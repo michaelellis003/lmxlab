@@ -26,9 +26,13 @@ class TestBlockConfig:
         assert config.n_heads == 8
         assert config.pre_norm is True
 
-    def test_head_dim(self):
-        config = BlockConfig(d_model=256, n_heads=4)
-        assert config.head_dim == 64
+    @pytest.mark.parametrize(
+        "d_model,n_heads,expected",
+        [(256, 4, 64), (512, 8, 64), (64, 2, 32), (128, 1, 128)],
+    )
+    def test_head_dim(self, d_model, n_heads, expected):
+        config = BlockConfig(d_model=d_model, n_heads=n_heads)
+        assert config.head_dim == expected
 
     def test_effective_n_kv_heads_default(self):
         config = BlockConfig(n_heads=8)
@@ -233,13 +237,25 @@ class TestPosition:
 
 
 class TestConfigurableBlock:
-    def test_gpt_style_block(self, small_dims, random_hidden):
-        """GPT-style: LayerNorm + MHA + StandardFFN + Sinusoidal."""
+    @pytest.mark.parametrize(
+        "attn,ffn,norm,pos",
+        [
+            ("mha", "standard", "layer_norm", "sinusoidal"),
+            ("gqa", "gated", "rms_norm", "rope"),
+            ("mha", "gated", "rms_norm", "sinusoidal"),
+            ("gqa", "standard", "layer_norm", "rope"),
+        ],
+        ids=["gpt-style", "llama-style", "mixed-1", "mixed-2"],
+    )
+    def test_block_combinations(
+        self, small_dims, random_hidden, attn, ffn, norm, pos
+    ):
+        """Block assembles correctly for all component combos."""
         config = BlockConfig(
-            attention="mha",
-            ffn="standard",
-            norm="layer_norm",
-            position="sinusoidal",
+            attention=attn,
+            ffn=ffn,
+            norm=norm,
+            position=pos,
             **small_dims,
         )
         block = ConfigurableBlock(config)
@@ -247,21 +263,7 @@ class TestConfigurableBlock:
         out, cache = block(random_hidden)
         mx.eval(out)
         assert out.shape == random_hidden.shape
-
-    def test_llama_style_block(self, small_dims, random_hidden):
-        """LLaMA-style: RMSNorm + GQA + GatedFFN + RoPE."""
-        config = BlockConfig(
-            attention="gqa",
-            ffn="gated",
-            norm="rms_norm",
-            position="rope",
-            **small_dims,
-        )
-        block = ConfigurableBlock(config)
-        mx.eval(block.parameters())
-        out, cache = block(random_hidden)
-        mx.eval(out)
-        assert out.shape == random_hidden.shape
+        assert cache is not None
 
     def test_post_norm(self, small_dims, random_hidden):
         config = BlockConfig(

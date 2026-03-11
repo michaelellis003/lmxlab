@@ -14,5 +14,13 @@ memory/
 AGENT_PLAN.md
 CLAUDE.md
 
+# Secrets
+.env
+.env.*
+credentials.json
+
+# Build artifacts
+site/
+
 # OS
 .DS_Store

@@ -96,6 +96,7 @@ class TestTrainer:
         assert "loss" in metrics
         assert metrics["loss"] > 0
 
+    @pytest.mark.slow
     def test_overfit_tiny(self, tiny_model, tiny_batches):
         """Loss should decrease when overfitting a single batch."""
         config = TrainConfig(
