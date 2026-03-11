@@ -22,7 +22,12 @@ import argparse
 import mlx.core as mx
 import mlx.utils
 
-from lmt_metal.core.lora import apply_lora, lora_parameters, merge_lora
+from lmt_metal.core.lora import (
+    apply_lora,
+    lora_parameters,
+    merge_lora,
+    save_lora_adapters,
+)
 from lmt_metal.data.batching import batch_iterator
 from lmt_metal.data.tokenizer import CharTokenizer
 from lmt_metal.models.base import LanguageModel
@@ -126,6 +131,21 @@ def main() -> None:
     for i, m in enumerate(history):
         if (i + 1) % 20 == 0 or i == 0 or i == len(history) - 1:
             print(f"{i + 1:>5} {m['loss']:>10.4f}")
+
+    # --- Save LoRA adapters ---
+    adapter_dir = "experiments/lora_adapters"
+    print(f"\nSaving LoRA adapters to {adapter_dir}...")
+    save_lora_adapters(
+        adapter_dir,
+        model,
+        rank=args.rank,
+        alpha=args.alpha,
+        metadata={"targets": args.targets, "steps": args.steps},
+    )
+    import os
+
+    size = os.path.getsize(f"{adapter_dir}/adapter.safetensors")
+    print(f"  Adapter size: {size / 1024:.1f} KB")
 
     # --- Merge LoRA ---
     print("\nMerging LoRA weights into base model...")

@@ -4,6 +4,10 @@ Implements LoRA as described in Hu et al. (2021): instead of
 fine-tuning all weights W, learn a low-rank update W + BA where
 B is (d_out, rank) and A is (d_in, rank), with rank << d_model.
 
+Includes save/load utilities for LoRA adapter weights, enabling
+small adapter files (~MBs) that can be shared independently of
+the base model weights (~GBs).
+
 Only the LoRA matrices A and B are trainable; the base weight W
 is frozen. This reduces trainable parameters by 10-100x while
 preserving most of the fine-tuning quality.
@@ -24,10 +28,14 @@ Example::
     merge_lora(model)
 """
 
+import json
 import math
+from pathlib import Path
+from typing import Any
 
 import mlx.core as mx
 import mlx.nn as nn
+import mlx.utils
 from mlx.utils import tree_map_with_path
 
 
@@ -225,3 +233,79 @@ def merge_lora(model: nn.Module) -> None:
         _maybe_merge, leaves, is_leaf=nn.Module.is_module
     )
     model.update_modules(leaves)
+
+
+def save_lora_adapters(
+    path: str | Path,
+    model: nn.Module,
+    rank: int | None = None,
+    alpha: float | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> None:
+    """Save only the LoRA adapter weights to a directory.
+
+    Saves lora_A and lora_B parameters as a small safetensors file,
+    much smaller than a full model checkpoint. The adapter can be
+    loaded on top of any compatible base model.
+
+    Args:
+        path: Directory to save the adapter.
+        model: Model with LoRA layers applied.
+        rank: LoRA rank (saved in config for reference).
+        alpha: LoRA alpha (saved in config for reference).
+        metadata: Additional metadata to include in config.
+    """
+    path = Path(path)
+    path.mkdir(parents=True, exist_ok=True)
+
+    # Extract only LoRA parameters
+    lora_weights = {}
+    for key, value in mlx.utils.tree_flatten(model.parameters()):
+        if "lora_A" in key or "lora_B" in key:
+            lora_weights[key] = value
+
+    mx.save_safetensors(str(path / "adapter.safetensors"), lora_weights)
+
+    # Save config
+    config: dict[str, Any] = {}
+    if rank is not None:
+        config["rank"] = rank
+    if alpha is not None:
+        config["alpha"] = alpha
+    if metadata:
+        config.update(metadata)
+
+    (path / "adapter_config.json").write_text(json.dumps(config, indent=2))
+
+
+def load_lora_adapters(
+    path: str | Path,
+    model: nn.Module,
+) -> dict[str, Any]:
+    """Load LoRA adapter weights into a model.
+
+    The model must already have LoRA layers applied (via
+    ``apply_lora``). This function loads only the lora_A and
+    lora_B weights from a previously saved adapter.
+
+    Args:
+        path: Directory containing the adapter files.
+        model: Model with LoRA layers to load weights into.
+
+    Returns:
+        Metadata dict from adapter_config.json.
+
+    Raises:
+        FileNotFoundError: If path does not exist.
+    """
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Adapter directory not found: {path}")
+
+    weights = mx.load(str(path / "adapter.safetensors"))
+    model.load_weights(list(weights.items()))
+
+    config_path = path / "adapter_config.json"
+    if config_path.exists():
+        return json.loads(config_path.read_text())
+    return {}
