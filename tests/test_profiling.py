@@ -7,6 +7,7 @@ from lmt_metal.experiments.profiling import (
     count_parameters_by_module,
     memory_estimate,
     profile_forward,
+    profile_generation,
 )
 from lmt_metal.models.base import LanguageModel
 from lmt_metal.models.gpt import gpt_tiny
@@ -140,3 +141,54 @@ class TestProfileForward:
         result = profile_forward(model, tokens, n_iter=3)
 
         assert result["tokens_per_sec"] > 0
+
+
+class TestProfileGeneration:
+    """Test autoregressive generation profiling."""
+
+    def test_returns_expected_keys(self):
+        config = gpt_tiny()
+        model = LanguageModel(config)
+        mx.eval(model.parameters())
+
+        prompt = mx.array([[1, 2, 3]])
+        result = profile_generation(model, prompt, max_tokens=5)
+
+        assert "prefill_ms" in result
+        assert "decode_ms_per_token" in result
+        assert "total_ms" in result
+        assert "tokens_generated" in result
+        assert "prompt_len" in result
+        assert "decode_tokens_per_sec" in result
+
+    def test_prompt_len_correct(self):
+        config = gpt_tiny()
+        model = LanguageModel(config)
+        mx.eval(model.parameters())
+
+        prompt = mx.array([[1, 2, 3, 4, 5]])
+        result = profile_generation(model, prompt, max_tokens=3)
+
+        assert result["prompt_len"] == 5
+
+    def test_tokens_generated(self):
+        config = gpt_tiny()
+        model = LanguageModel(config)
+        mx.eval(model.parameters())
+
+        prompt = mx.array([[1, 2]])
+        result = profile_generation(model, prompt, max_tokens=10)
+
+        assert result["tokens_generated"] == 10
+
+    def test_timing_positive(self):
+        config = llama_tiny()
+        model = LanguageModel(config)
+        mx.eval(model.parameters())
+
+        prompt = mx.array([[1, 2, 3]])
+        result = profile_generation(model, prompt, max_tokens=5)
+
+        assert result["prefill_ms"] > 0
+        assert result["total_ms"] > 0
+        assert result["decode_tokens_per_sec"] > 0
