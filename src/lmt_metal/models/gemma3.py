@@ -87,15 +87,15 @@ def gemma3_config(
 
 
 def gemma3_tiny() -> ModelConfig:
-    """Tiny Gemma 3 for testing."""
+    """Tiny Gemma 3 for testing (4 layers, global every 4th)."""
     return gemma3_config(
         vocab_size=256,
         d_model=64,
         n_heads=4,
         n_kv_heads=2,
-        n_layers=6,
+        n_layers=4,
         d_ff=128,
         max_seq_len=128,
         window_size=16,
-        global_every=6,
+        global_every=4,
     )

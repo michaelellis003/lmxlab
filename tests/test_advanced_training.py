@@ -1,4 +1,4 @@
-"""Tests for advanced training: DPO, GRPO, curriculum learning."""
+"""Tests for advanced training: DPO, GRPO, curriculum, MTP."""
 
 import mlx.core as mx
 import pytest
@@ -11,6 +11,7 @@ from lmt_metal.training.curriculum import (
 )
 from lmt_metal.training.dpo import _sequence_log_probs, dpo_loss
 from lmt_metal.training.grpo import grpo_loss
+from lmt_metal.training.mtp import MultiTokenPrediction
 
 
 @pytest.fixture
@@ -116,3 +117,61 @@ class TestCurriculum:
         for x, y in batches:
             assert x.shape == (4, 16)
             assert y.shape == (4, 16)
+
+
+class TestMTP:
+    """Tests for Multi-Token Prediction."""
+
+    def test_returns_losses(self, tiny_model):
+        """MTP should return main_loss, mtp_loss, total_loss."""
+        mtp = MultiTokenPrediction(tiny_model, n_predict=2)
+        mx.eval(mtp.parameters())
+
+        x = mx.random.randint(0, 256, shape=(2, 16))
+        targets = mx.random.randint(0, 256, shape=(2, 16))
+        logits, losses = mtp(x, targets)
+        mx.eval(logits, losses["main_loss"], losses["mtp_loss"])
+
+        assert "main_loss" in losses
+        assert "mtp_loss" in losses
+        assert "total_loss" in losses
+
+    def test_total_loss_includes_mtp(self, tiny_model):
+        """Total loss should be main + weight * mtp."""
+        mtp = MultiTokenPrediction(tiny_model, n_predict=2, mtp_weight=0.5)
+        mx.eval(mtp.parameters())
+
+        x = mx.random.randint(0, 256, shape=(2, 16))
+        targets = mx.random.randint(0, 256, shape=(2, 16))
+        _, losses = mtp(x, targets)
+        mx.eval(
+            losses["main_loss"],
+            losses["mtp_loss"],
+            losses["total_loss"],
+        )
+
+        expected = losses["main_loss"].item() + 0.5 * losses["mtp_loss"].item()
+        assert abs(losses["total_loss"].item() - expected) < 1e-4
+
+    def test_logits_shape(self, tiny_model):
+        """MTP logits should match standard forward pass shape."""
+        mtp = MultiTokenPrediction(tiny_model, n_predict=2)
+        mx.eval(mtp.parameters())
+
+        x = mx.random.randint(0, 256, shape=(2, 16))
+        targets = mx.random.randint(0, 256, shape=(2, 16))
+        logits, _ = mtp(x, targets)
+        mx.eval(logits)
+
+        assert logits.shape == (2, 16, tiny_model.config.vocab_size)
+
+    def test_n_predict_1(self, tiny_model):
+        """MTP with n_predict=1 should still work."""
+        mtp = MultiTokenPrediction(tiny_model, n_predict=1)
+        mx.eval(mtp.parameters())
+
+        x = mx.random.randint(0, 256, shape=(2, 16))
+        targets = mx.random.randint(0, 256, shape=(2, 16))
+        _, losses = mtp(x, targets)
+        mx.eval(losses["total_loss"])
+        assert losses["total_loss"].item() > 0
