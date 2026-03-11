@@ -282,6 +282,9 @@ uv run python recipes/train_grpo.py --grpo-steps 50
 # Curriculum learning (short→long sequences)
 uv run python recipes/train_curriculum.py --stages 4
 
+# Multi-token prediction (predict multiple future tokens)
+uv run python recipes/train_mtp.py --n-predict 2
+
 # Checkpoint and resume training
 uv run python recipes/checkpoint_resume.py --steps 200
 ```
