@@ -140,6 +140,57 @@ config = qwen35_config()
 
 **Key insight:** Pure linear attention loses expressiveness by compressing all history into a fixed-size state. The hybrid 3:1 pattern preserves efficient long-context processing (DeltaNet) while periodic GQA layers provide global attention for tasks that need it.
 
+## Loading Pretrained Weights
+
+lmt-metal can load pretrained weights from HuggingFace Hub for LLaMA, Gemma, Qwen2, and Mistral models.
+
+### Quick load (requires `huggingface_hub`)
+
+```python
+from lmt_metal.models.convert import load_from_hf
+
+model, config = load_from_hf('meta-llama/Llama-3.2-1B')
+```
+
+### Manual conversion
+
+If you have weights and config locally:
+
+```python
+import json
+from lmt_metal.models.convert import config_from_hf, convert_weights
+from lmt_metal.models.base import LanguageModel
+import mlx.core as mx
+
+# Load HF config.json
+hf_config = json.loads(open('config.json').read())
+model_config = config_from_hf(hf_config)
+
+# Load and convert weights
+hf_weights = mx.load('model.safetensors')
+lmt_weights = convert_weights(hf_weights, 'llama')
+
+# Build model and load
+model = LanguageModel(model_config)
+model.load_weights(list(lmt_weights.items()))
+```
+
+### Weight name mapping
+
+The conversion handles the naming differences between HF and lmt-metal:
+
+| HuggingFace | lmt-metal |
+|---|---|
+| `model.embed_tokens.weight` | `embed.weight` |
+| `model.layers.{i}.self_attn.q_proj.weight` | `blocks.{i}.attention.q_proj.weight` |
+| `model.layers.{i}.mlp.gate_proj.weight` | `blocks.{i}.ffn.gate.weight` |
+| `model.layers.{i}.mlp.up_proj.weight` | `blocks.{i}.ffn.up.weight` |
+| `model.layers.{i}.mlp.down_proj.weight` | `blocks.{i}.ffn.down.weight` |
+| `model.layers.{i}.input_layernorm.weight` | `blocks.{i}.attn_norm.weight` |
+| `model.layers.{i}.post_attention_layernorm.weight` | `blocks.{i}.ffn_norm.weight` |
+| `model.norm.weight` | `final_norm.weight` |
+| `lm_head.weight` | `head.weight` |
+
 ## Creating a Tiny Model
 
 Every architecture has a `_tiny()` factory for testing:
