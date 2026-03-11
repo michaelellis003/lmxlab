@@ -6,6 +6,7 @@ import pytest
 
 from lmt_metal.core.attention import SlidingWindowGQA, _apply_sliding_window
 from lmt_metal.core.config import BlockConfig, ModelConfig
+from lmt_metal.core.deltanet import GatedDeltaNet
 from lmt_metal.core.mla import MLA
 from lmt_metal.core.moe import MoEFFN, SharedExpertMoEFFN
 from lmt_metal.models.deepseek import deepseek_config, deepseek_tiny
@@ -15,6 +16,7 @@ from lmt_metal.models.gpt import gpt_config, gpt_tiny
 from lmt_metal.models.llama import llama_config, llama_tiny
 from lmt_metal.models.mixtral import mixtral_config, mixtral_tiny
 from lmt_metal.models.qwen import qwen_config, qwen_tiny
+from lmt_metal.models.qwen35 import qwen35_config, qwen35_tiny
 
 ALL_TINY_FACTORIES = [
     ("gpt", gpt_tiny),
@@ -24,6 +26,7 @@ ALL_TINY_FACTORIES = [
     ("mixtral", mixtral_tiny),
     ("deepseek", deepseek_tiny),
     ("gemma3", gemma3_tiny),
+    ("qwen35", qwen35_tiny),
 ]
 
 
@@ -414,3 +417,153 @@ class TestGemma3Config:
         assert c.block_configs[3].attention == "gqa"
         # Layer 0 should be sliding window
         assert c.block_configs[0].attention == "sliding_window_gqa"
+
+
+class TestGatedDeltaNet:
+    """Tests for Gated DeltaNet attention."""
+
+    def test_output_shape(self):
+        """Output shape must match input shape."""
+        config = BlockConfig(
+            attention="gated_deltanet",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+        )
+        dn = GatedDeltaNet(config)
+        mx.eval(dn.parameters())
+
+        x = mx.random.normal(shape=(2, 8, 64))
+        out, cache = dn(x)
+        mx.eval(out)
+        assert out.shape == x.shape
+
+    def test_state_is_fixed_size(self):
+        """DeltaNet state should be (B, H, d, d) regardless
+        of sequence length."""
+        config = BlockConfig(
+            attention="gated_deltanet",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+        )
+        dn = GatedDeltaNet(config)
+        mx.eval(dn.parameters())
+
+        # Short sequence
+        x_short = mx.random.normal(shape=(1, 4, 64))
+        _, cache_short = dn(x_short)
+        mx.eval(cache_short[0])
+
+        # Long sequence
+        x_long = mx.random.normal(shape=(1, 32, 64))
+        _, cache_long = dn(x_long)
+        mx.eval(cache_long[0])
+
+        # State shape should be the same
+        assert cache_short[0].shape == cache_long[0].shape
+        assert cache_short[0].shape == (1, 4, 16, 16)
+
+    def test_incremental_generation(self):
+        """DeltaNet should support token-by-token generation."""
+        config = BlockConfig(
+            attention="gated_deltanet",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+        )
+        dn = GatedDeltaNet(config)
+        mx.eval(dn.parameters())
+
+        # Full sequence
+        x = mx.random.normal(shape=(1, 4, 64))
+        _, cache = dn(x)
+        mx.eval(cache[0])
+
+        # Single token with cache
+        x2 = mx.random.normal(shape=(1, 1, 64))
+        out2, cache2 = dn(x2, cache=cache)
+        mx.eval(out2, cache2[0])
+
+        assert out2.shape == (1, 1, 64)
+        # State shape unchanged
+        assert cache2[0].shape == cache[0].shape
+
+    def test_with_short_conv(self):
+        """DeltaNet with causal convolutions."""
+        config = BlockConfig(
+            attention="gated_deltanet",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+            use_short_conv=True,
+            conv_kernel_size=4,
+        )
+        dn = GatedDeltaNet(config)
+        mx.eval(dn.parameters())
+
+        x = mx.random.normal(shape=(2, 8, 64))
+        out, cache = dn(x)
+        mx.eval(out)
+        assert out.shape == x.shape
+
+    def test_gates_start_conservative(self):
+        """Gate biases should initialize negative (near-zero gates)."""
+        config = BlockConfig(
+            attention="gated_deltanet",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+        )
+        dn = GatedDeltaNet(config)
+        mx.eval(dn.parameters())
+
+        # Decay and update gate biases should be negative
+        mx.eval(dn.decay_proj.bias, dn.update_proj.bias)
+        assert mx.all(dn.decay_proj.bias < 0).item()
+        assert mx.all(dn.update_proj.bias < 0).item()
+
+
+class TestQwen35Config:
+    """Tests for Qwen 3.5 configuration factory."""
+
+    def test_qwen35_defaults(self):
+        """Full-size config should have expected defaults."""
+        c = qwen35_config()
+        assert c.block.attention == "gated_deltanet"
+        assert c.block.norm == "rms_norm"
+        assert c.block.ffn == "gated"
+        assert c.block.use_short_conv is True
+        assert c.n_layers == 28
+        assert c.tie_embeddings is False
+
+    def test_hybrid_attention_pattern(self):
+        """Qwen 3.5 should have 3:1 DeltaNet:GQA pattern."""
+        c = qwen35_config()
+        assert c.block_configs is not None
+        attn_types = [c.block_configs[i].attention for i in range(c.n_layers)]
+        # Should have both types
+        assert "gated_deltanet" in attn_types
+        assert "gqa" in attn_types
+        # Every 4th layer (0-indexed: 3, 7, 11, ...) is GQA
+        for i in range(c.n_layers):
+            if (i + 1) % 4 == 0:
+                assert c.block_configs[i].attention == "gqa"
+            else:
+                assert c.block_configs[i].attention == "gated_deltanet"
+
+    def test_qwen35_tiny_small_dims(self):
+        """Tiny config should have small dimensions."""
+        c = qwen35_tiny()
+        assert c.block.d_model <= 128
+        assert c.n_layers <= 4
+        assert c.vocab_size <= 1024
+
+    def test_qwen35_tiny_has_hybrid(self):
+        """Tiny config should have hybrid attention."""
+        c = qwen35_tiny()
+        assert c.block_configs is not None
+        # Layer 3 (index 3, every 4th) should be GQA
+        assert c.block_configs[3].attention == "gqa"
+        # Layer 0 should be DeltaNet
+        assert c.block_configs[0].attention == "gated_deltanet"

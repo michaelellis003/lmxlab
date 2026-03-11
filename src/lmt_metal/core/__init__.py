@@ -3,6 +3,7 @@
 from lmt_metal.core.attention import GQA, MHA, SlidingWindowGQA
 from lmt_metal.core.block import ConfigurableBlock
 from lmt_metal.core.config import BlockConfig, ModelConfig
+from lmt_metal.core.deltanet import GatedDeltaNet
 from lmt_metal.core.ffn import GatedFFN, StandardFFN
 from lmt_metal.core.mla import MLA
 from lmt_metal.core.norm import layer_norm, rms_norm
@@ -13,6 +14,7 @@ __all__ = [
     "BlockConfig",
     "ConfigurableBlock",
     "GQA",
+    "GatedDeltaNet",
     "GatedFFN",
     "MHA",
     "MLA",

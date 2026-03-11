@@ -26,6 +26,7 @@ from lmt_metal.models.gpt import gpt_config, gpt_tiny
 from lmt_metal.models.llama import llama_config, llama_tiny
 from lmt_metal.models.mixtral import mixtral_config, mixtral_tiny
 from lmt_metal.models.qwen import qwen_config, qwen_tiny
+from lmt_metal.models.qwen35 import qwen35_config, qwen35_tiny
 
 ARCHITECTURES = {
     "gpt": (gpt_config, gpt_tiny),
@@ -33,6 +34,7 @@ ARCHITECTURES = {
     "gemma": (gemma_config, gemma_tiny),
     "gemma3": (gemma3_config, gemma3_tiny),
     "qwen": (qwen_config, qwen_tiny),
+    "qwen35": (qwen35_config, qwen35_tiny),
     "mixtral": (mixtral_config, mixtral_tiny),
     "deepseek": (deepseek_config, deepseek_tiny),
 }
