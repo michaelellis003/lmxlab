@@ -68,7 +68,7 @@ characteristics will differ.
 - **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
 - **HuggingFace integration**: load pretrained weights from the Hub
 - **Experiment framework**: time-budgeted runs, results tracking, sweeps, MLX profiling
-- **14 recipe scripts**: training, fine-tuning, ablation studies, architecture comparison, benchmarking
+- **23 recipe scripts**: training, fine-tuning, ablation studies, architecture comparison, benchmarking
 
 ## Documentation overview
 
@@ -83,6 +83,11 @@ characteristics will differ.
   fuses the training step.
 - **[Unified Memory](architecture/unified-memory.md)** -- What Apple Silicon's
   memory model means for ML.
+- **[Production Optimizations](architecture/production-optimizations.md)** -- How
+  production systems (vLLM, llama.cpp) optimize beyond what lmxlab teaches.
+- **[Recipes](recipes/index.md)** -- All 23 ready-to-run scripts, categorized.
 - **[Experiment Methodology](experiments/methodology.md)** -- How to run rigorous
   experiments with the framework.
+- **[Developer Log](devlog/index.md)** -- Design decisions, lessons learned,
+  and pre-registered experiment plans.
 - **[API Reference](api/index.md)** -- Auto-generated module documentation.
