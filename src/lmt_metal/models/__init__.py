@@ -1,13 +1,19 @@
 """Model architectures and generation utilities."""
 
 from lmt_metal.models.base import LanguageModel
+from lmt_metal.models.gemma import gemma_config
 from lmt_metal.models.generate import generate
 from lmt_metal.models.gpt import gpt_config
 from lmt_metal.models.llama import llama_config
+from lmt_metal.models.mixtral import mixtral_config
+from lmt_metal.models.qwen import qwen_config
 
 __all__ = [
     "LanguageModel",
+    "gemma_config",
     "generate",
     "gpt_config",
     "llama_config",
+    "mixtral_config",
+    "qwen_config",
 ]
