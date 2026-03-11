@@ -222,6 +222,7 @@ def load_from_hf(
     repo_id: str,
     revision: str | None = None,
     dtype: mx.Dtype = mx.float16,
+    quantize: int | None = None,
 ) -> tuple[LanguageModel, ModelConfig]:
     """Download and load a HuggingFace model into lmt-metal.
 
@@ -231,6 +232,8 @@ def load_from_hf(
         repo_id: HuggingFace repo ID (e.g., 'meta-llama/Llama-3.2-1B').
         revision: Git revision (branch, tag, or commit hash).
         dtype: Target dtype for weights (default: float16).
+        quantize: If set, quantize the model to this many bits
+            (4 or 8) after loading. Reduces memory usage.
 
     Returns:
         Tuple of (loaded LanguageModel, ModelConfig).
@@ -292,5 +295,11 @@ def load_from_hf(
     # Build model and load weights
     model = LanguageModel(model_config)
     model.load_weights(list(lmt_weights.items()))
+
+    # Optional post-load quantization
+    if quantize is not None:
+        from lmt_metal.core.quantize import quantize_model
+
+        quantize_model(model, bits=quantize)
 
     return model, model_config

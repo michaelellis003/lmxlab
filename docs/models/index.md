@@ -191,6 +191,28 @@ The conversion handles the naming differences between HF and lmt-metal:
 | `model.norm.weight` | `final_norm.weight` |
 | `lm_head.weight` | `head.weight` |
 
+## Quantization
+
+lmt-metal supports post-training quantization via MLX's native affine quantization. This replaces `nn.Linear` with `nn.QuantizedLinear`, reducing memory by ~4-8x.
+
+```python
+from lmt_metal.core.quantize import quantize_model, dequantize_model
+
+# Quantize to 4-bit (default)
+quantize_model(model, bits=4, group_size=64)
+
+# Or load from HF already quantized
+model, config = load_from_hf('meta-llama/Llama-3.2-1B', quantize=4)
+
+# Dequantize back to float for fine-tuning
+dequantize_model(model)
+```
+
+| Bits | Memory reduction | Quality | Use case |
+|------|-----------------|---------|----------|
+| 8 | ~4x | Near-lossless | Fine-tuning, high-quality inference |
+| 4 | ~8x | Good | Inference, fitting large models in memory |
+
 ## Creating a Tiny Model
 
 Every architecture has a `_tiny()` factory for testing:

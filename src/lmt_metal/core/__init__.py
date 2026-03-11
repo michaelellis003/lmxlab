@@ -8,6 +8,7 @@ from lmt_metal.core.ffn import GatedFFN, StandardFFN
 from lmt_metal.core.mla import MLA
 from lmt_metal.core.norm import layer_norm, rms_norm
 from lmt_metal.core.position import alibi, rope, sinusoidal
+from lmt_metal.core.quantize import dequantize_model, quantize_model
 from lmt_metal.core.registry import Registry
 
 __all__ = [
@@ -22,7 +23,9 @@ __all__ = [
     "ModelConfig",
     "Registry",
     "StandardFFN",
+    "dequantize_model",
     "alibi",
+    "quantize_model",
     "layer_norm",
     "rope",
     "rms_norm",
