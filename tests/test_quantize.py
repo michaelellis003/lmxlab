@@ -119,7 +119,7 @@ class TestQuantizeModel:
 
     def test_8bit_forward_runs(self):
         """Forward pass works with 8-bit quantization."""
-        config = gpt_tiny()
+        config = llama_tiny()
         model = LanguageModel(config)
         mx.eval(model.parameters())
 
@@ -146,9 +146,19 @@ class TestQuantizeModel:
 
         assert size4 < size8
 
-    def test_quantize_gpt_architecture(self):
-        """Quantization works on GPT architecture."""
-        config = gpt_tiny()
+    def test_quantize_gpt_no_tied_embeddings(self):
+        """Quantization works on GPT with untied embeddings."""
+        from lmxlab.models.gpt import gpt_config
+
+        config = gpt_config(
+            vocab_size=256,
+            d_model=64,
+            n_heads=2,
+            n_layers=2,
+            d_ff=128,
+            max_seq_len=128,
+            tie_embeddings=False,
+        )
         model = LanguageModel(config)
         mx.eval(model.parameters())
 
@@ -163,7 +173,7 @@ class TestQuantizeModel:
         """Can generate tokens after quantization."""
         from lmxlab.models.generate import generate
 
-        config = gpt_tiny()
+        config = llama_tiny()
         model = LanguageModel(config)
         mx.eval(model.parameters())
 
@@ -284,7 +294,7 @@ class TestDequantizeModel:
         """Can generate after quantize→dequantize roundtrip."""
         from lmxlab.models.generate import generate
 
-        config = gpt_tiny()
+        config = llama_tiny()
         model = LanguageModel(config)
         mx.eval(model.parameters())
 
