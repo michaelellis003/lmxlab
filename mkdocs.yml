@@ -50,4 +50,12 @@ nav:
     - MLX Idioms: architecture/mlx-idioms.md
   - Models: models/index.md
   - Training: training/index.md
-  - API Reference: api/index.md
+  - API Reference:
+    - Overview: api/index.md
+    - Core: api/core.md
+    - Models: api/models.md
+    - Training: api/training.md
+    - Data: api/data.md
+    - Evaluation: api/eval.md
+    - Inference: api/inference.md
+    - Experiments: api/experiments.md
