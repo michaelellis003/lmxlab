@@ -11,11 +11,13 @@ authors = [
 keywords = ["mlx", "transformers", "apple-silicon", "language-models", "deep-learning"]
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
@@ -41,6 +43,8 @@ dev = [
 Homepage = "https://github.com/michaelellis003/lmxlab"
 Repository = "https://github.com/michaelellis003/lmxlab"
 Documentation = "https://michaelellis003.github.io/lmxlab/"
+Issues = "https://github.com/michaelellis003/lmxlab/issues"
+Changelog = "https://github.com/michaelellis003/lmxlab/blob/main/CHANGELOG.md"
 
 [project.scripts]
 lmxlab = "lmxlab.cli:main"
