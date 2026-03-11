@@ -82,7 +82,8 @@ These are open questions for the experiment framework to investigate.
 ### `mx.compile` Is Not Free
 
 Compiling the training step with `mx.compile` provides significant speedups
-(2-4x in our benchmarks), but it constrains what you can do:
+(1.3-2x typical, potentially more for larger models), but it constrains
+what you can do:
 
 - No Python control flow that depends on array values
 - Must declare `inputs` and `outputs` explicitly

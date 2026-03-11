@@ -140,7 +140,9 @@ trainer = Trainer(model, TrainConfig(compile_step=True))
 ## Performance impact
 
 The speedup from compilation depends on model size and step complexity.
-Typical improvements on Apple Silicon:
+Expected improvements on Apple Silicon (approximate, based on MLX
+documentation and community benchmarks — actual results vary by
+hardware, batch size, and sequence length):
 
 | Scenario | Uncompiled | Compiled | Speedup |
 |----------|-----------|----------|---------|
@@ -149,7 +151,8 @@ Typical improvements on Apple Silicon:
 | Medium model (1024d, 12L) | ~30ms/step | ~15ms/step | ~2x |
 
 The larger the model, the more opportunity for kernel fusion and the
-greater the relative reduction in Python overhead.
+greater the relative reduction in Python overhead. Use
+`benchmark_compile.py` to measure on your specific hardware.
 
 ## How lmxlab structures the compiled step
 

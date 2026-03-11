@@ -27,7 +27,7 @@ config = gpt_config()
 # position="sinusoidal", bias=True
 ```
 
-**Key characteristics:** Uses bias in all linear layers, post-LayerNorm (though our default is pre-norm), and the only architecture with standard (non-gated) FFN.
+**Key characteristics:** Uses bias in all linear layers, pre-norm LayerNorm (matching GPT-2), and the only architecture with standard (non-gated) FFN.
 
 ## LLaMA
 
@@ -111,8 +111,9 @@ Mixes sliding window (local) and global attention layers. Most layers use a fixe
 from lmxlab.models.gemma3 import gemma3_config
 
 config = gemma3_config()
-# Every 6th layer: global GQA
+# Every 6th layer: global GQA (5:1 local:global ratio)
 # Other layers: sliding_window_gqa with window_size=4096
+# (Real Gemma 3 uses window_size=1024; adjust to match)
 ```
 
 **Key insight:** Local attention is O(n × w) instead of O(n²), making long sequences tractable. Periodic global layers maintain long-range dependencies. Uses per-layer `block_configs` — a direct showcase of the ConfigurableBlock system's flexibility.
