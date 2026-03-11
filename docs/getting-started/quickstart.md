@@ -227,6 +227,18 @@ uv run python recipes/finetune_lora.py --rank 8 --steps 200
 
 # Fine-tune with QLoRA (4-bit base + LoRA, maximum memory efficiency)
 uv run python recipes/finetune_qlora.py --rank 8 --bits 4
+
+# Train a Mixture of Experts model (dense vs MoE comparison)
+uv run python recipes/train_moe.py --experts 4 --top-k 2
+
+# Speculative decoding (draft-then-verify generation)
+uv run python recipes/speculative_decoding.py --draft-tokens 4
+
+# Profile all architectures (memory, throughput, generation speed)
+uv run python recipes/profile_models.py
+
+# Benchmark mx.compile speedup on training steps
+uv run python recipes/benchmark_compile.py
 ```
 
 ## Next steps
