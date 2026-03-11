@@ -9,7 +9,7 @@ from lmt_metal.models.convert import (
 from lmt_metal.models.deepseek import deepseek_config
 from lmt_metal.models.gemma import gemma_config
 from lmt_metal.models.gemma3 import gemma3_config
-from lmt_metal.models.generate import generate
+from lmt_metal.models.generate import generate, stream_generate
 from lmt_metal.models.gpt import gpt_config
 from lmt_metal.models.llama import llama_config
 from lmt_metal.models.mixtral import mixtral_config
@@ -25,6 +25,7 @@ __all__ = [
     "gemma_config",
     "generate",
     "gpt_config",
+    "stream_generate",
     "llama_config",
     "load_from_hf",
     "mixtral_config",

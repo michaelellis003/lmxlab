@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 import mlx.core as mx
@@ -107,6 +108,35 @@ def _apply_repetition_penalty(
     return mx.where(mask > 0, penalized, logits)
 
 
+def _sample_next(
+    logits: mx.array,
+    temperature: float,
+    top_k: int,
+    top_p: float,
+) -> mx.array:
+    """Sample next token from logits.
+
+    Args:
+        logits: Logits for next position (batch, vocab).
+        temperature: Sampling temperature (0 = greedy).
+        top_k: If > 0, only sample from top-k.
+        top_p: If < 1.0, use nucleus sampling.
+
+    Returns:
+        Token IDs (batch, 1).
+    """
+    if temperature > 0:
+        scaled = logits / temperature
+        if top_k > 0:
+            return _sample_top_k(scaled, top_k)
+        elif top_p < 1.0:
+            return _sample_top_p(scaled, top_p)
+        else:
+            return mx.random.categorical(scaled)[:, None]
+    else:
+        return mx.argmax(logits, axis=-1, keepdims=True)
+
+
 def generate(
     model: LanguageModel,
     prompt: mx.array,
@@ -115,6 +145,7 @@ def generate(
     top_k: int = 0,
     top_p: float = 1.0,
     repetition_penalty: float = 1.0,
+    stop_tokens: list[int] | None = None,
 ) -> mx.array:
     """Generate tokens autoregressively with KV caching.
 
@@ -127,13 +158,17 @@ def generate(
         top_p: If < 1.0, use nucleus sampling.
         repetition_penalty: Penalty for repeating tokens (> 1.0
             discourages repetition, 1.0 = no effect).
+        stop_tokens: List of token IDs that stop generation.
+            When any batch element generates a stop token,
+            generation stops for all.
 
     Returns:
         Generated token IDs of shape
-        (batch, prompt_len + max_tokens).
+        (batch, prompt_len + generated_len).
     """
     tokens = prompt
     cache = None
+    stop_set = set(stop_tokens) if stop_tokens else set()
 
     # Process prompt (prefill)
     logits, cache = model(tokens, cache=cache)
@@ -141,32 +176,24 @@ def generate(
 
     generated: list[mx.array] = []
     for _ in range(max_tokens):
-        # Get logits for last position
         next_logits = logits[:, -1, :]
 
-        # Apply repetition penalty
         if repetition_penalty != 1.0:
             next_logits = _apply_repetition_penalty(
                 next_logits, generated, repetition_penalty
             )
 
-        # Apply temperature
-        if temperature > 0:
-            next_logits = next_logits / temperature
+        next_token = _sample_next(next_logits, temperature, top_k, top_p)
+        mx.eval(next_token)
 
-            if top_k > 0:
-                next_token = _sample_top_k(next_logits, top_k)
-            elif top_p < 1.0:
-                next_token = _sample_top_p(next_logits, top_p)
-            else:
-                next_token = mx.random.categorical(next_logits)[:, None]
-        else:
-            # Greedy
-            next_token = mx.argmax(next_logits, axis=-1, keepdims=True)
+        # Check stop tokens
+        if stop_set:
+            token_val = next_token[0, 0].item()
+            if token_val in stop_set:
+                break
 
         generated.append(next_token)
 
-        # Forward pass with single token + cache
         logits, cache = model(next_token, cache=cache)
         mx.eval(logits, *[c for pair in cache for c in pair])
 
@@ -174,3 +201,63 @@ def generate(
         all_generated = mx.concatenate(generated, axis=1)
         return mx.concatenate([prompt, all_generated], axis=1)
     return prompt
+
+
+def stream_generate(
+    model: LanguageModel,
+    prompt: mx.array,
+    max_tokens: int = 100,
+    temperature: float = 1.0,
+    top_k: int = 0,
+    top_p: float = 1.0,
+    repetition_penalty: float = 1.0,
+    stop_tokens: list[int] | None = None,
+) -> Iterator[int]:
+    """Generate tokens one at a time, yielding each as produced.
+
+    This is the standard interface for interactive/streaming
+    applications. Each token is yielded immediately after
+    generation, enabling real-time display.
+
+    Args:
+        model: Language model to generate from.
+        prompt: Input token IDs of shape (1, prompt_len).
+        max_tokens: Maximum number of new tokens.
+        temperature: Sampling temperature (0 = greedy).
+        top_k: If > 0, only sample from top-k.
+        top_p: If < 1.0, use nucleus sampling.
+        repetition_penalty: Penalty for repeating tokens.
+        stop_tokens: Token IDs that stop generation.
+
+    Yields:
+        Generated token IDs one at a time.
+    """
+    cache = None
+    stop_set = set(stop_tokens) if stop_tokens else set()
+
+    # Prefill
+    logits, cache = model(prompt, cache=cache)
+    mx.eval(logits, *[c for pair in cache for c in pair])
+
+    generated: list[mx.array] = []
+    for _ in range(max_tokens):
+        next_logits = logits[:, -1, :]
+
+        if repetition_penalty != 1.0:
+            next_logits = _apply_repetition_penalty(
+                next_logits, generated, repetition_penalty
+            )
+
+        next_token = _sample_next(next_logits, temperature, top_k, top_p)
+        mx.eval(next_token)
+
+        token_id = next_token[0, 0].item()
+
+        if stop_set and token_id in stop_set:
+            return
+
+        generated.append(next_token)
+        yield token_id
+
+        logits, cache = model(next_token, cache=cache)
+        mx.eval(logits, *[c for pair in cache for c in pair])
