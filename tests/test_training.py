@@ -5,7 +5,11 @@ import pytest
 
 from lmt_metal.models.base import LanguageModel
 from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.training.callbacks import EarlyStopping, MetricsLogger
+from lmt_metal.training.callbacks import (
+    EarlyStopping,
+    MetricsLogger,
+    ThroughputMonitor,
+)
 from lmt_metal.training.checkpoints import (
     load_checkpoint,
     save_checkpoint,
@@ -241,3 +245,29 @@ class TestCallbacks:
 
         es.on_eval_end(4, {"eval_loss": 4.0})
         assert es.should_stop
+
+    def test_throughput_monitor(self, capsys):
+        monitor = ThroughputMonitor(log_interval=1, tokens_per_step=128)
+        monitor.on_train_begin(TrainConfig())
+        monitor.on_step_end(1, {"loss": 5.0})
+        captured = capsys.readouterr()
+        assert "steps/s" in captured.out
+        assert "tok/s" in captured.out
+
+    def test_throughput_monitor_no_tokens(self, capsys):
+        monitor = ThroughputMonitor(log_interval=1)
+        monitor.on_train_begin(TrainConfig())
+        monitor.on_step_end(1, {"loss": 5.0})
+        captured = capsys.readouterr()
+        assert "steps/s" in captured.out
+        assert "tok/s" not in captured.out
+
+    def test_throughput_monitor_summary(self, capsys):
+        monitor = ThroughputMonitor(log_interval=100, tokens_per_step=64)
+        monitor.on_train_begin(TrainConfig())
+        for i in range(5):
+            monitor.on_step_end(i + 1, {"loss": 1.0})
+        monitor.on_train_end([{"loss": 1.0}] * 5)
+        captured = capsys.readouterr()
+        assert "Throughput summary" in captured.out
+        assert "5 steps" in captured.out
