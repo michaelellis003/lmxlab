@@ -19,7 +19,7 @@ class TrainConfig:
         eval_interval: Steps between evaluations.
         log_interval: Steps between logging.
         checkpoint_interval: Steps between checkpoints.
-        optimizer: Optimizer name ('adamw', 'lion', 'adafactor').
+        optimizer: Optimizer name ('adamw', 'lion', 'adafactor', 'sgd').
         lr_schedule: Learning rate schedule ('cosine', 'linear', 'constant').
         compile_step: Whether to mx.compile the training step.
         seed: Random seed.

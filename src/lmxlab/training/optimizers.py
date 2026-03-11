@@ -72,5 +72,11 @@ def create_optimizer(
         return optim.Adafactor(
             learning_rate=schedule,
         )
+    elif config.optimizer == "sgd":
+        return optim.SGD(
+            learning_rate=schedule,
+            momentum=0.9,
+            weight_decay=config.weight_decay,
+        )
     else:
         raise ValueError(f"Unknown optimizer: {config.optimizer!r}")

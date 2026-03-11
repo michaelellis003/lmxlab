@@ -66,6 +66,16 @@ class TestOptimizers:
         opt = create_optimizer(config)
         assert opt is not None
 
+    def test_adafactor(self):
+        config = TrainConfig(optimizer="adafactor")
+        opt = create_optimizer(config)
+        assert opt is not None
+
+    def test_sgd(self):
+        config = TrainConfig(optimizer="sgd")
+        opt = create_optimizer(config)
+        assert opt is not None
+
     def test_unknown_raises(self):
         config = TrainConfig(optimizer="unknown")
         with pytest.raises(ValueError, match="Unknown optimizer"):
