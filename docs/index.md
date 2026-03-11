@@ -59,14 +59,30 @@ Requires Python 3.12+ and an Apple Silicon Mac (M1 or later) for GPU acceleratio
 MLX will still run on Intel Macs and Linux using CPU, but the performance
 characteristics will differ.
 
+## What's included
+
+- **8 architectures** as config factories: GPT, LLaMA, Gemma, Qwen, Mixtral (MoE), DeepSeek V2 (MLA), Gemma 3 (sliding window), Qwen 3.5 (hybrid DeltaNet)
+- **Compiled training** with `mx.compile`, functional gradients, gradient clipping, cosine schedules
+- **Advanced training**: DPO, GRPO, multi-token prediction, curriculum learning
+- **LoRA & QLoRA**: parameter-efficient fine-tuning with optional 4-bit quantization
+- **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
+- **HuggingFace integration**: load pretrained weights from the Hub
+- **Experiment framework**: time-budgeted runs, results tracking, sweeps, MLX profiling
+- **14 recipe scripts**: training, fine-tuning, ablation studies, architecture comparison, benchmarking
+
 ## Documentation overview
 
 - **[Quickstart](getting-started/quickstart.md)** -- Build and run a model in
   under 20 lines.
 - **[Architecture Overview](architecture/overview.md)** -- How configs, registries,
   and `ConfigurableBlock` fit together.
-- **[Configurable Block](architecture/configurable-block.md)** -- Deep dive into
-  the block that assembles components from registries.
 - **[MLX Idioms](architecture/mlx-idioms.md)** -- How MLX differs from PyTorch
   and why it matters for this library.
+- **[Models](models/index.md)** -- Compare all 8 architectures side-by-side.
+- **[Compiled Training](architecture/compiled-training.md)** -- How `mx.compile`
+  fuses the training step.
+- **[Unified Memory](architecture/unified-memory.md)** -- What Apple Silicon's
+  memory model means for ML.
+- **[Experiment Methodology](experiments/methodology.md)** -- How to run rigorous
+  experiments with the framework.
 - **[API Reference](api/index.md)** -- Auto-generated module documentation.
