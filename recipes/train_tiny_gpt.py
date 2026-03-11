@@ -7,10 +7,11 @@ Usage:
     uv run python recipes/train_tiny_gpt.py
 """
 
+from dataclasses import replace
+
 import mlx.core as mx
 
 from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.dataset import TextDataset, TokenDataset
 from lmt_metal.data.tokenizer import CharTokenizer
 from lmt_metal.models.base import LanguageModel
 from lmt_metal.models.generate import generate
@@ -37,19 +38,16 @@ def main() -> None:
         "To sleep, perchance to dream. "
     )
 
-    tokenizer = CharTokenizer()
-    tokenizer.fit(text)
+    tokenizer = CharTokenizer(text)
     print(f"Vocab size: {tokenizer.vocab_size}")
 
-    dataset = TextDataset(text)
-    token_dataset = TokenDataset(dataset, tokenizer, seq_len=32)
-    print(f"Dataset: {len(token_dataset)} sequences of length 32")
+    # Tokenize to flat array for batch_iterator
+    tokens = mx.array(tokenizer.encode(text), dtype=mx.int32)
+    seq_len = 32
+    print(f"Tokens: {len(tokens)}, seq_len={seq_len}")
 
     # --- Model ---
     config = gpt_tiny()
-    # Override vocab to match our tokenizer
-    from dataclasses import replace
-
     config = replace(config, vocab_size=tokenizer.vocab_size)
     model = LanguageModel(config)
     mx.eval(model.parameters())
@@ -68,9 +66,11 @@ def main() -> None:
 
     trainer = Trainer(model, train_config)
 
-    # Create batches
+    # Create batches from token array
     def data_iter():
-        yield from batch_iterator(token_dataset, batch_size=4, shuffle=True)
+        yield from batch_iterator(
+            tokens, batch_size=4, seq_len=seq_len, shuffle=True
+        )
 
     print("\nTraining...")
     history = trainer.train(data_iter())
