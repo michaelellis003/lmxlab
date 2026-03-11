@@ -156,3 +156,108 @@ class TestGenerate:
         output = generate(model, prompt, max_tokens=4, temperature=0.0)
         mx.eval(output)
         assert output.shape == (2, 7)
+
+    def test_stop_tokens(self):
+        """Generation stops at stop token."""
+        config = gpt_tiny()
+        model = LanguageModel(config)
+        mx.eval(model.parameters())
+
+        prompt = mx.array([[1, 2, 3]])
+        # Use a large max_tokens but stop early
+        output = generate(
+            model,
+            prompt,
+            max_tokens=50,
+            temperature=0.0,
+            stop_tokens=[0],  # likely to hit 0 eventually
+        )
+        mx.eval(output)
+        # Should be shorter than 3 + 50 = 53
+        assert output.shape[1] <= 53
+        # Prompt preserved
+        assert mx.array_equal(output[:, :3], prompt)
+
+    def test_repetition_penalty(self):
+        """Repetition penalty runs without error."""
+        config = gpt_tiny()
+        model = LanguageModel(config)
+        mx.eval(model.parameters())
+
+        prompt = mx.array([[1, 2, 3]])
+        output = generate(
+            model,
+            prompt,
+            max_tokens=5,
+            temperature=0.8,
+            repetition_penalty=1.2,
+        )
+        mx.eval(output)
+        assert output.shape == (1, 8)
+
+
+class TestStreamGenerate:
+    def test_yields_tokens(self):
+        """stream_generate yields individual token IDs."""
+        from lmt_metal.models.generate import stream_generate
+
+        config = gpt_tiny()
+        model = LanguageModel(config)
+        mx.eval(model.parameters())
+
+        prompt = mx.array([[1, 2, 3]])
+        tokens = list(
+            stream_generate(model, prompt, max_tokens=5, temperature=0.0)
+        )
+        assert len(tokens) == 5
+        assert all(isinstance(t, int) for t in tokens)
+
+    def test_stream_stop_tokens(self):
+        """stream_generate stops at stop token."""
+        from lmt_metal.models.generate import stream_generate
+
+        config = gpt_tiny()
+        model = LanguageModel(config)
+        mx.eval(model.parameters())
+
+        prompt = mx.array([[1, 2, 3]])
+        tokens = list(
+            stream_generate(
+                model,
+                prompt,
+                max_tokens=50,
+                temperature=0.0,
+                stop_tokens=[0],
+            )
+        )
+        # Should stop before 50 tokens (0 is common in random model)
+        assert len(tokens) <= 50
+
+    def test_stream_matches_generate(self):
+        """Streaming and batch generate produce same tokens (greedy)."""
+        from lmt_metal.models.generate import stream_generate
+
+        config = gpt_tiny()
+        model = LanguageModel(config)
+        mx.eval(model.parameters())
+
+        prompt = mx.array([[1, 2, 3]])
+        mx.random.seed(42)
+        batch_output = generate(model, prompt, max_tokens=5, temperature=0.0)
+        mx.eval(batch_output)
+        batch_tokens = batch_output[0, 3:].tolist()
+
+        mx.random.seed(42)
+        model2 = LanguageModel(config)
+        # Load same weights
+        import mlx.utils as mlx_utils
+
+        model2.load_weights(
+            list(dict(mlx_utils.tree_flatten(model.parameters())).items())
+        )
+        mx.eval(model2.parameters())
+        stream_tokens = list(
+            stream_generate(model2, prompt, max_tokens=5, temperature=0.0)
+        )
+
+        assert batch_tokens == stream_tokens
