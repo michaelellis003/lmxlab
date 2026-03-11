@@ -2,6 +2,7 @@
 
 import mlx.core as mx
 import mlx.nn as nn
+import mlx.utils
 
 from lmt_metal.core.block import ConfigurableBlock
 from lmt_metal.core.config import ModelConfig
@@ -108,5 +109,5 @@ class LanguageModel(nn.Module):
 
     def count_parameters(self) -> int:
         """Count total trainable parameters."""
-        leaves = mx.utils.tree_flatten(self.parameters())
+        leaves = mlx.utils.tree_flatten(self.parameters())
         return sum(p.size for _, p in leaves)

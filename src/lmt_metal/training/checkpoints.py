@@ -6,6 +6,7 @@ from typing import Any
 
 import mlx.core as mx
 import mlx.optimizers as optim
+import mlx.utils
 
 from lmt_metal.models.base import LanguageModel
 
@@ -32,12 +33,12 @@ def save_checkpoint(
     path.mkdir(parents=True, exist_ok=True)
 
     # Save model weights
-    weights = dict(mx.utils.tree_flatten(model.parameters()))
+    weights = dict(mlx.utils.tree_flatten(model.parameters()))
     mx.save_safetensors(str(path / "model.safetensors"), weights)
 
     # Save optimizer state if provided
     if optimizer is not None:
-        opt_state = dict(mx.utils.tree_flatten(optimizer.state))
+        opt_state = dict(mlx.utils.tree_flatten(optimizer.state))
         if opt_state:
             mx.save_safetensors(str(path / "optimizer.safetensors"), opt_state)
 
@@ -75,7 +76,7 @@ def load_checkpoint(
     if optimizer is not None and opt_path.exists():
         opt_state = mx.load(str(opt_path))
         # Reconstruct nested state from flat keys
-        optimizer.state = mx.utils.tree_unflatten(list(opt_state.items()))
+        optimizer.state = mlx.utils.tree_unflatten(list(opt_state.items()))
 
     # Load metadata
     meta_path = path / "metadata.json"

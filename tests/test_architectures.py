@@ -1,6 +1,7 @@
 """Tests for all model architecture config factories."""
 
 import mlx.core as mx
+import mlx.utils
 import pytest
 
 from lmt_metal.core.config import BlockConfig, ModelConfig
@@ -122,6 +123,6 @@ class TestMoEFFN:
         moe8 = MoEFFN(config, n_experts=8, top_k=2)
         mx.eval(moe4.parameters(), moe8.parameters())
 
-        p4 = sum(p.size for _, p in mx.utils.tree_flatten(moe4.parameters()))
-        p8 = sum(p.size for _, p in mx.utils.tree_flatten(moe8.parameters()))
+        p4 = sum(p.size for _, p in mlx.utils.tree_flatten(moe4.parameters()))
+        p8 = sum(p.size for _, p in mlx.utils.tree_flatten(moe8.parameters()))
         assert p8 > p4

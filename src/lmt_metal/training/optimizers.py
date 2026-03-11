@@ -26,7 +26,7 @@ def create_schedule(
     if config.lr_schedule == "cosine":
         decay = optim.schedulers.cosine_decay(
             init=config.learning_rate,
-            steps=config.max_steps - config.warmup_steps,
+            decay_steps=config.max_steps - config.warmup_steps,
         )
     elif config.lr_schedule == "linear":
         decay = optim.schedulers.linear_schedule(
