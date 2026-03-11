@@ -32,6 +32,7 @@ import logging
 import re
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import mlx.core as mx
 
@@ -168,7 +169,7 @@ def convert_weights(
 
 
 def config_from_hf(
-    hf_config: dict,
+    hf_config: dict[str, Any],
 ) -> ModelConfig:
     """Create a ModelConfig from a HuggingFace config dict.
 
@@ -290,7 +291,9 @@ def load_from_hf(
 
     hf_weights: dict[str, mx.array] = {}
     for wf in weight_files:
-        hf_weights.update(mx.load(str(wf)))
+        loaded = mx.load(str(wf))
+        if isinstance(loaded, dict):
+            hf_weights.update(loaded)
 
     # Determine architecture for weight mapping
     arch = hf_config["model_type"]

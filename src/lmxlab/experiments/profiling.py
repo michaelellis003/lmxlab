@@ -25,6 +25,8 @@ Example::
     print(f"Throughput: {result['tokens_per_sec']:.0f} tok/s")
 """
 
+from __future__ import annotations
+
 import math
 import time
 from collections.abc import Callable
@@ -77,7 +79,7 @@ def benchmark_fn(
     }
 
 
-def memory_estimate(model: nn.Module) -> dict[str, Any]:
+def memory_estimate(model: nn.Module) -> dict[str, Any]:  # type: ignore[name-defined]
     """Estimate model memory usage from parameter shapes and dtypes.
 
     This is a static estimate based on parameter tensors. Actual
@@ -94,9 +96,9 @@ def memory_estimate(model: nn.Module) -> dict[str, Any]:
     flat = mlx.utils.tree_flatten(model.parameters())
     total_bytes = 0
     param_count = 0
-    dtype_bytes = {}
+    dtype_bytes: dict[str, int] = {}
 
-    for _, p in flat:
+    for _, p in flat:  # type: ignore[misc]
         nbytes = p.nbytes
         total_bytes += nbytes
         param_count += p.size
@@ -112,7 +114,7 @@ def memory_estimate(model: nn.Module) -> dict[str, Any]:
 
 
 def count_parameters_by_module(
-    model: nn.Module,
+    model: nn.Module,  # type: ignore[name-defined]
 ) -> dict[str, int]:
     """Count parameters per top-level submodule.
 
@@ -129,14 +131,14 @@ def count_parameters_by_module(
     result = {}
     for name, child in model.children().items():
         flat = mlx.utils.tree_flatten(child)
-        count = sum(p.size for _, p in flat)
+        count = sum(p.size for _, p in flat)  # type: ignore[misc]
         if count > 0:
             result[name] = count
     return result
 
 
 def profile_forward(
-    model: nn.Module,
+    model: nn.Module,  # type: ignore[name-defined]
     tokens: mx.array,
     n_warmup: int = 2,
     n_iter: int = 5,
@@ -179,7 +181,7 @@ def profile_forward(
 
 
 def profile_generation(
-    model: nn.Module,
+    model: nn.Module,  # type: ignore[name-defined]
     prompt: mx.array,
     max_tokens: int = 50,
 ) -> dict[str, Any]:

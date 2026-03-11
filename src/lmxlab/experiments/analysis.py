@@ -168,7 +168,7 @@ def simplicity_score(
     Returns:
         Simplicity-weighted improvement score.
     """
-    metric_val = getattr(entry, metric)
+    metric_val: float = getattr(entry, metric)
     improvement = baseline_metric - metric_val  # positive = better
     param_ratio = baseline_params / max(entry.param_count, 1)
     return improvement * param_ratio

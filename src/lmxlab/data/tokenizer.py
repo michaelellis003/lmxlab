@@ -144,7 +144,7 @@ class TiktokenTokenizer:
     @property
     def vocab_size(self) -> int:
         """Size of the vocabulary."""
-        return self._enc.n_vocab
+        return int(self._enc.n_vocab)
 
     def encode(self, text: str) -> list[int]:
         """Encode text to BPE token IDs.
@@ -155,7 +155,7 @@ class TiktokenTokenizer:
         Returns:
             List of token IDs.
         """
-        return self._enc.encode(text)
+        return list(self._enc.encode(text))
 
     def decode(self, tokens: list[int]) -> str:
         """Decode BPE token IDs back to text.
@@ -166,7 +166,7 @@ class TiktokenTokenizer:
         Returns:
             Decoded string.
         """
-        return self._enc.decode(tokens)
+        return str(self._enc.decode(tokens))
 
 
 class HFTokenizer:
@@ -212,12 +212,14 @@ class HFTokenizer:
     @property
     def eos_token_id(self) -> int | None:
         """End-of-sequence token ID, if available."""
-        return self._tok.eos_token_id
+        eos = self._tok.eos_token_id
+        return int(eos) if eos is not None else None
 
     @property
     def bos_token_id(self) -> int | None:
         """Beginning-of-sequence token ID, if available."""
-        return self._tok.bos_token_id
+        bos = self._tok.bos_token_id
+        return int(bos) if bos is not None else None
 
     def encode(self, text: str) -> list[int]:
         """Encode text to token IDs.
@@ -232,7 +234,7 @@ class HFTokenizer:
         Returns:
             List of token IDs.
         """
-        return self._tok.encode(text, add_special_tokens=False)
+        return list(self._tok.encode(text, add_special_tokens=False))
 
     def decode(self, tokens: list[int]) -> str:
         """Decode token IDs back to text.
@@ -243,4 +245,4 @@ class HFTokenizer:
         Returns:
             Decoded string.
         """
-        return self._tok.decode(tokens)
+        return str(self._tok.decode(tokens))
