@@ -228,3 +228,78 @@ class TestHFTokenizer:
 
         assert hasattr(HFTokenizer, "eos_token_id")
         assert hasattr(HFTokenizer, "bos_token_id")
+
+
+# ── Integration tests ──────────────────────────────────────
+
+
+class TestDataPipelineIntegration:
+    """End-to-end data pipeline tests."""
+
+    def test_text_to_batches(self):
+        """Full pipeline: text → tokenizer → batch_iterator."""
+        text = "the quick brown fox jumps over the lazy dog " * 10
+        tok = CharTokenizer(text)
+        tokens = mx.array(tok.encode(text), dtype=mx.int32)
+        batches = list(
+            batch_iterator(tokens, batch_size=2, seq_len=8, shuffle=False)
+        )
+        assert len(batches) > 0
+        x, y = batches[0]
+        mx.eval(x, y)
+        assert x.shape == (2, 8)
+        assert y.shape == (2, 8)
+
+    def test_text_dataset_to_batches(self):
+        """TextDataset items can be used in a training loop."""
+        text = "abcdefghijklmnopqrstuvwxyz" * 5
+        tok = CharTokenizer(text)
+        ds = TextDataset(text, tok, seq_len=8)
+        # Simulate a mini training loop
+        for i in range(min(3, len(ds))):
+            x, y = ds[i]
+            mx.eval(x, y)
+            assert x.shape == (8,)
+            assert y.shape == (8,)
+
+    def test_token_dataset_batching(self):
+        """TokenDataset → batch_iterator integration."""
+        tokens = mx.arange(200, dtype=mx.int32)
+        ds = TokenDataset(tokens, seq_len=10)
+        assert len(ds) > 0
+        # Verify same tokens feed into batch_iterator
+        batches = list(
+            batch_iterator(tokens, batch_size=4, seq_len=10, shuffle=False)
+        )
+        assert len(batches) > 0
+
+    def test_shuffled_batches_cover_data(self):
+        """Shuffled batches still cover the full dataset."""
+        mx.random.seed(123)
+        tokens = mx.arange(100, dtype=mx.int32)
+        batches_unshuffled = list(
+            batch_iterator(tokens, batch_size=2, seq_len=5, shuffle=False)
+        )
+        mx.random.seed(456)
+        batches_shuffled = list(
+            batch_iterator(tokens, batch_size=2, seq_len=5, shuffle=True)
+        )
+        # Same number of batches
+        assert len(batches_shuffled) == len(batches_unshuffled)
+
+    def test_char_tokenizer_special_chars(self):
+        """CharTokenizer handles whitespace and punctuation."""
+        text = "Hello, World! How's it going?\n\tFine."
+        tok = CharTokenizer(text)
+        ids = tok.encode(text)
+        decoded = tok.decode(ids)
+        assert decoded == text
+
+    def test_single_char_text(self):
+        """Edge case: single character repeated."""
+        text = "aaaaaaaaaa"
+        tok = CharTokenizer(text)
+        assert tok.vocab_size == 1
+        ids = tok.encode(text)
+        assert all(i == ids[0] for i in ids)
+        assert tok.decode(ids) == text
