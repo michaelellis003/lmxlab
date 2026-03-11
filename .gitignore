@@ -5,6 +5,11 @@ __pycache__/
 dist/
 *.egg-info/
 
+# Tool caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
 # Virtual environment
 .venv/
 
