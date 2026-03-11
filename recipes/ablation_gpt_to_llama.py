@@ -27,6 +27,11 @@ import mlx.core as mx
 from lmxlab.core.config import BlockConfig, ModelConfig
 from lmxlab.data.batching import batch_iterator
 from lmxlab.data.tokenizer import CharTokenizer
+from lmxlab.experiments.analysis import (
+    cohens_d,
+    compute_statistics,
+    confidence_interval,
+)
 from lmxlab.models.base import LanguageModel
 from lmxlab.training.config import TrainConfig
 from lmxlab.training.trainer import Trainer
@@ -179,22 +184,47 @@ def main() -> None:
     print("\n" + "=" * 60)
     print("Final Loss Comparison")
     print("=" * 60)
-    print(f"{'Config':<25} {'Final Loss':>12} {'Improvement':>12}")
-    print("-" * 50)
 
-    baseline_loss = None
+    multi_seed = args.seeds > 1
+    if multi_seed:
+        print(
+            f"{'Config':<22} {'Mean':>8} {'±Std':>8}"
+            f" {'95% CI':>14} {'Cohen d':>9}"
+        )
+    else:
+        print(f"{'Config':<25} {'Final Loss':>12} {'Improvement':>12}")
+    print("-" * 62)
+
+    baseline_losses: list[float] = []
     for name, _ in configs:
         runs = all_results[name]
-        avg_final = sum(r[-1] for r in runs) / len(runs)
+        finals = [r[-1] for r in runs]
 
-        if baseline_loss is None:
-            baseline_loss = avg_final
-            imp = ""
+        if not baseline_losses:
+            baseline_losses = finals
+
+        if multi_seed:
+            stats = compute_statistics(finals)
+            ci_lo, ci_hi = confidence_interval(finals)
+            d = (
+                cohens_d(baseline_losses, finals)
+                if name != configs[0][0]
+                else 0.0
+            )
+            print(
+                f"{name:<22} {stats['mean']:>8.4f}"
+                f" {stats['std']:>7.4f}"
+                f" [{ci_lo:.4f},{ci_hi:.4f}]"
+                f" {d:>+8.2f}"
+            )
         else:
-            delta = baseline_loss - avg_final
-            imp = f"{delta:+.4f}"
-
-        print(f"{name:<25} {avg_final:>12.4f} {imp:>12}")
+            avg_final = finals[0]
+            if name == configs[0][0]:
+                imp = ""
+            else:
+                delta = baseline_losses[0] - avg_final
+                imp = f"{delta:+.4f}"
+            print(f"{name:<25} {avg_final:>12.4f} {imp:>12}")
 
     # Loss curve comparison (every N steps)
     print("\n" + "=" * 60)
