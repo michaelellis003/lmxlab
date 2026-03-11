@@ -267,6 +267,9 @@ uv run python recipes/profile_models.py
 
 # Benchmark mx.compile speedup on training steps
 uv run python recipes/benchmark_compile.py
+
+# Evaluate models with perplexity and BPB metrics
+uv run python recipes/evaluate_model.py
 ```
 
 ## Next steps
