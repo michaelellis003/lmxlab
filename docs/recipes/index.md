@@ -294,6 +294,7 @@ Measure performance on your hardware.
 | [`benchmark_compile.py`](#benchmark_compile) | `mx.compile` speedup measurement |
 | [`profile_models.py`](#profile_models) | Memory, throughput, and generation speed |
 | [`evaluate_model.py`](#evaluate_model) | Perplexity and bits-per-byte metrics |
+| [`quantize_and_generate.py`](#quantize_and_generate) | 4-bit/8-bit quantization and memory comparison |
 
 ### benchmark_compile
 
@@ -321,6 +322,17 @@ Trains on a train/val split and reports perplexity and bits-per-byte
 
 ```bash
 uv run python recipes/evaluate_model.py
+```
+
+### quantize_and_generate
+
+Train a model, then quantize to 4-bit and 8-bit. Compares memory
+usage and generation quality across precisions. Also demonstrates
+`dequantize_model` for converting back to float (useful before
+fine-tuning).
+
+```bash
+uv run python recipes/quantize_and_generate.py --bits 4 8
 ```
 
 ---

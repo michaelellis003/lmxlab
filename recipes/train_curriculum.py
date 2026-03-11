@@ -22,7 +22,7 @@ from lmxlab.models.base import LanguageModel
 from lmxlab.models.generate import generate
 from lmxlab.models.gpt import gpt_tiny
 from lmxlab.training.config import TrainConfig
-from lmxlab.training.curriculum import length_curriculum
+from lmxlab.training.curriculum import difficulty_curriculum, length_curriculum
 from lmxlab.training.trainer import Trainer
 
 # Simple text for "easy" data
@@ -161,28 +161,91 @@ def main() -> None:
     )
     print(f"Curriculum final loss: {curriculum_loss:.4f}")
 
+    # ── Experiment 3: Difficulty Curriculum ──
+    print(f"\n{'=' * 50}")
+    print("Experiment 3: Difficulty curriculum (easy -> hard)")
+    print(f"{'=' * 50}")
+
+    easy_tokens = mx.array(
+        tokenizer.encode(EASY_TEXT),
+        dtype=mx.int32,
+    )
+    hard_tokens = mx.array(
+        tokenizer.encode(HARD_TEXT),
+        dtype=mx.int32,
+    )
+    print(
+        f"  Easy tokens: {len(easy_tokens)}, Hard tokens: {len(hard_tokens)}"
+    )
+
+    mx.random.seed(42)
+    difficulty_model = LanguageModel(config)
+    mx.eval(difficulty_model.parameters())
+
+    difficulty_config = TrainConfig(
+        learning_rate=1e-3,
+        max_steps=args.steps,
+        batch_size=4,
+        compile_step=False,
+        warmup_steps=10,
+        log_interval=100,
+    )
+    trainer = Trainer(difficulty_model, difficulty_config)
+
+    def difficulty_data():
+        yield from difficulty_curriculum(
+            easy_data=easy_tokens,
+            hard_data=hard_tokens,
+            batch_size=4,
+            seq_len=args.max_seq_len,
+            n_batches=args.steps,
+            warmup_fraction=0.5,
+        )
+
+    difficulty_history = trainer.train(difficulty_data())
+    difficulty_loss = (
+        difficulty_history[-1]["loss"] if difficulty_history else float("nan")
+    )
+    print(f"Difficulty curriculum final loss: {difficulty_loss:.4f}")
+
     # ── Comparison ──
     print(f"\n{'=' * 50}")
     print("Results")
     print(f"{'=' * 50}")
-    print(f"  Baseline loss:   {baseline_loss:.4f}")
-    print(f"  Curriculum loss:  {curriculum_loss:.4f}")
+    print(f"  Baseline loss:            {baseline_loss:.4f}")
+    print(f"  Length curriculum loss:    {curriculum_loss:.4f}")
+    print(f"  Difficulty curriculum loss: {difficulty_loss:.4f}")
 
-    diff = baseline_loss - curriculum_loss
-    if diff > 0:
-        print(f"  Curriculum is better by {diff:.4f}")
-    else:
-        print(f"  Baseline is better by {-diff:.4f}")
+    losses = {
+        "Baseline": baseline_loss,
+        "Length curriculum": curriculum_loss,
+        "Difficulty curriculum": difficulty_loss,
+    }
+    best = min(losses, key=losses.get)
+    print(f"  Best: {best}")
 
-    # ── Generate from both ──
+    # ── Generate from all ──
     print("\nGeneration comparison:")
     prompt = mx.array([tokenizer.encode("To be")])
 
     output = generate(baseline, prompt, max_tokens=60, temperature=0.7)
-    print(f'  Baseline:   "{tokenizer.decode(output[0].tolist())}"')
+    print(f'  Baseline:    "{tokenizer.decode(output[0].tolist())}"')
 
-    output = generate(curriculum_model, prompt, max_tokens=60, temperature=0.7)
-    print(f'  Curriculum: "{tokenizer.decode(output[0].tolist())}"')
+    output = generate(
+        curriculum_model,
+        prompt,
+        max_tokens=60,
+        temperature=0.7,
+    )
+    print(f'  Length:      "{tokenizer.decode(output[0].tolist())}"')
+
+    output = generate(
+        difficulty_model,
+        prompt,
+        max_tokens=60,
+        temperature=0.7,
+    )
+    print(f'  Difficulty:  "{tokenizer.decode(output[0].tolist())}"')
 
     print("\nDone!")
 
