@@ -9,10 +9,12 @@ from lmxlab.core.lora import (
     LoRALinear,
     apply_lora,
     load_lora_adapters,
+    lora_parameters,
     merge_lora,
     save_lora_adapters,
 )
 from lmxlab.core.mla import MLA
+from lmxlab.core.moe import MoEFFN, SharedExpertMoEFFN
 from lmxlab.core.norm import layer_norm, rms_norm
 from lmxlab.core.position import alibi, rope, sinusoidal
 from lmxlab.core.qlora import LoRAQuantizedLinear, apply_qlora
@@ -29,6 +31,8 @@ __all__ = [
     "LoRAQuantizedLinear",
     "MHA",
     "MLA",
+    "MoEFFN",
+    "SharedExpertMoEFFN",
     "SlidingWindowGQA",
     "ModelConfig",
     "Registry",
@@ -37,6 +41,7 @@ __all__ = [
     "apply_qlora",
     "dequantize_model",
     "load_lora_adapters",
+    "lora_parameters",
     "merge_lora",
     "save_lora_adapters",
     "alibi",
