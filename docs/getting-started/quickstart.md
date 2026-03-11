@@ -103,36 +103,64 @@ happens on the GPU automatically.
     (e.g., `logits.shape` is available immediately, but `.item()` triggers
     evaluation).
 
-## 4. Greedy text generation
+## 4. Text generation
 
-For autoregressive generation, feed one token at a time and reuse the
-KV cache:
+lmt-metal provides built-in generation with KV caching, sampling strategies,
+and stop tokens:
 
 ```python
-def generate(model, prompt_tokens, max_new_tokens=50):
-    """Simple greedy generation loop."""
-    tokens = prompt_tokens  # (1, prompt_len)
-    cache = None
+from lmt_metal.models import generate
 
-    for _ in range(max_new_tokens):
-        logits, cache = model(tokens, cache=cache)
-        # Take the last token's logits, pick the argmax
-        next_token = mx.argmax(logits[:, -1, :], axis=-1, keepdims=True)
-        mx.eval(next_token)  # Force evaluation before next step
-        tokens = next_token  # Feed only the new token (cache has history)
+prompt = mx.array([[1, 234, 567]])  # Token IDs
 
-        yield next_token.item()
+# Greedy decoding (temperature=0)
+output = generate(model, prompt, max_tokens=20, temperature=0.0)
+# output shape: (1, 23) -- 3 prompt + 20 generated
 
-# Usage:
-prompt = mx.array([[1, 234, 567]])  # Example token IDs
-for token_id in generate(model, prompt, max_new_tokens=20):
-    print(token_id, end=' ')
+# Top-k sampling with temperature
+output = generate(
+    model, prompt, max_tokens=50,
+    temperature=0.8, top_k=40,
+)
+
+# Nucleus (top-p) sampling
+output = generate(
+    model, prompt, max_tokens=50,
+    temperature=0.9, top_p=0.95,
+)
+
+# Stop at specific token IDs (e.g., EOS)
+output = generate(
+    model, prompt, max_tokens=100,
+    stop_tokens=[0, 2],  # Stop when token 0 or 2 is generated
+)
+
+# Repetition penalty (> 1.0 discourages repeats)
+output = generate(
+    model, prompt, max_tokens=50,
+    temperature=0.8, repetition_penalty=1.2,
+)
 ```
 
-The first call processes the full prompt. Subsequent calls process only the
-new token, because the KV cache stores the key/value projections from
-previous positions. This is why generation is O(n) total work instead of
-O(n^2).
+### Streaming generation
+
+For interactive applications, `stream_generate` yields tokens one at a
+time as they are produced:
+
+```python
+from lmt_metal.models import stream_generate
+
+prompt = mx.array([[1, 234, 567]])
+for token_id in stream_generate(
+    model, prompt, max_tokens=50,
+    temperature=0.8, stop_tokens=[0],
+):
+    print(token_id, end=' ', flush=True)
+```
+
+Both functions use KV caching internally -- the first call processes the
+full prompt (prefill), then each subsequent token reuses cached key/value
+projections. This makes generation O(n) total work instead of O(n^2).
 
 ## 5. Try a different architecture
 

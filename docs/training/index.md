@@ -178,6 +178,49 @@ apply_qlora(model, rank=8, targets=['attention'])
 trainer.train(data)
 ```
 
+## Callbacks
+
+Callbacks hook into the training loop for logging, monitoring,
+and early stopping.
+
+### ThroughputMonitor
+
+Track tokens/sec and steps/sec during training:
+
+```python
+from lmt_metal.training.callbacks import ThroughputMonitor
+
+monitor = ThroughputMonitor(window_size=50)
+trainer = Trainer(model, config, callbacks=[monitor])
+trainer.train(data)
+
+# After training:
+print(f'Avg throughput: {monitor.avg_tokens_per_sec:.0f} tok/s')
+print(f'Avg step time: {1/monitor.avg_steps_per_sec:.3f} s/step')
+```
+
+### EarlyStopping
+
+Stop training when validation loss stops improving:
+
+```python
+from lmt_metal.training.callbacks import EarlyStopping
+
+stopper = EarlyStopping(patience=5, min_delta=0.01)
+trainer = Trainer(model, config, callbacks=[stopper])
+```
+
+### MetricsLogger
+
+Log training metrics to a file:
+
+```python
+from lmt_metal.training.callbacks import MetricsLogger
+
+logger = MetricsLogger('metrics.jsonl')
+trainer = Trainer(model, config, callbacks=[logger])
+```
+
 ## Checkpoints
 
 Save and load via safetensors:
