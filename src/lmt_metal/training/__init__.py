@@ -14,6 +14,7 @@ from lmt_metal.training.curriculum import (
 )
 from lmt_metal.training.dpo import dpo_loss
 from lmt_metal.training.grpo import grpo_loss
+from lmt_metal.training.mtp import MTPHead, MultiTokenPrediction
 from lmt_metal.training.optimizers import create_optimizer, create_schedule
 from lmt_metal.training.trainer import Trainer
 
@@ -29,6 +30,8 @@ __all__ = [
     "difficulty_curriculum",
     "dpo_loss",
     "grpo_loss",
+    "MTPHead",
+    "MultiTokenPrediction",
     "length_curriculum",
     "load_checkpoint",
     "save_checkpoint",
