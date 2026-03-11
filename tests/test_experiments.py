@@ -83,6 +83,15 @@ class TestExperimentLog:
         assert s["discarded"] == 1
         assert s["crashed"] == 1
 
+    def test_best_higher_is_better(self, tmp_path):
+        log = ExperimentLog(tmp_path / "results.jsonl")
+        log.log(LogEntry(experiment="low", val_bpb=1.0))
+        log.log(LogEntry(experiment="high", val_bpb=5.0))
+
+        best = log.best(metric="val_bpb", lower_is_better=False)
+        assert best is not None
+        assert best.experiment == "high"
+
     def test_empty_log(self, tmp_path):
         log = ExperimentLog(tmp_path / "nonexistent.jsonl")
         assert log.load() == []
@@ -256,6 +265,14 @@ class TestAnalysis:
     def test_compute_statistics_empty(self):
         stats = compute_statistics([])
         assert stats["n"] == 0
+
+    def test_compute_statistics_single_value(self):
+        stats = compute_statistics([42.0])
+        assert stats["mean"] == 42.0
+        assert stats["std"] == 0.0
+        assert stats["min"] == 42.0
+        assert stats["max"] == 42.0
+        assert stats["n"] == 1
 
     def test_compare_experiments(self, tmp_path):
         log = ExperimentLog(tmp_path / "results.jsonl")
