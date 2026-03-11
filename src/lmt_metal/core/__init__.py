@@ -9,6 +9,7 @@ from lmt_metal.core.lora import LoRALinear, apply_lora, merge_lora
 from lmt_metal.core.mla import MLA
 from lmt_metal.core.norm import layer_norm, rms_norm
 from lmt_metal.core.position import alibi, rope, sinusoidal
+from lmt_metal.core.qlora import LoRAQuantizedLinear, apply_qlora
 from lmt_metal.core.quantize import dequantize_model, quantize_model
 from lmt_metal.core.registry import Registry
 
@@ -19,6 +20,7 @@ __all__ = [
     "GatedDeltaNet",
     "GatedFFN",
     "LoRALinear",
+    "LoRAQuantizedLinear",
     "MHA",
     "MLA",
     "SlidingWindowGQA",
@@ -26,6 +28,7 @@ __all__ = [
     "Registry",
     "StandardFFN",
     "apply_lora",
+    "apply_qlora",
     "dequantize_model",
     "merge_lora",
     "alibi",

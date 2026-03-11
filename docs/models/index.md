@@ -237,6 +237,34 @@ merge_lora(model)
 - `'attention'` — q/k/v/o projections
 - `'ffn'` — gate/up/down projections
 
+## QLoRA (Quantized LoRA)
+
+Combine quantization and LoRA for maximum memory efficiency. Keep base weights in 4-bit quantized form while training full-precision LoRA adapters. This lets you fine-tune models that nearly fill available memory.
+
+```python
+from lmt_metal.core.quantize import quantize_model
+from lmt_metal.core.qlora import apply_qlora
+
+# Quantize base model to 4-bit
+quantize_model(model, bits=4)
+
+# Apply LoRA on top of quantized layers
+apply_qlora(model, rank=8, targets=['attention'])
+
+# Train — only LoRA params are trainable
+trainer = Trainer(model, train_config)
+trainer.train(data)
+```
+
+**How it works:** Each targeted `nn.QuantizedLinear` is replaced with `LoRAQuantizedLinear`, which uses `mx.quantized_matmul` for the frozen base computation and adds a full-precision low-rank update: `y = quantized_matmul(x, W_q) + scaling * x @ A @ B^T`.
+
+**When to use QLoRA vs LoRA:**
+
+| Approach | Base weights | Memory | Use case |
+|----------|-------------|--------|----------|
+| LoRA | Float16 | Full model + LoRA | Plenty of memory |
+| QLoRA | 4-bit quantized | ~25% of full + LoRA | Large models, tight memory |
+
 ## Creating a Tiny Model
 
 Every architecture has a `_tiny()` factory for testing:
