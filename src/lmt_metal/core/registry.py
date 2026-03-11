@@ -1,5 +1,8 @@
 """Typed component registries for attention, FFN, norm, and position."""
 
+from collections.abc import Callable
+from typing import overload
+
 
 class Registry[T]:
     """A typed registry mapping string names to factory functions.
@@ -8,9 +11,11 @@ class Registry[T]:
         name: Human-readable name for this registry.
 
     Example:
-        >>> reg = Registry[nn.Module]('attention')
-        >>> reg.register('mha', MHA)
-        >>> cls = reg.get('mha')
+        >>> reg = Registry[type]('attention')
+        >>> @reg.register('mha')
+        ... class MHA: ...
+        >>> reg.get('mha')
+        <class 'MHA'>
     """
 
     def __init__(self, name: str) -> None:
@@ -22,23 +27,52 @@ class Registry[T]:
         """Registry name."""
         return self._name
 
-    def register(self, key: str, value: T) -> T:
+    @overload
+    def register(self, key: str) -> Callable[[T], T]: ...
+
+    @overload
+    def register(self, key: str, value: T) -> T: ...
+
+    def register(
+        self, key: str, value: T | None = None
+    ) -> T | Callable[[T], T]:
         """Register a component under a key.
+
+        Can be used as a decorator factory or called directly:
+
+            @registry.register('name')
+            class MyClass: ...
+
+            registry.register('name', MyClass)
 
         Args:
             key: String name for lookup.
-            value: The component to register.
+            value: The component to register. If None, returns
+                a decorator that registers the decorated object.
 
         Returns:
-            The registered value (for decorator use).
+            The registered value, or a decorator if value is None.
 
         Raises:
             ValueError: If key is already registered.
         """
-        if key in self._entries:
-            raise ValueError(f"{self._name} registry already has key {key!r}")
-        self._entries[key] = value
-        return value
+        if value is not None:
+            if key in self._entries:
+                raise ValueError(
+                    f"{self._name} registry already has key {key!r}"
+                )
+            self._entries[key] = value
+            return value
+
+        def decorator(val: T) -> T:
+            if key in self._entries:
+                raise ValueError(
+                    f"{self._name} registry already has key {key!r}"
+                )
+            self._entries[key] = val
+            return val
+
+        return decorator
 
     def get(self, key: str) -> T:
         """Look up a component by key.
