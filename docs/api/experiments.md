@@ -29,3 +29,15 @@ Experiment runner, sweeps, tracking, and analysis.
 ## Analysis
 
 ::: lmt_metal.experiments.analysis
+
+## Profiling
+
+::: lmt_metal.experiments.profiling.benchmark_fn
+
+::: lmt_metal.experiments.profiling.memory_estimate
+
+::: lmt_metal.experiments.profiling.count_parameters_by_module
+
+::: lmt_metal.experiments.profiling.profile_forward
+
+::: lmt_metal.experiments.profiling.profile_generation
