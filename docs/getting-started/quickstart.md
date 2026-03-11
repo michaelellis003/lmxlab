@@ -224,6 +224,9 @@ uv run python recipes/load_pretrained.py --repo meta-llama/Llama-3.2-1B
 
 # Fine-tune with LoRA (parameter-efficient, ~0.1% trainable)
 uv run python recipes/finetune_lora.py --rank 8 --steps 200
+
+# Fine-tune with QLoRA (4-bit base + LoRA, maximum memory efficiency)
+uv run python recipes/finetune_qlora.py --rank 8 --bits 4
 ```
 
 ## Next steps
