@@ -99,6 +99,22 @@ class ALiBi(nn.Module):
         return self._alibi(mask)
 
 
+@position_registry.register("none")
+class NoPosition(nn.Module):
+    """No positional encoding (identity).
+
+    Used by architectures that get position information from
+    other mechanisms (e.g. causal convolutions in DeltaNet).
+    """
+
+    def __init__(self, config: BlockConfig) -> None:
+        super().__init__()
+
+    def __call__(self, x: mx.array) -> mx.array:
+        """Return input unchanged."""
+        return x
+
+
 # Convenience factory functions
 def rope(config: BlockConfig) -> RoPE:
     """Create a RoPE module from config."""

@@ -1,6 +1,6 @@
 # Model Architectures
 
-lmt-metal implements seven transformer architectures as **config factories** — functions that return a `ModelConfig`. The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
+lmt-metal implements eight transformer architectures as **config factories** — functions that return a `ModelConfig`. The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
 
 ## Architecture Comparison
 
@@ -13,6 +13,7 @@ lmt-metal implements seven transformer architectures as **config factories** —
 | **Mixtral** | GQA | Gated (MoE) | RMSNorm | RoPE (θ=1M) | No | < n_heads | 8 experts, top-2 |
 | **DeepSeek V2** | MLA | Gated | RMSNorm | Decoupled RoPE | No | Latent | KV compression |
 | **Gemma 3** | Mixed | Gated | RMSNorm | RoPE | No | < n_heads | Sliding window |
+| **Qwen 3.5** | Hybrid | Gated | RMSNorm | Conv + RoPE | No | < n_heads | DeltaNet + GQA |
 
 ## GPT
 
@@ -115,6 +116,29 @@ config = gemma3_config()
 ```
 
 **Key insight:** Local attention is O(n × w) instead of O(n²), making long sequences tractable. Periodic global layers maintain long-range dependencies. Uses per-layer `block_configs` — a direct showcase of the ConfigurableBlock system's flexibility.
+
+## Qwen 3.5 (Hybrid DeltaNet + GQA)
+
+The most architecturally novel model: interleaves **Gated DeltaNet** (linear attention with delta rule) and standard **GQA** layers in a 3:1 ratio.
+
+```python
+from lmt_metal.models.qwen35 import qwen35_config
+
+config = qwen35_config()
+# 75% gated_deltanet layers + 25% gqa layers
+# DeltaNet: causal conv, no RoPE, fixed-size state
+# GQA: standard with RoPE, growing KV cache
+```
+
+**How Gated DeltaNet works:**
+
+1. **Delta rule**: State matrix S predicts v from k, then corrects itself based on prediction error: `S = α·S - β·(S@k - v)@k^T`
+2. **Decay gate (α)**: Learned selective forgetting — when to discard old context
+3. **Update gate (β)**: Learned correction strength — how much to trust new information
+4. **Fixed-size state**: O(d²) per token regardless of sequence length (vs O(n) for KV cache)
+5. **Short causal convolutions**: Replace RoPE for local context in DeltaNet layers
+
+**Key insight:** Pure linear attention loses expressiveness by compressing all history into a fixed-size state. The hybrid 3:1 pattern preserves efficient long-context processing (DeltaNet) while periodic GQA layers provide global attention for tasks that need it.
 
 ## Creating a Tiny Model
 

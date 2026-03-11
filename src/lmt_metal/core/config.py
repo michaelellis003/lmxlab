@@ -52,6 +52,9 @@ class BlockConfig:
     kv_lora_rank: int | None = None
     q_lora_rank: int | None = None
     rope_dim: int | None = None
+    # Gated DeltaNet (linear attention) parameters
+    conv_kernel_size: int = 4
+    use_short_conv: bool = False
 
     @property
     def head_dim(self) -> int:
