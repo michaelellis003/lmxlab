@@ -4,11 +4,13 @@ import mlx.core as mx
 import mlx.utils
 import pytest
 
+from lmt_metal.core.attention import SlidingWindowGQA, _apply_sliding_window
 from lmt_metal.core.config import BlockConfig, ModelConfig
 from lmt_metal.core.mla import MLA
 from lmt_metal.core.moe import MoEFFN, SharedExpertMoEFFN
 from lmt_metal.models.deepseek import deepseek_config, deepseek_tiny
 from lmt_metal.models.gemma import gemma_config, gemma_tiny
+from lmt_metal.models.gemma3 import gemma3_config, gemma3_tiny
 from lmt_metal.models.gpt import gpt_config, gpt_tiny
 from lmt_metal.models.llama import llama_config, llama_tiny
 from lmt_metal.models.mixtral import mixtral_config, mixtral_tiny
@@ -21,6 +23,7 @@ ALL_TINY_FACTORIES = [
     ("qwen", qwen_tiny),
     ("mixtral", mixtral_tiny),
     ("deepseek", deepseek_tiny),
+    ("gemma3", gemma3_tiny),
 ]
 
 
@@ -304,3 +307,110 @@ class TestSharedExpertMoEFFN:
         out = moe(x)
         mx.eval(out)
         assert out.shape == x.shape
+
+
+class TestSlidingWindowGQA:
+    """Tests for Sliding Window GQA attention."""
+
+    def test_output_shape(self):
+        """Output shape must match input shape."""
+        config = BlockConfig(
+            attention="sliding_window_gqa",
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            window_size=4,
+        )
+        attn = SlidingWindowGQA(config)
+        mx.eval(attn.parameters())
+
+        x = mx.random.normal(shape=(2, 8, 64))
+        mask = mx.zeros((8, 8))
+        out, cache = attn(x, mask=mask)
+        mx.eval(out)
+        assert out.shape == x.shape
+
+    def test_sliding_window_mask_restricts_range(self):
+        """Window mask should block tokens beyond window_size."""
+        window_size = 3
+        seq_len = 6
+        mask = _apply_sliding_window(
+            mask=None,
+            window_size=window_size,
+            seq_len=seq_len,
+            cache_len=0,
+        )
+        mx.eval(mask)
+
+        # For each row i, columns < max(0, i - window_size + 1)
+        # should be masked (-1e9)
+        for i in range(seq_len):
+            for j in range(seq_len):
+                val = mask[i, j].item()
+                if j > i:
+                    # Future tokens: should be masked by causal
+                    # (not enforced here, only window)
+                    pass
+                elif j < i - window_size + 1:
+                    # Beyond window: should be masked
+                    assert val < -1e8, f"row={i}, col={j} should be masked"
+                else:
+                    # Within window: should be 0
+                    assert val == 0.0, f"row={i}, col={j} should be 0"
+
+    def test_requires_window_size(self):
+        """SlidingWindowGQA should raise without window_size."""
+        config = BlockConfig(d_model=64, n_heads=4, d_ff=128)
+        with pytest.raises(ValueError, match="window_size"):
+            SlidingWindowGQA(config)
+
+
+class TestGemma3Config:
+    """Tests for Gemma 3 configuration factory."""
+
+    def test_gemma3_defaults(self):
+        """Full-size config should have expected defaults."""
+        c = gemma3_config()
+        assert c.block.attention == "sliding_window_gqa"
+        assert c.block.norm == "rms_norm"
+        assert c.block.ffn == "gated"
+        assert c.block.position == "rope"
+        assert c.block.bias is False
+        assert c.block.window_size == 4096
+        assert c.n_layers == 26
+        assert c.tie_embeddings is True
+
+    def test_interleaved_attention_types(self):
+        """Gemma 3 should have different attention across layers."""
+        c = gemma3_config()
+        assert c.block_configs is not None
+        attn_types = [c.block_configs[i].attention for i in range(c.n_layers)]
+        # Should have both types
+        assert "gqa" in attn_types
+        assert "sliding_window_gqa" in attn_types
+        # Every 6th layer (0-indexed: 5, 11, 17, 23) is global
+        for i in range(c.n_layers):
+            if (i + 1) % 6 == 0:
+                assert c.block_configs[i].attention == "gqa"
+                assert c.block_configs[i].window_size is None
+            else:
+                assert c.block_configs[i].attention == "sliding_window_gqa"
+                assert c.block_configs[i].window_size == 4096
+
+    def test_gemma3_tiny_small_dims(self):
+        """Tiny config should have small dimensions."""
+        c = gemma3_tiny()
+        assert c.block.d_model <= 128
+        assert c.n_layers <= 6
+        assert c.vocab_size <= 1024
+
+    def test_gemma3_tiny_has_window(self):
+        """Tiny config should use sliding window."""
+        c = gemma3_tiny()
+        assert c.block.window_size == 16
+        assert c.block_configs is not None
+        # Layer 5 (index 5) should be global
+        assert c.block_configs[5].attention == "gqa"
+        # Layer 0 should be sliding window
+        assert c.block_configs[0].attention == "sliding_window_gqa"

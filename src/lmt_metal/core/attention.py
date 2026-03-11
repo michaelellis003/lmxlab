@@ -1,4 +1,4 @@
-"""Attention modules: MHA and Grouped-Query Attention."""
+"""Attention modules: MHA, GQA, and Sliding Window GQA."""
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -130,6 +130,100 @@ class GQA(AttentionBase):
             k = mx.concatenate([cache[0], k], axis=2)
             v = mx.concatenate([cache[1], v], axis=2)
         new_cache = (k, v)
+
+        out = mx.fast.scaled_dot_product_attention(
+            q, k, v, scale=self.scale, mask=mask
+        )
+        out = out.transpose(0, 2, 1, 3).reshape(B, L, self.d_model)
+        return self.o_proj(out), new_cache
+
+
+def _apply_sliding_window(
+    mask: mx.array | None,
+    window_size: int,
+    seq_len: int,
+    cache_len: int = 0,
+) -> mx.array:
+    """Apply sliding window constraint to a causal mask.
+
+    Args:
+        mask: Existing additive causal mask
+            (seq_len, cache_len + seq_len) or None.
+        window_size: Number of recent tokens each query can
+            attend to (including itself).
+        seq_len: Query sequence length.
+        cache_len: Length of cached KV sequence.
+
+    Returns:
+        Additive mask with sliding window applied.
+    """
+    total_len = cache_len + seq_len
+    # Column indices (key positions)
+    col_idx = mx.arange(total_len)[None, :]
+    # Row indices mapped to absolute positions
+    row_idx = mx.arange(seq_len)[:, None] + cache_len
+    # A token at position i can attend to [i - window_size + 1, i]
+    window_mask = mx.where(col_idx >= (row_idx - window_size + 1), 0.0, -1e9)
+    if mask is not None:
+        # Combine: both causal and window constraints must pass
+        return mx.maximum(mask, window_mask)
+    return window_mask
+
+
+@attention_registry.register("sliding_window_gqa")
+class SlidingWindowGQA(AttentionBase):
+    """Grouped-Query Attention with sliding window masking.
+
+    Each token can only attend to the most recent
+    ``window_size`` tokens (including itself). Uses GQA head
+    configuration for memory efficiency.
+
+    The window size is read from ``config.window_size``.
+    """
+
+    def __init__(self, config: BlockConfig) -> None:
+        super().__init__(config)
+        if config.window_size is None:
+            raise ValueError("SlidingWindowGQA requires config.window_size")
+        self.window_size = config.window_size
+        self.n_kv_heads = config.effective_n_kv_heads
+        kv_dim = self.n_kv_heads * self.head_dim
+
+        self.q_proj = nn.Linear(self.d_model, self.d_model, bias=config.bias)
+        self.k_proj = nn.Linear(self.d_model, kv_dim, bias=config.bias)
+        self.v_proj = nn.Linear(self.d_model, kv_dim, bias=config.bias)
+        self.o_proj = nn.Linear(self.d_model, self.d_model, bias=config.bias)
+        self.scale = self.head_dim**-0.5
+
+    def __call__(
+        self,
+        x: mx.array,
+        mask: mx.array | None = None,
+        cache: tuple[mx.array, mx.array] | None = None,
+    ) -> tuple[mx.array, tuple[mx.array, mx.array] | None]:
+        B, L, _ = x.shape
+
+        q = self.q_proj(x)
+        k = self.k_proj(x)
+        v = self.v_proj(x)
+
+        q = q.reshape(B, L, self.n_heads, self.head_dim).transpose(0, 2, 1, 3)
+        k = k.reshape(B, L, self.n_kv_heads, self.head_dim).transpose(
+            0, 2, 1, 3
+        )
+        v = v.reshape(B, L, self.n_kv_heads, self.head_dim).transpose(
+            0, 2, 1, 3
+        )
+
+        cache_len = 0
+        if cache is not None:
+            cache_len = cache[0].shape[2]
+            k = mx.concatenate([cache[0], k], axis=2)
+            v = mx.concatenate([cache[1], v], axis=2)
+        new_cache = (k, v)
+
+        # Apply sliding window to the mask
+        mask = _apply_sliding_window(mask, self.window_size, L, cache_len)
 
         out = mx.fast.scaled_dot_product_attention(
             q, k, v, scale=self.scale, mask=mask

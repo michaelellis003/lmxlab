@@ -1,6 +1,6 @@
 """Core abstractions for transformer blocks and components."""
 
-from lmt_metal.core.attention import GQA, MHA
+from lmt_metal.core.attention import GQA, MHA, SlidingWindowGQA
 from lmt_metal.core.block import ConfigurableBlock
 from lmt_metal.core.config import BlockConfig, ModelConfig
 from lmt_metal.core.ffn import GatedFFN, StandardFFN
@@ -16,6 +16,7 @@ __all__ = [
     "GatedFFN",
     "MHA",
     "MLA",
+    "SlidingWindowGQA",
     "ModelConfig",
     "Registry",
     "StandardFFN",

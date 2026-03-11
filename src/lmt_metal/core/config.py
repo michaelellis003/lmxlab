@@ -28,6 +28,8 @@ class BlockConfig:
         max_seq_len: Maximum sequence length.
         pre_norm: If True, apply norm before attention/FFN (pre-norm).
             If False, apply after (post-norm).
+        window_size: Sliding window size for local attention.
+            None means full (global) attention.
     """
 
     attention: str = "mha"
@@ -44,6 +46,8 @@ class BlockConfig:
     rope_theta: float = 10000.0
     max_seq_len: int = 2048
     pre_norm: bool = True
+    # Sliding window attention parameters
+    window_size: int | None = None
     # MLA (Multi-Head Latent Attention) parameters
     kv_lora_rank: int | None = None
     q_lora_rank: int | None = None
