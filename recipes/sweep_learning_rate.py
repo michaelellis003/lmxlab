@@ -173,6 +173,7 @@ def main() -> None:
                     "n_layers": (1, 4),
                 },
                 n_trials=args.trials,
+                log_scale={"lr"},
             )
         )
         # Round d_model to nearest power of 2

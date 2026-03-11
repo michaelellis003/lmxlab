@@ -32,22 +32,39 @@ def random_sweep(
     param_ranges: dict[str, tuple[float, float]],
     n_trials: int = 10,
     seed: int = 42,
+    log_scale: set[str] | None = None,
 ) -> Iterator[dict[str, float]]:
     """Generate random parameter combinations.
 
-    Samples uniformly from continuous ranges.
+    Samples uniformly from continuous ranges by default.
+    Parameters listed in ``log_scale`` are sampled in
+    log-space, which is standard for learning rates and
+    other parameters spanning multiple orders of magnitude.
 
     Args:
         param_ranges: Dict mapping parameter names to
             (min, max) tuples.
         n_trials: Number of random combinations.
         seed: Random seed for reproducibility.
+        log_scale: Set of parameter names to sample in
+            log-space. For these, (min, max) must both
+            be positive.
 
     Yields:
         Dicts with one sampled value per parameter.
+
+    Example:
+        >>> configs = list(random_sweep(
+        ...     param_ranges={"lr": (1e-5, 1e-1), "d_model": (64, 512)},
+        ...     n_trials=5,
+        ...     log_scale={"lr"},
+        ... ))
     """
+    import math
+
     import mlx.core as mx
 
+    log_params = log_scale or set()
     mx.random.seed(seed)
     keys = list(param_ranges.keys())
     ranges = list(param_ranges.values())
@@ -55,7 +72,14 @@ def random_sweep(
     for _ in range(n_trials):
         config = {}
         for key, (lo, hi) in zip(keys, ranges, strict=True):
-            val = mx.random.uniform(low=lo, high=hi)
-            mx.eval(val)
-            config[key] = float(val.item())
+            if key in log_params:
+                log_lo = math.log(lo)
+                log_hi = math.log(hi)
+                val = mx.random.uniform(low=log_lo, high=log_hi)
+                mx.eval(val)
+                config[key] = math.exp(float(val.item()))
+            else:
+                val = mx.random.uniform(low=lo, high=hi)
+                mx.eval(val)
+                config[key] = float(val.item())
         yield config
