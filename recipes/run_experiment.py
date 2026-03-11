@@ -164,7 +164,7 @@ def show_log() -> None:
         f"Discarded: {summary['discarded']}, "
         f"Crashed: {summary['crashed']}"
     )
-    print(f"  Best val_loss: {summary.get('best_val_bpb', 'N/A')}")
+    print(f"  Best val_bpb: {summary.get('best_val_bpb', 'N/A')}")
 
     print(
         f"\n{'Experiment':<20} {'Status':<10} "

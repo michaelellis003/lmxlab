@@ -92,7 +92,7 @@ def main() -> None:
         if block.window_size is not None:
             print(f"  window_size={block.window_size}")
         if block.n_experts:
-            print(f"  experts={block.n_experts}, top_k={block.top_k}")
+            print(f"  experts={block.n_experts}, top_k={block.top_k_experts}")
 
         # Forward pass
         logits, _ = model(batch)

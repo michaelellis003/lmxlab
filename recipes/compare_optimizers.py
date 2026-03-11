@@ -355,11 +355,9 @@ def main() -> None:
     ]
     if opt_entries:
         print(f"\nLogged {len(opt_entries)} optimizer trials")
-        compare_experiments(
-            opt_entries,
-            metric="val_loss",
-            ascending=True,
-        )
+        comparison = compare_experiments(log, metric="val_bpb")
+        for row in comparison:
+            print(f"  {row['experiment']}: val_bpb={row['val_bpb']:.4f}")
 
     print(
         "\nNote: Run with --seeds 3 for statistical rigor. "
