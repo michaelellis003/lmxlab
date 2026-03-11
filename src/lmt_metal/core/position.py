@@ -54,7 +54,7 @@ class Sinusoidal(nn.Module):
         super().__init__()
         self._embed = nn.SinusoidalPositionalEncoding(
             config.d_model,
-            max_freq=config.max_seq_len,
+            full_turns=True,
         )
 
     def __call__(self, x: mx.array) -> mx.array:
@@ -66,7 +66,10 @@ class Sinusoidal(nn.Module):
         Returns:
             Input with positional encoding added.
         """
-        return x + self._embed(x)
+        seq_len = x.shape[1]
+        positions = mx.arange(seq_len)
+        pe = self._embed(positions)  # (seq_len, d_model)
+        return x + pe
 
 
 @position_registry.register("alibi")
