@@ -258,6 +258,9 @@ uv run python recipes/finetune_qlora.py --rank 8 --bits 4
 # Train a Mixture of Experts model (dense vs MoE comparison)
 uv run python recipes/train_moe.py --experts 4 --top-k 2
 
+# Best-of-N and majority vote sampling
+uv run python recipes/advanced_sampling.py --n 8
+
 # Speculative decoding (draft-then-verify generation)
 uv run python recipes/speculative_decoding.py --draft-tokens 4
 
