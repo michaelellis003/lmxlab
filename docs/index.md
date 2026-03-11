@@ -74,6 +74,8 @@ characteristics will differ.
 
 - **[Quickstart](getting-started/quickstart.md)** -- Build and run a model in
   under 20 lines.
+- **[First Training Run](getting-started/first-training-run.md)** -- Train a
+  model from scratch, step by step.
 - **[Architecture Overview](architecture/overview.md)** -- How configs, registries,
   and `ConfigurableBlock` fit together.
 - **[MLX Idioms](architecture/mlx-idioms.md)** -- How MLX differs from PyTorch
