@@ -19,6 +19,16 @@ CLAUDE.md
 .env.*
 credentials.json
 
+# Data (downloaded by recipes)
+data/
+
+# Experiment results
+results.jsonl
+
+# Checkpoints
+checkpoints/
+*.safetensors
+
 # Build artifacts
 site/
 
