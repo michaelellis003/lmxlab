@@ -90,6 +90,10 @@ The core package provides the building blocks for all architectures.
 
 ::: lmt_metal.core.lora.lora_parameters
 
+::: lmt_metal.core.lora.save_lora_adapters
+
+::: lmt_metal.core.lora.load_lora_adapters
+
 ## QLoRA
 
 ::: lmt_metal.core.qlora.LoRAQuantizedLinear
