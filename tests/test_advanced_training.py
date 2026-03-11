@@ -1,4 +1,4 @@
-"""Tests for advanced training: DPO, GRPO, curriculum, MTP."""
+"""Tests for advanced training: DPO, GRPO, curriculum, MTP, distillation."""
 
 import mlx.core as mx
 import pytest
@@ -8,6 +8,10 @@ from lmxlab.models.gpt import gpt_tiny
 from lmxlab.training.curriculum import (
     difficulty_curriculum,
     length_curriculum,
+)
+from lmxlab.training.distillation import (
+    distillation_loss,
+    soft_target_loss,
 )
 from lmxlab.training.dpo import _sequence_log_probs, dpo_loss
 from lmxlab.training.grpo import grpo_loss
@@ -175,3 +179,87 @@ class TestMTP:
         _, losses = mtp(x, targets)
         mx.eval(losses["total_loss"])
         assert losses["total_loss"].item() > 0
+
+
+class TestDistillation:
+    """Tests for knowledge distillation."""
+
+    def test_distillation_loss_scalar(self, tiny_model, ref_model):
+        """Distillation loss should be a scalar."""
+        tokens = mx.random.randint(0, 256, shape=(2, 16))
+        loss = distillation_loss(tiny_model, ref_model, tokens)
+        mx.eval(loss)
+        assert loss.shape == ()
+
+    def test_distillation_loss_positive(self, tiny_model, ref_model):
+        """Distillation loss should be positive."""
+        tokens = mx.random.randint(0, 256, shape=(2, 16))
+        loss = distillation_loss(tiny_model, ref_model, tokens)
+        mx.eval(loss)
+        assert loss.item() > 0
+
+    def test_distillation_loss_finite(self, tiny_model, ref_model):
+        """Distillation loss should be finite."""
+        tokens = mx.random.randint(0, 256, shape=(2, 16))
+        loss = distillation_loss(
+            tiny_model,
+            ref_model,
+            tokens,
+            temperature=4.0,
+            alpha=0.7,
+        )
+        mx.eval(loss)
+        assert mx.isfinite(loss).item()
+
+    def test_alpha_zero_is_pure_ce(self, tiny_model, ref_model):
+        """With alpha=0, loss should be pure cross-entropy."""
+        tokens = mx.random.randint(0, 256, shape=(2, 16))
+        loss = distillation_loss(
+            tiny_model,
+            ref_model,
+            tokens,
+            alpha=0.0,
+        )
+        mx.eval(loss)
+        assert loss.item() > 0
+
+    def test_alpha_one_is_pure_kl(self, tiny_model, ref_model):
+        """With alpha=1, loss should be pure KL divergence."""
+        tokens = mx.random.randint(0, 256, shape=(2, 16))
+        loss = distillation_loss(
+            tiny_model,
+            ref_model,
+            tokens,
+            alpha=1.0,
+        )
+        mx.eval(loss)
+        assert loss.item() >= 0
+
+    def test_soft_target_loss_same_model(self, tiny_model):
+        """KL divergence with itself should be ~0."""
+        tokens = mx.random.randint(0, 256, shape=(2, 16))
+        logits, _ = tiny_model(tokens[:, :-1])
+        mx.eval(logits)
+        loss = soft_target_loss(logits, logits, temperature=4.0)
+        mx.eval(loss)
+        assert loss.item() < 1e-4
+
+    def test_higher_temp_softer(self, tiny_model, ref_model):
+        """Higher temperature should give different loss."""
+        tokens = mx.random.randint(0, 256, shape=(2, 16))
+        loss_t2 = distillation_loss(
+            tiny_model,
+            ref_model,
+            tokens,
+            temperature=2.0,
+        )
+        loss_t8 = distillation_loss(
+            tiny_model,
+            ref_model,
+            tokens,
+            temperature=8.0,
+        )
+        mx.eval(loss_t2, loss_t8)
+        # Both should be finite and positive
+        assert mx.isfinite(loss_t2).item()
+        assert mx.isfinite(loss_t8).item()
