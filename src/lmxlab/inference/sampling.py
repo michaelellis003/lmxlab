@@ -48,7 +48,7 @@ def best_of_n(
         scores = scores / gen_len
 
     # Return best
-    best_idx = mx.argmax(scores).item()
+    best_idx = int(mx.argmax(scores).item())
     return completions[best_idx : best_idx + 1]
 
 
@@ -120,7 +120,8 @@ def majority_vote(
     # Group by generated content
     counts: dict[tuple[int, ...], int] = {}
     for i in range(n):
-        gen = tuple(completions[i, prompt_len:].tolist())
+        raw = completions[i, prompt_len:]
+        gen = tuple(int(raw[j].item()) for j in range(raw.shape[0]))
         counts[gen] = counts.get(gen, 0) + 1
 
     # Sort by frequency
