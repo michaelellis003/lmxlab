@@ -402,6 +402,142 @@ prefer the one with fewer parameters or simpler architecture. A
 0.001 improvement from deleting a feature is worth more than
 the same improvement from adding complexity.
 
+## Research Directions
+
+These are longer-term areas we plan to explore. Each connects to
+existing lmxlab infrastructure and extends the library's educational
+scope into active research topics.
+
+### Test-Time Compute Scaling
+
+**The idea:** Instead of training a bigger model, spend more compute
+at inference time. This is the central insight behind chain-of-thought
+prompting, tree search, best-of-N sampling, and the "thinking" paradigm
+seen in recent models.
+
+**What lmxlab already has:**
+
+- `best_of_n()` — generate N completions, pick the best by
+  log-probability
+- `majority_vote()` — generate N answers, take the most common
+- `speculative_decoding` — draft + verify for faster generation
+
+**What we want to explore:**
+
+1. **Scaling laws for inference compute.** How does quality scale with
+   N in best-of-N? Is the relationship log-linear (as suggested by
+   recent work) or does it plateau?
+2. **Tree search at generation time.** Beam search is the simplest
+   form; Monte Carlo Tree Search (MCTS) over token sequences is a
+   richer strategy. How does this compare to best-of-N at matched
+   compute?
+3. **Iterative refinement.** Generate, critique, regenerate. Can a
+   model improve its own output through self-evaluation loops? What's
+   the optimal number of iterations?
+4. **Budget-optimal allocation.** Given a fixed compute budget, is it
+   better to run one large model or many small models with voting?
+   Unified memory makes this especially interesting — no transfer
+   overhead between model copies.
+
+**Connection to experiments:** This extends Experiment 5 ("What Can
+You Train in 5 Minutes?") into inference: "What's the best output
+quality achievable in 5 seconds of inference compute?"
+
+---
+
+### Knowledge Distillation
+
+**The idea:** Train a smaller "student" model to mimic a larger
+"teacher" model. The student learns from the teacher's soft probability
+distributions, which carry more information than hard labels alone
+(Hinton et al., 2015).
+
+**Why it matters for lmxlab:**
+
+- Educational: distillation is a foundational technique that connects
+  training objectives, model capacity, and information theory
+- Practical: on Apple Silicon with limited memory, distilling a large
+  model into a small one that fits comfortably is directly useful
+- Connects to existing infrastructure: DPO and GRPO already implement
+  reference-model patterns (comparing policy vs reference
+  log-probabilities), and distillation uses the same machinery
+
+**What to build:**
+
+1. **Basic distillation loss.** KL divergence between teacher and
+   student logits (temperature-scaled). This is a training module
+   alongside `dpo.py` and `grpo.py`.
+2. **Online vs offline distillation.** Offline: pre-compute teacher
+   logits and store them. Online: run teacher forward pass during
+   student training. Trade-off is memory vs flexibility.
+3. **Layer-wise distillation.** Match intermediate representations,
+   not just final logits. This requires compatible architectures
+   (same hidden dimension or a projection layer).
+4. **Self-distillation.** A model distills into a smaller version of
+   itself. Interesting because you can iterate: train, distill,
+   train the smaller model, distill again.
+
+**Experiment idea:** Train a LLaMA-small teacher on Shakespeare,
+distill into a GPT-tiny student. Compare student quality vs training
+from scratch at the same compute budget. Does distillation help
+more when the student is much smaller than the teacher?
+
+---
+
+### RL with Verifiable Rewards (Code Generation)
+
+**The idea:** Reinforcement learning works best when rewards are
+unambiguous. Code is a natural domain because correctness is
+verifiable — run the tests, check if they pass. This eliminates the
+reward model noise that plagues RLHF on open-ended text.
+
+**What lmxlab already has:**
+
+- `grpo_loss()` — Group Relative Policy Optimization, which takes
+  scalar rewards per completion
+- `pass_at_k()` / `evaluate_pass_at_k()` — code generation metrics
+  that score completions by test passage
+- `best_of_n()` — generate multiple completions and pick the best
+
+**The pipeline (what to build):**
+
+1. **Problem format.** Define a simple function-completion task:
+   given a docstring with examples, generate the function body.
+   We can start with arithmetic/string problems where test cases
+   are easy to generate.
+2. **Reward function.** Execute the generated code in a sandbox,
+   run test cases, return pass rate as the reward signal. Binary
+   (0/1 per test) or fractional (fraction of tests passed).
+3. **Training loop.** For each problem: generate K completions
+   with the model, score each with the reward function, compute
+   GRPO loss using the scores. This connects `grpo_loss` directly
+   to `pass_at_k` as the reward signal.
+4. **Curriculum over difficulty.** Start with easy problems
+   (single-function, simple logic), progress to harder ones. Use
+   `difficulty_curriculum` pattern but with problem difficulty
+   instead of text complexity.
+
+**Key research questions:**
+
+- How many completions per problem (K) are needed for stable GRPO
+  training? Theory says more is better for variance reduction, but
+  compute scales linearly.
+- Does the model generalize from easy problems to hard ones, or does
+  it overfit to the reward signal on seen problem types?
+- How does RL fine-tuning compare to SFT on verified solutions?
+  SFT is simpler but requires curated correct solutions; RL can
+  learn from the model's own attempts.
+- On unified memory, can we run code execution and model inference
+  simultaneously without contention?
+
+**Connection to existing work:** This is the natural extension of
+GRPO (Experiment idea: after the optimizer comparison in Experiment
+3, use the best optimizer for GRPO training on code tasks). It also
+extends the `pass_at_k` evaluation metric from passive measurement
+to active training signal.
+
+---
+
 ## Open Questions
 
 - How does training dynamics change between Apple Silicon and CUDA
@@ -418,3 +554,9 @@ the same improvement from adding complexity.
   ratios (2:1, 4:1) on our educational-scale models?
 - At what model size does compilation speedup become worth the
   first-step overhead? (See Experiment 2.)
+- What are the scaling laws for inference compute on Apple Silicon?
+  (See Test-Time Compute Scaling above.)
+- Can distillation produce models that are better than training from
+  scratch at the same size? (See Knowledge Distillation above.)
+- How effective is RL with verifiable rewards compared to SFT on
+  curated solutions? (See RL with Verifiable Rewards above.)
