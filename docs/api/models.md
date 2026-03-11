@@ -53,8 +53,22 @@ architecture when passed to `LanguageModel`.
 
 ::: lmt_metal.models.mixtral.mixtral_tiny
 
+### Qwen 3.5 (Hybrid DeltaNet)
+
+::: lmt_metal.models.qwen35.qwen35_config
+
+::: lmt_metal.models.qwen35.qwen35_tiny
+
 ### DeepSeek
 
 ::: lmt_metal.models.deepseek.deepseek_config
 
 ::: lmt_metal.models.deepseek.deepseek_tiny
+
+## Weight Conversion
+
+::: lmt_metal.models.convert.load_from_hf
+
+::: lmt_metal.models.convert.config_from_hf
+
+::: lmt_metal.models.convert.convert_weights
