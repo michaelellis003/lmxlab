@@ -15,14 +15,14 @@ from dataclasses import replace
 
 import mlx.core as mx
 
-from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.tokenizer import CharTokenizer
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.training.checkpoints import load_checkpoint, save_checkpoint
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.optimizers import create_optimizer
-from lmt_metal.training.trainer import Trainer
+from lmxlab.data.batching import batch_iterator
+from lmxlab.data.tokenizer import CharTokenizer
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.training.checkpoints import load_checkpoint, save_checkpoint
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.optimizers import create_optimizer
+from lmxlab.training.trainer import Trainer
 
 TEXT = (
     "To be, or not to be, that is the question: "
@@ -37,7 +37,7 @@ TEXT = (
     "To sleep, perchance to dream. "
 )
 
-CKPT_DIR = "/tmp/lmt_metal_checkpoint_demo"
+CKPT_DIR = "/tmp/lmxlab_checkpoint_demo"
 
 
 def make_batches(tokens, batch_size=4, seq_len=32):

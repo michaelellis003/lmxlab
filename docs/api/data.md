@@ -4,22 +4,22 @@ Tokenizers, datasets, and batching utilities.
 
 ## Tokenizer
 
-::: lmt_metal.data.tokenizer
+::: lmxlab.data.tokenizer
 
 ## Datasets
 
-::: lmt_metal.data.dataset.TextDataset
+::: lmxlab.data.dataset.TextDataset
     options:
       members: true
 
-::: lmt_metal.data.dataset.TokenDataset
+::: lmxlab.data.dataset.TokenDataset
     options:
       members: true
 
-::: lmt_metal.data.dataset.HFDataset
+::: lmxlab.data.dataset.HFDataset
     options:
       members: true
 
 ## Batching
 
-::: lmt_metal.data.batching
+::: lmxlab.data.batching

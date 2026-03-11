@@ -1,26 +1,26 @@
-# lmt-metal
+# lmxlab
 
 An educational MLX library for transformer language models on Apple Silicon.
 
-[![CI](https://github.com/michaelellis003/lmt-metal/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelellis003/lmt-metal/actions/workflows/ci.yml)
-[![Docs](https://github.com/michaelellis003/lmt-metal/actions/workflows/docs.yml/badge.svg)](https://michaelellis003.github.io/lmt-metal/)
+[![CI](https://github.com/michaelellis003/lmxlab/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelellis003/lmxlab/actions/workflows/ci.yml)
+[![Docs](https://github.com/michaelellis003/lmxlab/actions/workflows/docs.yml/badge.svg)](https://michaelellis003.github.io/lmxlab/)
 
-## Why lmt-metal?
+## Why lmxlab?
 
 Most transformer implementations optimize for production at the cost of readability.
-lmt-metal takes the opposite approach: every layer is implemented from scratch in
+lmxlab takes the opposite approach: every layer is implemented from scratch in
 [MLX](https://ml-explore.github.io/mlx/), with the explicit goal of helping you
 understand how modern language models work.
 
 The core insight is that GPT, LLaMA, and DeepSeek are not fundamentally different
 architectures. They are different *configurations* of the same building blocks:
-attention, feed-forward networks, normalization, and positional encoding. lmt-metal
+attention, feed-forward networks, normalization, and positional encoding. lmxlab
 makes this concrete by using **config factories** instead of class hierarchies.
 
 ```python
-from lmt_metal.models.llama import llama_config
-from lmt_metal.models.deepseek import deepseek_config
-from lmt_metal.models.base import LanguageModel
+from lmxlab.models.llama import llama_config
+from lmxlab.models.deepseek import deepseek_config
+from lmxlab.models.base import LanguageModel
 
 # Same LanguageModel class, different configs
 llama = LanguageModel(llama_config(d_model=512, n_heads=8, n_kv_heads=4, n_layers=6))
@@ -44,15 +44,15 @@ assembled from registry components based on what the config asks for.
 ## Quick start
 
 ```bash
-pip install lmt-metal
+pip install lmxlab
 ```
 
 ```python
 import mlx.core as mx
-from lmt_metal.models.llama import llama_config
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.trainer import Trainer
+from lmxlab.models.llama import llama_config
+from lmxlab.models.base import LanguageModel
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.trainer import Trainer
 
 # Build a small LLaMA
 config = llama_config(vocab_size=256, d_model=128, n_heads=4, n_kv_heads=2, n_layers=4)
@@ -64,7 +64,7 @@ print(f"Parameters: {model.count_parameters():,}")
 trainer = Trainer(model, TrainConfig(learning_rate=1e-3, max_steps=100))
 ```
 
-See the [Quickstart guide](https://michaelellis003.github.io/lmt-metal/getting-started/quickstart/) for a complete walkthrough.
+See the [Quickstart guide](https://michaelellis003.github.io/lmxlab/getting-started/quickstart/) for a complete walkthrough.
 
 ## Recipes
 
@@ -99,9 +99,9 @@ uv run python recipes/benchmark_compile.py            # mx.compile speedup bench
 ## CLI
 
 ```bash
-lmt-metal list                    # List all architectures
-lmt-metal info llama --tiny       # Show config details
-lmt-metal count deepseek --detail # Parameter breakdown
+lmxlab list                    # List all architectures
+lmxlab info llama --tiny       # Show config details
+lmxlab count deepseek --detail # Parameter breakdown
 ```
 
 ## Design principles
@@ -120,8 +120,8 @@ lmt-metal count deepseek --detail # Parameter breakdown
 ## Development
 
 ```bash
-git clone https://github.com/michaelellis003/lmt-metal.git
-cd lmt-metal
+git clone https://github.com/michaelellis003/lmxlab.git
+cd lmxlab
 uv sync --extra dev
 uv run pre-commit install
 uv run pre-commit install --hook-type commit-msg
@@ -138,16 +138,16 @@ uv run mkdocs serve
 
 ## Documentation
 
-Full documentation at [michaelellis003.github.io/lmt-metal](https://michaelellis003.github.io/lmt-metal/).
+Full documentation at [michaelellis003.github.io/lmxlab](https://michaelellis003.github.io/lmxlab/).
 
-- [Quickstart](https://michaelellis003.github.io/lmt-metal/getting-started/quickstart/)
-- [Architecture Overview](https://michaelellis003.github.io/lmt-metal/architecture/overview/)
-- [MLX Idioms](https://michaelellis003.github.io/lmt-metal/architecture/mlx-idioms/)
-- [Models Comparison](https://michaelellis003.github.io/lmt-metal/models/)
-- [Data Pipeline](https://michaelellis003.github.io/lmt-metal/data/)
-- [Training](https://michaelellis003.github.io/lmt-metal/training/)
-- [Inference](https://michaelellis003.github.io/lmt-metal/inference/)
-- [API Reference](https://michaelellis003.github.io/lmt-metal/api/)
+- [Quickstart](https://michaelellis003.github.io/lmxlab/getting-started/quickstart/)
+- [Architecture Overview](https://michaelellis003.github.io/lmxlab/architecture/overview/)
+- [MLX Idioms](https://michaelellis003.github.io/lmxlab/architecture/mlx-idioms/)
+- [Models Comparison](https://michaelellis003.github.io/lmxlab/models/)
+- [Data Pipeline](https://michaelellis003.github.io/lmxlab/data/)
+- [Training](https://michaelellis003.github.io/lmxlab/training/)
+- [Inference](https://michaelellis003.github.io/lmxlab/inference/)
+- [API Reference](https://michaelellis003.github.io/lmxlab/api/)
 
 ## License
 

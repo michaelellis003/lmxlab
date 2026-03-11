@@ -3,23 +3,23 @@
 import mlx.core as mx
 import pytest
 
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.training.callbacks import (
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.training.callbacks import (
     EarlyStopping,
     MetricsLogger,
     ThroughputMonitor,
 )
-from lmt_metal.training.checkpoints import (
+from lmxlab.training.checkpoints import (
     load_checkpoint,
     save_checkpoint,
 )
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.optimizers import (
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.optimizers import (
     create_optimizer,
     create_schedule,
 )
-from lmt_metal.training.trainer import Trainer
+from lmxlab.training.trainer import Trainer
 
 
 @pytest.fixture

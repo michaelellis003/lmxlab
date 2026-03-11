@@ -1,6 +1,6 @@
 # Compiled Training
 
-This page explains how lmt-metal's training loop uses `mx.compile` to fuse
+This page explains how lmxlab's training loop uses `mx.compile` to fuse
 the entire training step into a single optimized computation graph, and why
 this matters for performance on Apple Silicon.
 
@@ -69,7 +69,7 @@ that the model's parameter arrays change between calls.
 !!! warning "Getting inputs/outputs wrong"
     If you forget to include optimizer state in outputs, the optimizer's
     internal state (momentum, second moments for Adam) will not be
-    updated correctly after the first step. In lmt-metal, we pass
+    updated correctly after the first step. In lmxlab, we pass
     `model.trainable_parameters()` which captures both the parameters
     and the optimizer's state through the model's parameter tree.
 
@@ -151,7 +151,7 @@ Typical improvements on Apple Silicon:
 The larger the model, the more opportunity for kernel fusion and the
 greater the relative reduction in Python overhead.
 
-## How lmt-metal structures the compiled step
+## How lmxlab structures the compiled step
 
 The full compiled function in `Trainer._single_step`:
 

@@ -1,6 +1,6 @@
-site_name: lmt-metal
+site_name: lmxlab
 site_description: Educational MLX library for transformer language models on Apple Silicon
-repo_url: https://github.com/michaelellis003/lmt-metal
+repo_url: https://github.com/michaelellis003/lmxlab
 
 theme:
   name: material

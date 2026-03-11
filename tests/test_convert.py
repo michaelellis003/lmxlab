@@ -3,17 +3,17 @@
 import mlx.core as mx
 import pytest
 
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.convert import (
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.convert import (
     WEIGHT_MAPS,
     config_from_hf,
     convert_weights,
 )
-from lmt_metal.models.llama import llama_config
+from lmxlab.models.llama import llama_config
 
 
 class TestWeightMapLlama:
-    """Test LLaMA HF-to-lmt-metal weight name mapping."""
+    """Test LLaMA HF-to-lmxlab weight name mapping."""
 
     def test_embed_mapping(self):
         wmap = WEIGHT_MAPS["llama"]
@@ -210,7 +210,7 @@ class TestLoadIntoModel:
         model = LanguageModel(config)
         mx.eval(model.parameters())
 
-        # Get lmt-metal weights
+        # Get lmxlab weights
         lmt_weights = dict(mlx.utils.tree_flatten(model.parameters()))
 
         # Create fake HF weights by reversing the mapping
@@ -235,7 +235,7 @@ class TestLoadIntoModel:
 
 
 def _reverse_llama_name(lmt_name: str) -> str | None:
-    """Reverse map lmt-metal name to HF LLaMA name (test helper)."""
+    """Reverse map lmxlab name to HF LLaMA name (test helper)."""
     mappings = {
         "embed.weight": "model.embed_tokens.weight",
         "final_norm.weight": "model.norm.weight",

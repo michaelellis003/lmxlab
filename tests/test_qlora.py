@@ -4,10 +4,10 @@ import mlx.core as mx
 import mlx.nn as nn
 import mlx.utils
 
-from lmt_metal.core.qlora import LoRAQuantizedLinear, apply_qlora
-from lmt_metal.core.quantize import quantize_model
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.llama import llama_tiny
+from lmxlab.core.qlora import LoRAQuantizedLinear, apply_qlora
+from lmxlab.core.quantize import quantize_model
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.llama import llama_tiny
 
 
 class TestLoRAQuantizedLinear:

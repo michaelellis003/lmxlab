@@ -6,9 +6,9 @@ outputs, following the CheckList methodology (Ribeiro et al.).
 
 import pytest
 
-from lmt_metal.core.config import BlockConfig, ModelConfig
-from lmt_metal.core.registry import Registry
-from lmt_metal.data.tokenizer import CharTokenizer
+from lmxlab.core.config import BlockConfig, ModelConfig
+from lmxlab.core.registry import Registry
+from lmxlab.data.tokenizer import CharTokenizer
 
 # -- Invariance tests: perturbations that should NOT change output ---------
 

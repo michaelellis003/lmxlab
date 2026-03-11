@@ -5,14 +5,14 @@ import math
 import mlx.core as mx
 import pytest
 
-from lmt_metal.eval.metrics import (
+from lmxlab.eval.metrics import (
     bits_per_byte,
     evaluate_pass_at_k,
     pass_at_k,
     perplexity,
 )
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.gpt import gpt_tiny
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
 
 
 @pytest.fixture

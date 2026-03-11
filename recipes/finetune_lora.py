@@ -22,18 +22,18 @@ import argparse
 import mlx.core as mx
 import mlx.utils
 
-from lmt_metal.core.lora import (
+from lmxlab.core.lora import (
     apply_lora,
     lora_parameters,
     merge_lora,
     save_lora_adapters,
 )
-from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.tokenizer import CharTokenizer
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.llama import llama_config
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.trainer import Trainer
+from lmxlab.data.batching import batch_iterator
+from lmxlab.data.tokenizer import CharTokenizer
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.llama import llama_config
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.trainer import Trainer
 
 # Training data — a small corpus for demonstration
 TEXT = (
@@ -152,7 +152,7 @@ def main() -> None:
     merge_lora(model)
 
     # Verify no LoRA layers remain
-    from lmt_metal.core.lora import LoRALinear
+    from lmxlab.core.lora import LoRALinear
 
     has_lora = any(
         isinstance(m, LoRALinear) for _, m in model.leaf_modules().items()
@@ -166,7 +166,7 @@ def main() -> None:
     prompt_ids = tokenizer.encode(prompt_text)
     prompt = mx.array([prompt_ids])
 
-    from lmt_metal.models.generate import generate
+    from lmxlab.models.generate import generate
 
     output = generate(model, prompt, max_tokens=80, temperature=0.8)
     mx.eval(output)

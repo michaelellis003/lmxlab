@@ -1,13 +1,13 @@
-# Contributing to lmt-metal
+# Contributing to lmxlab
 
-Thanks for your interest in contributing! lmt-metal is an educational project,
+Thanks for your interest in contributing! lmxlab is an educational project,
 so clarity and simplicity are valued over performance optimization.
 
 ## Setup
 
 ```bash
-git clone https://github.com/michaelellis003/lmt-metal.git
-cd lmt-metal
+git clone https://github.com/michaelellis003/lmxlab.git
+cd lmxlab
 uv sync --extra dev
 uv run pre-commit install
 uv run pre-commit install --hook-type commit-msg
@@ -30,7 +30,7 @@ The pre-commit hooks will automatically:
    uv run pytest tests/test_my_module.py -v
    ```
 
-3. Implement the feature in `src/lmt_metal/`.
+3. Implement the feature in `src/lmxlab/`.
 
 4. Verify everything passes locally before pushing:
    ```bash
@@ -120,10 +120,10 @@ ruff format src/ tests/ recipes/         # Auto-format
 
 ## Adding a new architecture
 
-1. Create `src/lmt_metal/models/myarch.py` with a config factory function
+1. Create `src/lmxlab/models/myarch.py` with a config factory function
 2. Register any new components in the appropriate registry
 3. Add a `myarch_tiny()` config for tests
 4. Add tests in `tests/test_architectures.py`
-5. Update `src/lmt_metal/models/__init__.py` exports
-6. Add to CLI in `src/lmt_metal/cli.py`
+5. Update `src/lmxlab/models/__init__.py` exports
+6. Add to CLI in `src/lmxlab/cli.py`
 7. Document in `docs/models/index.md`

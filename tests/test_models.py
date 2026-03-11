@@ -2,11 +2,11 @@
 
 import mlx.core as mx
 
-from lmt_metal.core.config import BlockConfig, ModelConfig
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.generate import generate
-from lmt_metal.models.gpt import gpt_config, gpt_tiny
-from lmt_metal.models.llama import llama_config, llama_tiny
+from lmxlab.core.config import BlockConfig, ModelConfig
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.generate import generate
+from lmxlab.models.gpt import gpt_config, gpt_tiny
+from lmxlab.models.llama import llama_config, llama_tiny
 
 
 class TestLanguageModel:
@@ -199,7 +199,7 @@ class TestGenerate:
 class TestStreamGenerate:
     def test_yields_tokens(self):
         """stream_generate yields individual token IDs."""
-        from lmt_metal.models.generate import stream_generate
+        from lmxlab.models.generate import stream_generate
 
         config = gpt_tiny()
         model = LanguageModel(config)
@@ -214,7 +214,7 @@ class TestStreamGenerate:
 
     def test_stream_stop_tokens(self):
         """stream_generate stops at stop token."""
-        from lmt_metal.models.generate import stream_generate
+        from lmxlab.models.generate import stream_generate
 
         config = gpt_tiny()
         model = LanguageModel(config)
@@ -235,7 +235,7 @@ class TestStreamGenerate:
 
     def test_stream_matches_generate(self):
         """Streaming and batch generate produce same tokens (greedy)."""
-        from lmt_metal.models.generate import stream_generate
+        from lmxlab.models.generate import stream_generate
 
         config = gpt_tiny()
         model = LanguageModel(config)

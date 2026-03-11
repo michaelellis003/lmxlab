@@ -1,4 +1,4 @@
-"""Shared test fixtures for lmt-metal."""
+"""Shared test fixtures for lmxlab."""
 
 import mlx.core as mx
 import pytest

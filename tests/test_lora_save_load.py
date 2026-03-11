@@ -6,13 +6,13 @@ import mlx.core as mx
 import mlx.utils
 import pytest
 
-from lmt_metal.core.lora import (
+from lmxlab.core.lora import (
     apply_lora,
     load_lora_adapters,
     save_lora_adapters,
 )
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.llama import llama_config
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.llama import llama_config
 
 
 @pytest.fixture()

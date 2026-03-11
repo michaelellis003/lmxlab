@@ -4,40 +4,40 @@ Experiment runner, sweeps, tracking, and analysis.
 
 ## Runner
 
-::: lmt_metal.experiments.runner.ExperimentConfig
+::: lmxlab.experiments.runner.ExperimentConfig
     options:
       members: true
 
-::: lmt_metal.experiments.runner.ExperimentRunner
+::: lmxlab.experiments.runner.ExperimentRunner
     options:
       members: true
 
 ## Sweep
 
-::: lmt_metal.experiments.sweep
+::: lmxlab.experiments.sweep
 
 ## Tracking
 
-::: lmt_metal.experiments.tracking.LogEntry
+::: lmxlab.experiments.tracking.LogEntry
     options:
       members: true
 
-::: lmt_metal.experiments.tracking.ExperimentLog
+::: lmxlab.experiments.tracking.ExperimentLog
     options:
       members: true
 
 ## Analysis
 
-::: lmt_metal.experiments.analysis
+::: lmxlab.experiments.analysis
 
 ## Profiling
 
-::: lmt_metal.experiments.profiling.benchmark_fn
+::: lmxlab.experiments.profiling.benchmark_fn
 
-::: lmt_metal.experiments.profiling.memory_estimate
+::: lmxlab.experiments.profiling.memory_estimate
 
-::: lmt_metal.experiments.profiling.count_parameters_by_module
+::: lmxlab.experiments.profiling.count_parameters_by_module
 
-::: lmt_metal.experiments.profiling.profile_forward
+::: lmxlab.experiments.profiling.profile_forward
 
-::: lmt_metal.experiments.profiling.profile_generation
+::: lmxlab.experiments.profiling.profile_generation

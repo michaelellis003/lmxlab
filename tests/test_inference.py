@@ -3,10 +3,10 @@
 import mlx.core as mx
 import pytest
 
-from lmt_metal.inference.sampling import best_of_n, majority_vote
-from lmt_metal.inference.speculative import speculative_decode
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.gpt import gpt_tiny
+from lmxlab.inference.sampling import best_of_n, majority_vote
+from lmxlab.inference.speculative import speculative_decode
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
 
 
 @pytest.fixture

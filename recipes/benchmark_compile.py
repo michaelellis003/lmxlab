@@ -14,13 +14,13 @@ import argparse
 
 import mlx.core as mx
 
-from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.tokenizer import CharTokenizer
-from lmt_metal.experiments.profiling import benchmark_fn
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.llama import llama_config
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.trainer import Trainer
+from lmxlab.data.batching import batch_iterator
+from lmxlab.data.tokenizer import CharTokenizer
+from lmxlab.experiments.profiling import benchmark_fn
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.llama import llama_config
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.trainer import Trainer
 
 TEXT = (
     "The quick brown fox jumps over the lazy dog. "

@@ -4,14 +4,14 @@ import mlx.core as mx
 import mlx.nn as nn
 import mlx.utils
 
-from lmt_metal.core.lora import (
+from lmxlab.core.lora import (
     LoRALinear,
     apply_lora,
     lora_parameters,
     merge_lora,
 )
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.llama import llama_tiny
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.llama import llama_tiny
 
 
 class TestLoRALinear:

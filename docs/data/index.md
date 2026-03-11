@@ -1,6 +1,6 @@
 # Data Pipeline
 
-lmt-metal's data pipeline follows a simple flow: raw text goes through
+lmxlab's data pipeline follows a simple flow: raw text goes through
 a tokenizer, gets wrapped in a dataset, and is yielded as batches for
 training. No multiprocessing needed -- MLX's unified memory means data
 is already on the GPU.
@@ -15,7 +15,7 @@ All tokenizers implement the `Tokenizer` protocol: `encode()`,
 Character-level tokenizer for testing and small experiments:
 
 ```python
-from lmt_metal.data import CharTokenizer
+from lmxlab.data import CharTokenizer
 
 # Build vocabulary from your text
 text = open('data/shakespeare.txt').read()
@@ -37,7 +37,7 @@ tok = CharTokenizer()  # ASCII printable (95 chars)
 BPE tokenizer using OpenAI's tiktoken (requires `pip install tiktoken`):
 
 ```python
-from lmt_metal.data import TiktokenTokenizer
+from lmxlab.data import TiktokenTokenizer
 
 # GPT-2 encoding (50257 tokens, good default)
 tok = TiktokenTokenizer('gpt2')
@@ -53,7 +53,7 @@ tok = TiktokenTokenizer('cl100k_base')
 Wraps a HuggingFace `AutoTokenizer` (requires `pip install transformers`):
 
 ```python
-from lmt_metal.data import HFTokenizer
+from lmxlab.data import HFTokenizer
 
 # Use the tokenizer from a pretrained model
 tok = HFTokenizer('meta-llama/Llama-3.2-1B')
@@ -72,7 +72,7 @@ This is the tokenizer to use when working with models loaded via
 Any object implementing the `Tokenizer` protocol works:
 
 ```python
-from lmt_metal.data import Tokenizer
+from lmxlab.data import Tokenizer
 
 class MyTokenizer:
     @property
@@ -94,7 +94,7 @@ Takes raw text and a tokenizer, creates sliding windows of
 (input, target) pairs:
 
 ```python
-from lmt_metal.data import TextDataset, CharTokenizer
+from lmxlab.data import TextDataset, CharTokenizer
 
 text = open('data/shakespeare.txt').read()
 tok = CharTokenizer(text)
@@ -116,7 +116,7 @@ If you already have token IDs (e.g., pre-tokenized data):
 
 ```python
 import mlx.core as mx
-from lmt_metal.data import TokenDataset
+from lmxlab.data import TokenDataset
 
 tokens = mx.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 dataset = TokenDataset(tokens, seq_len=4)
@@ -129,7 +129,7 @@ x, y = dataset[0]
 Load data directly from HuggingFace datasets (requires `pip install datasets`):
 
 ```python
-from lmt_metal.data import HFDataset, HFTokenizer
+from lmxlab.data import HFDataset, HFTokenizer
 
 # Use a HuggingFace tokenizer with a HuggingFace dataset
 tok = HFTokenizer('meta-llama/Llama-3.2-1B')
@@ -166,7 +166,7 @@ for token_id in ds.token_iterator():
 array and yields shuffled batches:
 
 ```python
-from lmt_metal.data import batch_iterator, CharTokenizer
+from lmxlab.data import batch_iterator, CharTokenizer
 
 text = open('data/shakespeare.txt').read()
 tok = CharTokenizer(text)
@@ -198,10 +198,10 @@ Putting it all together to train a small model:
 
 ```python
 import mlx.core as mx
-from lmt_metal.data import CharTokenizer, batch_iterator
-from lmt_metal.models import LanguageModel
-from lmt_metal.models.gpt import gpt_config
-from lmt_metal.training import Trainer, TrainConfig
+from lmxlab.data import CharTokenizer, batch_iterator
+from lmxlab.models import LanguageModel
+from lmxlab.models.gpt import gpt_config
+from lmxlab.training import Trainer, TrainConfig
 
 # 1. Load and tokenize text
 text = open('data/shakespeare.txt').read()
@@ -228,7 +228,7 @@ batches = batch_iterator(tokens, batch_size=32, seq_len=128)
 history = trainer.train(batches)
 
 # 5. Generate
-from lmt_metal.models import stream_generate
+from lmxlab.models import stream_generate
 
 prompt = mx.array([tok.encode('HAMLET:\n')])
 for token_id in stream_generate(

@@ -1,6 +1,6 @@
 # Model Architectures
 
-lmt-metal implements eight transformer architectures as **config factories** — functions that return a `ModelConfig`. The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
+lmxlab implements eight transformer architectures as **config factories** — functions that return a `ModelConfig`. The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
 
 ## Architecture Comparison
 
@@ -20,7 +20,7 @@ lmt-metal implements eight transformer architectures as **config factories** —
 The baseline architecture. Standard multi-head attention, LayerNorm, and sinusoidal positional encoding.
 
 ```python
-from lmt_metal.models.gpt import gpt_config
+from lmxlab.models.gpt import gpt_config
 
 config = gpt_config()
 # attention="mha", norm="layer_norm", ffn="standard"
@@ -34,7 +34,7 @@ config = gpt_config()
 The modern open-source baseline. Grouped-query attention for memory efficiency, RMSNorm for speed, and SwiGLU FFN.
 
 ```python
-from lmt_metal.models.llama import llama_config
+from lmxlab.models.llama import llama_config
 
 config = llama_config()
 # attention="gqa", norm="rms_norm", ffn="gated"
@@ -48,7 +48,7 @@ config = llama_config()
 Google's efficient variant with multi-query attention (single KV head) and tied input/output embeddings.
 
 ```python
-from lmt_metal.models.gemma import gemma_config
+from lmxlab.models.gemma import gemma_config
 
 config = gemma_config()
 # n_kv_heads=1 (multi-query), tie_embeddings=True
@@ -61,7 +61,7 @@ config = gemma_config()
 Alibaba's architecture with high RoPE theta for long context and bias in QKV projections.
 
 ```python
-from lmt_metal.models.qwen import qwen_config
+from lmxlab.models.qwen import qwen_config
 
 config = qwen_config()
 # rope_theta=1_000_000.0, bias=True
@@ -74,7 +74,7 @@ config = qwen_config()
 Sparse Mixture of Experts — routes each token to 2 of 8 expert FFNs.
 
 ```python
-from lmt_metal.models.mixtral import mixtral_config
+from lmxlab.models.mixtral import mixtral_config
 
 config = mixtral_config()
 # Uses MoEFFN: 8 experts, top-2 routing
@@ -87,7 +87,7 @@ config = mixtral_config()
 Multi-Head Latent Attention compresses KV representations into a low-rank latent space, dramatically reducing KV cache size (~57x vs MHA).
 
 ```python
-from lmt_metal.models.deepseek import deepseek_config
+from lmxlab.models.deepseek import deepseek_config
 
 config = deepseek_config()
 # attention="mla", kv_lora_rank=512, rope_dim=64
@@ -108,7 +108,7 @@ Cache per token: `kv_lora_rank + rope_dim = 576` vs `2 × n_heads × head_dim = 
 Mixes sliding window (local) and global attention layers. Most layers use a fixed window; every Nth layer attends to the full sequence.
 
 ```python
-from lmt_metal.models.gemma3 import gemma3_config
+from lmxlab.models.gemma3 import gemma3_config
 
 config = gemma3_config()
 # Every 6th layer: global GQA
@@ -122,7 +122,7 @@ config = gemma3_config()
 The most architecturally novel model: interleaves **Gated DeltaNet** (linear attention with delta rule) and standard **GQA** layers in a 3:1 ratio.
 
 ```python
-from lmt_metal.models.qwen35 import qwen35_config
+from lmxlab.models.qwen35 import qwen35_config
 
 config = qwen35_config()
 # 75% gated_deltanet layers + 25% gqa layers
@@ -142,12 +142,12 @@ config = qwen35_config()
 
 ## Loading Pretrained Weights
 
-lmt-metal can load pretrained weights from HuggingFace Hub for LLaMA, Gemma, Qwen2, and Mistral models.
+lmxlab can load pretrained weights from HuggingFace Hub for LLaMA, Gemma, Qwen2, and Mistral models.
 
 ### Quick load (requires `huggingface_hub`)
 
 ```python
-from lmt_metal.models.convert import load_from_hf
+from lmxlab.models.convert import load_from_hf
 
 model, config = load_from_hf('meta-llama/Llama-3.2-1B')
 ```
@@ -158,8 +158,8 @@ If you have weights and config locally:
 
 ```python
 import json
-from lmt_metal.models.convert import config_from_hf, convert_weights
-from lmt_metal.models.base import LanguageModel
+from lmxlab.models.convert import config_from_hf, convert_weights
+from lmxlab.models.base import LanguageModel
 import mlx.core as mx
 
 # Load HF config.json
@@ -177,9 +177,9 @@ model.load_weights(list(lmt_weights.items()))
 
 ### Weight name mapping
 
-The conversion handles the naming differences between HF and lmt-metal:
+The conversion handles the naming differences between HF and lmxlab:
 
-| HuggingFace | lmt-metal |
+| HuggingFace | lmxlab |
 |---|---|
 | `model.embed_tokens.weight` | `embed.weight` |
 | `model.layers.{i}.self_attn.q_proj.weight` | `blocks.{i}.attention.q_proj.weight` |
@@ -193,10 +193,10 @@ The conversion handles the naming differences between HF and lmt-metal:
 
 ## Quantization
 
-lmt-metal supports post-training quantization via MLX's native affine quantization. This replaces `nn.Linear` with `nn.QuantizedLinear`, reducing memory by ~4-8x.
+lmxlab supports post-training quantization via MLX's native affine quantization. This replaces `nn.Linear` with `nn.QuantizedLinear`, reducing memory by ~4-8x.
 
 ```python
-from lmt_metal.core.quantize import quantize_model, dequantize_model
+from lmxlab.core.quantize import quantize_model, dequantize_model
 
 # Quantize to 4-bit (default)
 quantize_model(model, bits=4, group_size=64)
@@ -218,7 +218,7 @@ dequantize_model(model)
 Fine-tune pretrained models efficiently by training only small low-rank matrices instead of all weights. Reduces trainable parameters by 10-100x.
 
 ```python
-from lmt_metal.core.lora import apply_lora, merge_lora
+from lmxlab.core.lora import apply_lora, merge_lora
 
 # Apply LoRA to attention layers (rank=8)
 apply_lora(model, rank=8, targets=['attention'])
@@ -242,8 +242,8 @@ merge_lora(model)
 Combine quantization and LoRA for maximum memory efficiency. Keep base weights in 4-bit quantized form while training full-precision LoRA adapters. This lets you fine-tune models that nearly fill available memory.
 
 ```python
-from lmt_metal.core.quantize import quantize_model
-from lmt_metal.core.qlora import apply_qlora
+from lmxlab.core.quantize import quantize_model
+from lmxlab.core.qlora import apply_qlora
 
 # Quantize base model to 4-bit
 quantize_model(model, bits=4)
@@ -270,8 +270,8 @@ trainer.train(data)
 Every architecture has a `_tiny()` factory for testing:
 
 ```python
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.models.deepseek import deepseek_tiny
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.models.deepseek import deepseek_tiny
 
 config = gpt_tiny()       # d_model=64, 2 layers, 4 heads
 config = deepseek_tiny()  # d_model=64, 2 layers, kv_lora_rank=16

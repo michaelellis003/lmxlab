@@ -18,11 +18,11 @@ import time
 
 import mlx.core as mx
 
-from lmt_metal.data.tokenizer import CharTokenizer
-from lmt_metal.inference.speculative import speculative_decode
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.generate import generate
-from lmt_metal.models.llama import llama_config
+from lmxlab.data.tokenizer import CharTokenizer
+from lmxlab.inference.speculative import speculative_decode
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.generate import generate
+from lmxlab.models.llama import llama_config
 
 # Training data — both models trained on same corpus
 TEXT = (
@@ -45,9 +45,9 @@ def train_model(
     steps: int = 200,
 ) -> list[dict]:
     """Quick training loop."""
-    from lmt_metal.data.batching import batch_iterator
-    from lmt_metal.training.config import TrainConfig
-    from lmt_metal.training.trainer import Trainer
+    from lmxlab.data.batching import batch_iterator
+    from lmxlab.training.config import TrainConfig
+    from lmxlab.training.trainer import Trainer
 
     config = TrainConfig(
         learning_rate=1e-3,

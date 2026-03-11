@@ -21,15 +21,15 @@ Usage:
 import mlx.core as mx
 import mlx.utils
 
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.deepseek import deepseek_tiny
-from lmt_metal.models.gemma import gemma_tiny
-from lmt_metal.models.gemma3 import gemma3_tiny
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.models.llama import llama_tiny
-from lmt_metal.models.mixtral import mixtral_tiny
-from lmt_metal.models.qwen import qwen_tiny
-from lmt_metal.models.qwen35 import qwen35_tiny
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.deepseek import deepseek_tiny
+from lmxlab.models.gemma import gemma_tiny
+from lmxlab.models.gemma3 import gemma3_tiny
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.models.llama import llama_tiny
+from lmxlab.models.mixtral import mixtral_tiny
+from lmxlab.models.qwen import qwen_tiny
+from lmxlab.models.qwen35 import qwen35_tiny
 
 
 def count_params(model: LanguageModel) -> int:

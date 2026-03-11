@@ -2,7 +2,7 @@
 
 Apple Silicon's unified memory architecture fundamentally changes how ML
 frameworks manage data. This page explains what unified memory means for
-lmt-metal, how it differs from discrete GPU setups, and what trade-offs
+lmxlab, how it differs from discrete GPU setups, and what trade-offs
 it introduces.
 
 ## What unified memory means
@@ -37,7 +37,7 @@ There is no copy. When the CPU writes an array, the GPU can read it
 immediately (and vice versa). This eliminates an entire class of
 performance bottlenecks and bugs.
 
-## What this means for lmt-metal
+## What this means for lmxlab
 
 ### No device management
 
@@ -50,7 +50,7 @@ x = x.to('mps')               # Move data to GPU
 # RuntimeError if you forget either one
 ```
 
-In lmt-metal (MLX), there is no device concept:
+In lmxlab (MLX), there is no device concept:
 
 ```python
 # MLX: everything lives in unified memory
@@ -60,7 +60,7 @@ logits, _ = model(x)          # Just works
 ```
 
 You will never see `.to()`, `.cuda()`, `.cpu()`, or `device=` anywhere
-in the lmt-metal codebase. This is not a limitation — it is a feature
+in the lmxlab codebase. This is not a limitation — it is a feature
 of the hardware.
 
 ### Zero-copy data loading
@@ -75,7 +75,7 @@ tokens = mx.array(tokenizer.encode(text), dtype=mx.int32)
 # tokens is immediately usable by the GPU
 ```
 
-This is why lmt-metal's `batch_iterator` is a simple Python generator —
+This is why lmxlab's `batch_iterator` is a simple Python generator —
 no `DataLoader` with `pin_memory=True`, no `num_workers` for parallel
 prefetching across a PCIe boundary.
 
@@ -154,7 +154,7 @@ computation graphs can grow large before evaluation, consuming memory
 for intermediate results. The `mx.eval()` call forces evaluation and
 frees intermediate buffers.
 
-This is why lmt-metal places `mx.eval()` at explicit boundaries:
+This is why lmxlab places `mx.eval()` at explicit boundaries:
 
 ```python
 # Training: eval after each step
@@ -198,5 +198,5 @@ unified memory is available for model weights.
 | OOM recovery | Offload to CPU | Quantize or use smaller model |
 
 The unified memory model trades raw bandwidth for simplicity. For
-educational and research use (lmt-metal's target), the elimination
+educational and research use (lmxlab's target), the elimination
 of device management complexity is a significant win.
