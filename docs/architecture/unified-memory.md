@@ -101,7 +101,7 @@ the important trade-offs:
 
 | System | Memory Bandwidth |
 |--------|-----------------|
-| M1 Max (32GB) | ~400 GB/s |
+| M1 Max | ~400 GB/s |
 | M2 Ultra (192GB) | ~800 GB/s |
 | M4 Max (128GB) | ~546 GB/s |
 | NVIDIA A100 (80GB HBM) | ~2,039 GB/s |
