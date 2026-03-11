@@ -44,6 +44,10 @@ class BlockConfig:
     rope_theta: float = 10000.0
     max_seq_len: int = 2048
     pre_norm: bool = True
+    # MLA (Multi-Head Latent Attention) parameters
+    kv_lora_rank: int | None = None
+    q_lora_rank: int | None = None
+    rope_dim: int | None = None
 
     @property
     def head_dim(self) -> int:

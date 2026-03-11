@@ -5,7 +5,9 @@ import mlx.utils
 import pytest
 
 from lmt_metal.core.config import BlockConfig, ModelConfig
+from lmt_metal.core.mla import MLA
 from lmt_metal.core.moe import MoEFFN
+from lmt_metal.models.deepseek import deepseek_config, deepseek_tiny
 from lmt_metal.models.gemma import gemma_config, gemma_tiny
 from lmt_metal.models.gpt import gpt_config, gpt_tiny
 from lmt_metal.models.llama import llama_config, llama_tiny
@@ -18,6 +20,7 @@ ALL_TINY_FACTORIES = [
     ("gemma", gemma_tiny),
     ("qwen", qwen_tiny),
     ("mixtral", mixtral_tiny),
+    ("deepseek", deepseek_tiny),
 ]
 
 
@@ -82,6 +85,14 @@ class TestArchitectureDefaults:
         assert c.block.ffn == "gated"
         assert c.block.rope_theta == 1000000.0
 
+    def test_deepseek_defaults(self):
+        c = deepseek_config()
+        assert c.block.attention == "mla"
+        assert c.block.kv_lora_rank == 512
+        assert c.block.q_lora_rank == 1536
+        assert c.block.rope_dim == 64
+        assert c.block.bias is False
+
 
 class TestArchitectureDifferences:
     """Comparative tests: verify architectures differ as expected."""
@@ -126,3 +137,115 @@ class TestMoEFFN:
         p4 = sum(p.size for _, p in mlx.utils.tree_flatten(moe4.parameters()))
         p8 = sum(p.size for _, p in mlx.utils.tree_flatten(moe8.parameters()))
         assert p8 > p4
+
+
+class TestMLA:
+    """Tests for Multi-Head Latent Attention."""
+
+    def test_output_shape(self):
+        config = BlockConfig(
+            attention="mla",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+            kv_lora_rank=16,
+            q_lora_rank=32,
+            rope_dim=8,
+        )
+        mla = MLA(config)
+        mx.eval(mla.parameters())
+
+        x = mx.random.normal(shape=(2, 8, 64))
+        out, cache = mla(x)
+        mx.eval(out)
+        assert out.shape == x.shape
+
+    def test_cache_is_compressed(self):
+        """MLA cache should be smaller than full KV cache."""
+        config = BlockConfig(
+            attention="mla",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+            kv_lora_rank=16,
+            q_lora_rank=32,
+            rope_dim=8,
+        )
+        mla = MLA(config)
+        mx.eval(mla.parameters())
+
+        x = mx.random.normal(shape=(1, 8, 64))
+        _, cache = mla(x)
+        mx.eval(cache[0], cache[1])
+
+        # Cache[0] is compressed latent (B, 1, L, kv_lora_rank)
+        assert cache[0].shape[-1] == 16  # kv_lora_rank, not d_model
+
+    def test_kv_cache_incremental(self):
+        """Test that MLA KV cache works for autoregressive generation."""
+        config = BlockConfig(
+            attention="mla",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+            kv_lora_rank=16,
+            q_lora_rank=32,
+            rope_dim=8,
+        )
+        mla = MLA(config)
+        mx.eval(mla.parameters())
+
+        # First pass: full sequence
+        x = mx.random.normal(shape=(1, 4, 64))
+        out1, cache = mla(x)
+        mx.eval(out1, cache[0], cache[1])
+
+        # Second pass: single token with cache
+        x2 = mx.random.normal(shape=(1, 1, 64))
+        out2, cache2 = mla(x2, cache=cache)
+        mx.eval(out2, cache2[0], cache2[1])
+
+        # Cache should grow by 1 in sequence dimension
+        assert cache2[0].shape[2] == 5  # 4 + 1
+
+    def test_requires_kv_lora_rank(self):
+        """MLA should raise if kv_lora_rank is not set."""
+        config = BlockConfig(d_model=64, n_heads=4, d_ff=128)
+        with pytest.raises(ValueError, match="kv_lora_rank"):
+            MLA(config)
+
+    def test_no_rope_dim(self):
+        """MLA should work without decoupled RoPE (rope_dim=0)."""
+        config = BlockConfig(
+            attention="mla",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+            kv_lora_rank=16,
+            rope_dim=0,
+        )
+        mla = MLA(config)
+        mx.eval(mla.parameters())
+
+        x = mx.random.normal(shape=(1, 4, 64))
+        out, cache = mla(x)
+        mx.eval(out)
+        assert out.shape == x.shape
+
+    def test_no_q_compression(self):
+        """MLA should work without Q compression."""
+        config = BlockConfig(
+            attention="mla",
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+            kv_lora_rank=16,
+            rope_dim=8,
+        )
+        mla = MLA(config)
+        mx.eval(mla.parameters())
+
+        x = mx.random.normal(shape=(1, 4, 64))
+        out, cache = mla(x)
+        mx.eval(out)
+        assert out.shape == x.shape
