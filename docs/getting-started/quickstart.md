@@ -224,6 +224,9 @@ lmxlab info llama --tiny
 
 # Count parameters with breakdown
 lmxlab count deepseek --detail
+
+# Benchmark forward pass and generation speed
+lmxlab bench llama --tiny --seq-len 64
 ```
 
 ## 8. Recipes

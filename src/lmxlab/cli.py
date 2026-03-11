@@ -1,15 +1,17 @@
 """Command-line interface for lmxlab.
 
 Usage:
-    lmxlab info <arch>     Show architecture config details
     lmxlab list             List available architectures
+    lmxlab info <arch>      Show architecture config details
     lmxlab count <arch>     Count parameters for an architecture
+    lmxlab bench <arch>     Benchmark forward pass and memory
 
 Examples:
     lmxlab list
     lmxlab info gpt
     lmxlab info llama --tiny
-    lmxlab count deepseek --tiny
+    lmxlab count deepseek --tiny --detail
+    lmxlab bench llama --tiny --seq-len 64
 """
 
 import argparse
@@ -126,6 +128,48 @@ def cmd_count(args: argparse.Namespace) -> None:
             print(f"  {comp:20s} {count:>12,}  ({pct:.1f}%)")
 
 
+def cmd_bench(args: argparse.Namespace) -> None:
+    """Benchmark forward pass and memory for an architecture."""
+    name = args.arch.lower()
+    if name not in ARCHITECTURES:
+        print(f"Unknown architecture: {name}")
+        print(f"Available: {', '.join(ARCHITECTURES)}")
+        sys.exit(1)
+
+    from lmxlab.experiments.profiling import (
+        memory_estimate,
+        profile_forward,
+        profile_generation,
+    )
+
+    full_fn, tiny_fn = ARCHITECTURES[name]
+    config = tiny_fn() if args.tiny else full_fn()
+    label = f"{name} (tiny)" if args.tiny else name
+
+    model = LanguageModel(config)
+    mx.eval(model.parameters())
+
+    mem = memory_estimate(model)
+    print(f"Architecture: {label}")
+    print(f"  Parameters: {mem['param_count']:,}")
+    print(f"  Memory:     {mem['total_mb']:.1f} MB")
+
+    seq_len = args.seq_len
+    tokens = mx.random.randint(0, config.vocab_size, shape=(1, seq_len))
+
+    print(f"\nForward pass (seq_len={seq_len}):")
+    fwd = profile_forward(model, tokens)
+    print(f"  Mean:       {fwd['mean_ms']:.2f} ms")
+    print(f"  Throughput: {fwd['tokens_per_sec']:.0f} tok/s")
+
+    print(f"\nGeneration ({args.gen_tokens} tokens):")
+    prompt = mx.random.randint(0, config.vocab_size, shape=(1, 4))
+    gen = profile_generation(model, prompt, max_tokens=args.gen_tokens)
+    print(f"  Prefill:    {gen['prefill_ms']:.2f} ms")
+    print(f"  Decode:     {gen['decode_ms_per_token']:.2f} ms/tok")
+    print(f"  Decode:     {gen['decode_tokens_per_sec']:.0f} tok/s")
+
+
 def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -152,6 +196,25 @@ def main() -> None:
         help="Show per-component breakdown",
     )
 
+    # bench
+    bench_p = sub.add_parser(
+        "bench", help="Benchmark forward pass and generation"
+    )
+    bench_p.add_argument("arch", help="Architecture name")
+    bench_p.add_argument("--tiny", action="store_true", help="Use tiny config")
+    bench_p.add_argument(
+        "--seq-len",
+        type=int,
+        default=32,
+        help="Sequence length for forward pass (default: 32)",
+    )
+    bench_p.add_argument(
+        "--gen-tokens",
+        type=int,
+        default=20,
+        help="Tokens to generate (default: 20)",
+    )
+
     args = parser.parse_args()
 
     if args.command == "list":
@@ -160,6 +223,8 @@ def main() -> None:
         cmd_info(args)
     elif args.command == "count":
         cmd_count(args)
+    elif args.command == "bench":
+        cmd_bench(args)
     else:
         parser.print_help()
 
