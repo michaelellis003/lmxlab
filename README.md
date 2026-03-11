@@ -147,6 +147,10 @@ Full documentation at [michaelellis003.github.io/lmxlab](https://michaelellis003
 - [Data Pipeline](https://michaelellis003.github.io/lmxlab/data/)
 - [Training](https://michaelellis003.github.io/lmxlab/training/)
 - [Inference](https://michaelellis003.github.io/lmxlab/inference/)
+- [Recipes](https://michaelellis003.github.io/lmxlab/recipes/)
+- [Production Optimizations](https://michaelellis003.github.io/lmxlab/architecture/production-optimizations/)
+- [Experiment Methodology](https://michaelellis003.github.io/lmxlab/experiments/methodology/)
+- [Developer Log](https://michaelellis003.github.io/lmxlab/devlog/)
 - [API Reference](https://michaelellis003.github.io/lmxlab/api/)
 
 ## License
