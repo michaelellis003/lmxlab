@@ -270,6 +270,9 @@ uv run python recipes/benchmark_compile.py
 
 # Evaluate models with perplexity and BPB metrics
 uv run python recipes/evaluate_model.py
+
+# Interactive streaming generation with token-by-token output
+uv run python recipes/interactive_generate.py --temperature 0.8
 ```
 
 ## Next steps
