@@ -163,14 +163,19 @@ print(f"Decode: {gen['decode_ms_per_token']:.1f}ms/token")
 
 Ready-to-run experiment scripts:
 
-| Recipe | Description |
-|--------|-------------|
-| `run_experiment.py` | Structured experiment with tracking |
-| `sweep_learning_rate.py` | Grid/random learning rate sweep |
-| `benchmark_compile.py` | `mx.compile` speedup measurement |
-| `profile_models.py` | Architecture profiling comparison |
-| `compare_training.py` | Architecture training dynamics |
-| `ablation_gpt_to_llama.py` | Feature ablation study |
+| Recipe | Experiment | Description |
+|--------|-----------|-------------|
+| `run_experiment.py` | General | Structured experiment with tracking |
+| `sweep_learning_rate.py` | General | Grid/random learning rate sweep |
+| `benchmark_compile.py` | Exp 2 | `mx.compile` speedup measurement |
+| `profile_models.py` | General | Architecture profiling comparison |
+| `compare_training.py` | General | Architecture training dynamics |
+| `compare_architectures.py` | General | Side-by-side architecture comparison |
+| `ablation_gpt_to_llama.py` | Exp 1 | Feature ablation study |
+| `compare_optimizers.py` | Exp 3 | Optimizer comparison (AdamW/SGD/Adafactor/Lion) |
+| `compare_kv_cache.py` | Exp 4 | MLA vs GQA KV cache profiling |
+| `compare_schedules.py` | General | LR schedules and optimizer comparison |
+| `analyze_experiments.py` | General | Statistical analysis tools |
 
 ## Pre-Registered Experiments
 
@@ -190,11 +195,11 @@ Each pre-registered experiment specifies:
 See the [Developer Log](../devlog/index.md#pre-registered-experiment-plans)
 for the full set of pre-registered experiments, including:
 
-- **Experiment 1:** GPT-to-LLaMA feature ablation
-- **Experiment 2:** `mx.compile` coverage analysis
-- **Experiment 3:** Optimizer comparison on unified memory
-- **Experiment 4:** KV cache reduction with MLA
-- **Experiment 5:** What can you train in 5 minutes?
+- **Experiment 1:** GPT-to-LLaMA feature ablation → `ablation_gpt_to_llama.py`
+- **Experiment 2:** `mx.compile` coverage analysis → `benchmark_compile.py`
+- **Experiment 3:** Optimizer comparison on unified memory → `compare_optimizers.py`
+- **Experiment 4:** KV cache reduction with MLA → `compare_kv_cache.py`
+- **Experiment 5:** What can you train in 5 minutes? → `run_experiment.py`
 
 ### Why Pre-Registration Matters
 
