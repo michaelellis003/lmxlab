@@ -52,6 +52,8 @@ nav:
     - Unified Memory: architecture/unified-memory.md
   - Models: models/index.md
   - Training: training/index.md
+  - Experiments:
+    - Methodology: experiments/methodology.md
   - API Reference:
     - Overview: api/index.md
     - Core: api/core.md
