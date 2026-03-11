@@ -172,6 +172,41 @@ Ready-to-run experiment scripts:
 | `compare_training.py` | Architecture training dynamics |
 | `ablation_gpt_to_llama.py` | Feature ablation study |
 
+## Pre-Registered Experiments
+
+Following Platt's strong inference and Chamberlin's multiple working
+hypotheses, lmxlab pre-registers experiments with competing hypotheses
+and falsification criteria **before** running them. This guards against
+confirmation bias and the garden of forking paths (Gelman & Loken, 2013).
+
+Each pre-registered experiment specifies:
+
+1. **A question** — what we want to learn
+2. **Competing hypotheses** — at least 2-4 plausible explanations
+3. **Design** — controlled experimental conditions
+4. **Analysis plan** — how results will be interpreted
+5. **Falsification criteria** — what would disprove each hypothesis
+
+See the [Developer Log](../devlog/index.md#pre-registered-experiment-plans)
+for the full set of pre-registered experiments, including:
+
+- **Experiment 1:** GPT-to-LLaMA feature ablation
+- **Experiment 2:** `mx.compile` coverage analysis
+- **Experiment 3:** Optimizer comparison on unified memory
+- **Experiment 4:** KV cache reduction with MLA
+- **Experiment 5:** What can you train in 5 minutes?
+
+### Why Pre-Registration Matters
+
+Without pre-registration, it's easy to unconsciously adjust hypotheses
+after seeing results — finding a "story" that fits the data rather than
+testing a prediction against data. Pre-registration commits to the
+analysis before results are known, which:
+
+- Makes positive results more credible (they were predicted, not retrofitted)
+- Makes negative results publishable (they falsify a stated hypothesis)
+- Forces clearer thinking about what we actually expect and why
+
 ## Running Your Own Experiments
 
 ```python
