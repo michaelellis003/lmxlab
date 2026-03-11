@@ -255,6 +255,9 @@ uv run python recipes/finetune_lora.py --rank 8 --steps 200
 # Fine-tune with QLoRA (4-bit base + LoRA, maximum memory efficiency)
 uv run python recipes/finetune_qlora.py --rank 8 --bits 4
 
+# Train hybrid DeltaNet (linear + softmax attention)
+uv run python recipes/train_deltanet.py --steps 300
+
 # Train a Mixture of Experts model (dense vs MoE comparison)
 uv run python recipes/train_moe.py --experts 4 --top-k 2
 
