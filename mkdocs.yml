@@ -51,6 +51,7 @@ nav:
     - Compiled Training: architecture/compiled-training.md
     - Unified Memory: architecture/unified-memory.md
   - Models: models/index.md
+  - Data: data/index.md
   - Training: training/index.md
   - Inference: inference/index.md
   - Experiments:
