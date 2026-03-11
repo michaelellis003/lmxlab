@@ -164,6 +164,17 @@ class TestConfigFromHf:
         with pytest.raises(ValueError, match="Unsupported"):
             config_from_hf({"model_type": "bert"})
 
+    def test_missing_required_keys_raises(self):
+        """Missing required keys give a clear ValueError."""
+        hf_config = {
+            "model_type": "llama",
+            "vocab_size": 1000,
+            # missing: hidden_size, num_attention_heads,
+            #          intermediate_size, num_hidden_layers
+        }
+        with pytest.raises(ValueError, match="missing required"):
+            config_from_hf(hf_config)
+
     def test_gemma_config(self):
         hf_config = {
             "model_type": "gemma",

@@ -28,6 +28,7 @@ Example::
 """
 
 import json
+import logging
 import re
 from collections.abc import Callable
 from pathlib import Path
@@ -36,6 +37,8 @@ import mlx.core as mx
 
 from lmt_metal.core.config import BlockConfig, ModelConfig
 from lmt_metal.models.base import LanguageModel
+
+logger = logging.getLogger(__name__)
 
 # ── Weight name mapping functions ──────────────────────────────────
 
@@ -191,6 +194,18 @@ def config_from_hf(
             f"Supported: {sorted(llama_types)}"
         )
 
+    # Validate required keys with clear error messages
+    required = [
+        "num_attention_heads",
+        "hidden_size",
+        "intermediate_size",
+        "vocab_size",
+        "num_hidden_layers",
+    ]
+    missing = [k for k in required if k not in hf_config]
+    if missing:
+        raise ValueError(f"HF config missing required keys: {missing}")
+
     n_heads = hf_config["num_attention_heads"]
     block = BlockConfig(
         attention="gqa",
@@ -277,13 +292,8 @@ def load_from_hf(
     for wf in weight_files:
         hf_weights.update(mx.load(str(wf)))
 
-    # Determine architecture from model_type
+    # Determine architecture for weight mapping
     arch = hf_config["model_type"]
-    if arch == "gemma2":
-        arch = "gemma2"
-    elif arch in ("gemma",):
-        arch = "gemma"
-    # else: llama, qwen2, mistral map directly
 
     # Convert weight names
     lmt_weights = convert_weights(hf_weights, arch)
@@ -294,6 +304,20 @@ def load_from_hf(
 
     # Build model and load weights
     model = LanguageModel(model_config)
+
+    # Warn if converted weights don't cover all model parameters
+    import mlx.utils
+
+    model_keys = set(dict(mlx.utils.tree_flatten(model.parameters())).keys())
+    loaded_keys = set(lmt_weights.keys())
+    missing = model_keys - loaded_keys
+    if missing:
+        logger.warning(
+            "Missing %d model parameters after conversion: %s",
+            len(missing),
+            sorted(missing)[:10],
+        )
+
     model.load_weights(list(lmt_weights.items()))
 
     # Optional post-load quantization
