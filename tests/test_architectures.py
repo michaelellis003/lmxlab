@@ -88,7 +88,9 @@ class TestArchitectureDefaults:
 
     def test_mixtral_defaults(self):
         c = mixtral_config()
-        assert c.block.ffn == "gated"
+        assert c.block.ffn == "moe"
+        assert c.block.n_experts == 8
+        assert c.block.top_k_experts == 2
         assert c.block.rope_theta == 1000000.0
 
     def test_deepseek_defaults(self):

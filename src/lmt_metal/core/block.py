@@ -3,6 +3,7 @@
 import mlx.core as mx
 import mlx.nn as nn
 
+import lmt_metal.core.moe  # noqa: F401 — registers moe/shared_moe
 from lmt_metal.core.attention import attention_registry
 from lmt_metal.core.config import BlockConfig
 from lmt_metal.core.ffn import ffn_registry

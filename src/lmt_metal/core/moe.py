@@ -4,9 +4,10 @@ import mlx.core as mx
 import mlx.nn as nn
 
 from lmt_metal.core.config import BlockConfig
-from lmt_metal.core.ffn import GatedFFN
+from lmt_metal.core.ffn import GatedFFN, ffn_registry
 
 
+@ffn_registry.register("moe")
 class MoEFFN(nn.Module):
     """Mixture of Experts feed-forward network.
 
@@ -22,18 +23,18 @@ class MoEFFN(nn.Module):
     def __init__(
         self,
         config: BlockConfig,
-        n_experts: int = 8,
-        top_k: int = 2,
+        n_experts: int | None = None,
+        top_k: int | None = None,
     ) -> None:
         super().__init__()
-        self.n_experts = n_experts
-        self.top_k = top_k
+        self.n_experts = n_experts or config.n_experts or 8
+        self.top_k = top_k or config.top_k_experts
 
         # Router: projects hidden states to expert logits
-        self.router = nn.Linear(config.d_model, n_experts, bias=False)
+        self.router = nn.Linear(config.d_model, self.n_experts, bias=False)
 
         # Expert FFNs
-        self.experts = [GatedFFN(config) for _ in range(n_experts)]
+        self.experts = [GatedFFN(config) for _ in range(self.n_experts)]
 
     def __call__(self, x: mx.array) -> mx.array:
         """Route tokens to top-k experts and combine outputs.
@@ -79,6 +80,7 @@ class MoEFFN(nn.Module):
         return output
 
 
+@ffn_registry.register("shared_moe")
 class SharedExpertMoEFFN(nn.Module):
     """MoE with shared experts and bias-based load balancing.
 
@@ -100,27 +102,27 @@ class SharedExpertMoEFFN(nn.Module):
     def __init__(
         self,
         config: BlockConfig,
-        n_experts: int = 8,
-        top_k: int = 2,
-        n_shared: int = 1,
+        n_experts: int | None = None,
+        top_k: int | None = None,
+        n_shared: int | None = None,
     ) -> None:
         super().__init__()
-        self.n_experts = n_experts
-        self.top_k = top_k
-        self.n_shared = n_shared
+        self.n_experts = n_experts or config.n_experts or 8
+        self.top_k = top_k or config.top_k_experts
+        self.n_shared = n_shared or config.n_shared_experts or 1
 
         # Router: projects hidden states to expert logits
-        self.router = nn.Linear(config.d_model, n_experts, bias=False)
+        self.router = nn.Linear(config.d_model, self.n_experts, bias=False)
 
         # Learnable bias for aux-loss-free load balancing.
         # Added to logits for selection only, not for weights.
-        self.expert_bias = mx.zeros((n_experts,))
+        self.expert_bias = mx.zeros((self.n_experts,))
 
         # Routed experts
-        self.experts = [GatedFFN(config) for _ in range(n_experts)]
+        self.experts = [GatedFFN(config) for _ in range(self.n_experts)]
 
         # Shared experts (always active, not gated)
-        self.shared_experts = [GatedFFN(config) for _ in range(n_shared)]
+        self.shared_experts = [GatedFFN(config) for _ in range(self.n_shared)]
 
     def __call__(self, x: mx.array) -> mx.array:
         """Route tokens and combine with shared expert output.
