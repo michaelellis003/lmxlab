@@ -12,8 +12,13 @@ from lmt_metal.core.moe import MoEFFN, SharedExpertMoEFFN
 from lmt_metal.models.deepseek import deepseek_config, deepseek_tiny
 from lmt_metal.models.gemma import gemma_config, gemma_tiny
 from lmt_metal.models.gemma3 import gemma3_config, gemma3_tiny
-from lmt_metal.models.gpt import gpt_config, gpt_tiny
-from lmt_metal.models.llama import llama_config, llama_tiny
+from lmt_metal.models.gpt import gpt_config, gpt_medium, gpt_small, gpt_tiny
+from lmt_metal.models.llama import (
+    llama_7b,
+    llama_13b,
+    llama_config,
+    llama_tiny,
+)
 from lmt_metal.models.mixtral import mixtral_config, mixtral_tiny
 from lmt_metal.models.qwen import qwen_config, qwen_tiny
 from lmt_metal.models.qwen35 import qwen35_config, qwen35_tiny
@@ -100,6 +105,40 @@ class TestArchitectureDefaults:
         assert c.block.q_lora_rank == 1536
         assert c.block.rope_dim == 64
         assert c.block.bias is False
+
+
+class TestPresetConfigs:
+    """Test non-tiny preset config factories."""
+
+    def test_gpt_small_returns_valid_config(self):
+        c = gpt_small()
+        assert isinstance(c, ModelConfig)
+        assert c.block.d_model == 768
+        assert c.n_layers == 12
+
+    def test_gpt_medium_returns_valid_config(self):
+        c = gpt_medium()
+        assert isinstance(c, ModelConfig)
+        assert c.block.d_model == 1024
+        assert c.n_layers == 24
+
+    def test_llama_7b_returns_valid_config(self):
+        c = llama_7b()
+        assert isinstance(c, ModelConfig)
+        assert c.block.d_model == 4096
+        assert c.n_layers == 32
+
+    def test_llama_13b_returns_valid_config(self):
+        c = llama_13b()
+        assert isinstance(c, ModelConfig)
+        assert c.block.d_model == 5120
+        assert c.n_layers == 40
+
+    def test_presets_larger_than_tiny(self):
+        assert gpt_small().block.d_model > gpt_tiny().block.d_model
+        assert gpt_medium().block.d_model > gpt_small().block.d_model
+        assert llama_7b().block.d_model > llama_tiny().block.d_model
+        assert llama_13b().block.d_model > llama_7b().block.d_model
 
 
 class TestArchitectureDifferences:

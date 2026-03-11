@@ -37,6 +37,26 @@ class TestCharTokenizer:
         tok = CharTokenizer("hello")
         assert tok.encode("hello") == tok.encode("hello")
 
+    def test_fit_rebuilds_vocab(self):
+        """fit() rebuilds vocabulary from new text."""
+        tok = CharTokenizer("abc")
+        assert tok.vocab_size == 3
+        tok.fit("xyz123")
+        assert tok.vocab_size == 6
+        # Old chars should no longer work
+        with pytest.raises(KeyError):
+            tok.encode("a")
+        # New chars should work
+        ids = tok.encode("xyz")
+        assert tok.decode(ids) == "xyz"
+
+    def test_fit_roundtrip(self):
+        """fit() produces a working tokenizer."""
+        tok = CharTokenizer()
+        tok.fit("the quick brown fox")
+        text = "the fox"
+        assert tok.decode(tok.encode(text)) == text
+
 
 class TestTextDataset:
     def test_length(self):
