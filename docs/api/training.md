@@ -57,3 +57,7 @@ Compiled training loop, optimizers, and training utilities.
 ## Curriculum Learning
 
 ::: lmxlab.training.curriculum
+
+## Knowledge Distillation
+
+::: lmxlab.training.distillation
