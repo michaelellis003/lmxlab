@@ -181,6 +181,10 @@ def apply_lora(
     )
     model.update_modules(leaves)
 
+    # Freeze everything, then unfreeze only LoRA params
+    model.freeze()
+    model.unfreeze(keys=["lora_A", "lora_B"])
+
 
 def lora_parameters(model: nn.Module) -> dict:
     """Extract only LoRA parameters from a model.
