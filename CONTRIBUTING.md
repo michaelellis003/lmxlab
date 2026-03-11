@@ -28,8 +28,8 @@ pip install -e ".[dev]"
 4. Verify everything passes:
    ```bash
    pytest                          # All tests
-   ruff check src/ tests/          # Lint
-   ruff format --check src/ tests/ # Formatting
+   ruff check src/ tests/ recipes/          # Lint
+   ruff format --check src/ tests/ recipes/ # Formatting
    ```
 
 5. Open a PR against `main`.
@@ -64,8 +64,8 @@ refactor: simplify MoE routing logic
 
 Ruff handles formatting and linting:
 ```bash
-ruff check --fix src/ tests/   # Auto-fix lint issues
-ruff format src/ tests/         # Auto-format
+ruff check --fix src/ tests/ recipes/   # Auto-fix lint issues
+ruff format src/ tests/ recipes/         # Auto-format
 ```
 
 ## Testing

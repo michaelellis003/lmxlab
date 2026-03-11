@@ -128,7 +128,7 @@ pip install -e ".[dev]"
 pytest
 
 # Lint
-ruff check src/ tests/
+ruff check src/ tests/ recipes/
 
 # Build docs
 mkdocs serve
