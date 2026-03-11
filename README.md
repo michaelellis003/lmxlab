@@ -34,12 +34,12 @@ assembled from registry components based on what the config asks for.
 
 - **8 architectures** as config factories: GPT, LLaMA, Gemma, Qwen, Mixtral (MoE), DeepSeek V2 (MLA), Gemma 3 (sliding window), Qwen 3.5 (hybrid DeltaNet)
 - **Compiled training** with `mx.compile`, functional gradients, gradient clipping, cosine schedules
-- **Advanced training**: DPO, GRPO, multi-token prediction, curriculum learning
+- **Advanced training**: DPO, GRPO, multi-token prediction, curriculum learning, knowledge distillation
 - **LoRA & QLoRA**: parameter-efficient fine-tuning with optional 4-bit quantization
 - **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
 - **HuggingFace integration**: load pretrained weights from the Hub
 - **Experiment framework**: time-budgeted runs, results tracking, sweeps, MLX profiling
-- **23 recipe scripts**: training, fine-tuning, DPO, GRPO, MTP, curriculum learning, DeltaNet hybrid, best-of-N sampling, evaluation, streaming generation, checkpointing, ablation studies, architecture comparison, benchmarking
+- **31 recipe scripts**: training, fine-tuning, DPO, GRPO, MTP, distillation, curriculum learning, DeltaNet hybrid, best-of-N sampling, evaluation, quantization, callbacks, optimizer comparison, KV cache analysis, experiment sweeps, benchmarking
 
 ## Quick start
 
@@ -94,6 +94,14 @@ uv run python recipes/sweep_learning_rate.py          # Hyperparameter sweep
 uv run python recipes/load_pretrained.py              # Load HuggingFace model
 uv run python recipes/profile_models.py               # Architecture profiling
 uv run python recipes/benchmark_compile.py            # mx.compile speedup benchmark
+uv run python recipes/distill_model.py                # Knowledge distillation
+uv run python recipes/quantize_and_generate.py        # 4-bit/8-bit quantization
+uv run python recipes/train_with_callbacks.py         # Logging, throughput, early stopping
+uv run python recipes/train_with_datasets.py          # TextDataset vs TokenDataset
+uv run python recipes/compare_schedules.py            # LR schedules and optimizers
+uv run python recipes/compare_optimizers.py           # Optimizer comparison (Experiment 3)
+uv run python recipes/compare_kv_cache.py             # MLA vs GQA KV cache (Experiment 4)
+uv run python recipes/analyze_experiments.py          # Statistical analysis tools
 ```
 
 ## CLI
