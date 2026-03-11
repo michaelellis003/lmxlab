@@ -264,6 +264,7 @@ Scripts for understanding the differences between transformer architectures.
 | [`compare_architectures.py`](#compare_architectures) | Parameter counts, KV cache sizes for all 8 architectures |
 | [`compare_training.py`](#compare_training) | Training dynamics: loss curves across architectures |
 | [`ablation_gpt_to_llama.py`](#ablation_gpt_to_llama) | Feature ablation: which LLaMA innovation matters most? |
+| [`compare_kv_cache.py`](#compare_kv_cache) | MLA vs GQA KV cache and generation speed (Exp 4) |
 
 ### compare_architectures
 
@@ -293,6 +294,18 @@ contributions.
 
 ```bash
 uv run python recipes/ablation_gpt_to_llama.py --steps 200
+```
+
+### compare_kv_cache
+
+Pre-registered Experiment 4: compares DeepSeek-style MLA against
+standard GQA at matched dimensions. Profiles forward pass throughput
+and autoregressive generation at increasing sequence lengths. Tests
+whether MLA's compressed KV cache provides speed or memory benefits
+on unified memory.
+
+```bash
+uv run python recipes/compare_kv_cache.py --d-model 128 --max-gen 512
 ```
 
 ---
@@ -358,6 +371,7 @@ Structured experiment infrastructure for reproducible research.
 | [`run_experiment.py`](#run_experiment) | Time-budgeted experiments with logging |
 | [`sweep_learning_rate.py`](#sweep_learning_rate) | Grid and random hyperparameter sweeps |
 | [`analyze_experiments.py`](#analyze_experiments) | Statistical analysis: CI, Cohen's d, simplicity score |
+| [`compare_optimizers.py`](#compare_optimizers) | Optimizer comparison on unified memory (Exp 3) |
 
 ### run_experiment
 
@@ -386,4 +400,15 @@ Demonstrates the experiment analysis toolkit on synthetic data. Covers
 
 ```bash
 uv run python recipes/analyze_experiments.py
+```
+
+### compare_optimizers
+
+Pre-registered Experiment 3: compares AdamW, SGD+momentum, Adafactor,
+and Lion across a learning rate sweep. Tests whether unified memory
+changes which optimizer wins. Reports best-of-sweep per optimizer,
+throughput (steps/s), and evaluates three competing hypotheses.
+
+```bash
+uv run python recipes/compare_optimizers.py --seeds 3 --steps 300
 ```
