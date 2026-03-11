@@ -12,6 +12,10 @@ from lmxlab.training.curriculum import (
     difficulty_curriculum,
     length_curriculum,
 )
+from lmxlab.training.distillation import (
+    distillation_loss,
+    soft_target_loss,
+)
 from lmxlab.training.dpo import dpo_loss
 from lmxlab.training.grpo import grpo_loss
 from lmxlab.training.mtp import MTPHead, MultiTokenPrediction
@@ -28,6 +32,7 @@ __all__ = [
     "create_optimizer",
     "create_schedule",
     "difficulty_curriculum",
+    "distillation_loss",
     "dpo_loss",
     "grpo_loss",
     "MTPHead",
@@ -35,4 +40,5 @@ __all__ = [
     "length_curriculum",
     "load_checkpoint",
     "save_checkpoint",
+    "soft_target_loss",
 ]

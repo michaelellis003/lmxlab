@@ -150,6 +150,7 @@ Specialized training objectives beyond standard next-token prediction.
 | [`train_mtp.py`](#train_mtp) | Multi-Token Prediction (auxiliary heads) |
 | [`train_moe.py`](#train_moe) | Mixture of Experts routing |
 | [`train_deltanet.py`](#train_deltanet) | Hybrid linear + softmax attention |
+| [`distill_model.py`](#distill_model) | Knowledge distillation (teacher → student) |
 
 ### train_dpo
 
@@ -197,6 +198,17 @@ fixed-size state — O(d^2) per token regardless of sequence length.
 
 ```bash
 uv run python recipes/train_deltanet.py --steps 300
+```
+
+### distill_model
+
+Knowledge distillation (Hinton et al., 2015): train a larger teacher
+(LLaMA-tiny), then transfer its knowledge to a smaller student
+(GPT-tiny) via temperature-scaled soft targets. Compares distilled
+student against a baseline student trained without distillation.
+
+```bash
+uv run python recipes/distill_model.py --temperature 4 --alpha 0.7
 ```
 
 ---
