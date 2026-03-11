@@ -54,6 +54,7 @@ nav:
   - Training: training/index.md
   - Experiments:
     - Methodology: experiments/methodology.md
+  - Developer Log: devlog/index.md
   - API Reference:
     - Overview: api/index.md
     - Core: api/core.md

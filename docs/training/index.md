@@ -108,6 +108,58 @@ batches = length_curriculum(
 )
 ```
 
+## LoRA Fine-Tuning
+
+LoRA (Low-Rank Adaptation) freezes the base model and trains small
+low-rank matrices on top. This reduces trainable parameters by 10-100x
+while preserving most fine-tuning quality.
+
+```python
+from lmt_metal.core.lora import apply_lora, merge_lora
+from lmt_metal.core.lora import save_lora_adapters, load_lora_adapters
+
+# 1. Apply LoRA to attention layers
+apply_lora(model, rank=8, alpha=16.0, targets=['attention'])
+
+# 2. Train (only LoRA params are trainable)
+trainer = Trainer(model, train_config)
+trainer.train(data)
+
+# 3. Save just the adapter (~MBs vs GBs for full model)
+save_lora_adapters('adapters/my-lora', model, rank=8, alpha=16.0)
+
+# 4. Later: load adapter onto a fresh base model
+load_lora_adapters('adapters/my-lora', model)
+
+# 5. Merge LoRA into base weights for inference (no overhead)
+merge_lora(model)
+```
+
+Target options:
+
+- `'attention'` — q/k/v/o projections (default, most common)
+- `'ffn'` — gate/up/down projections
+- Both: `targets=['attention', 'ffn']`
+
+### QLoRA
+
+QLoRA combines 4-bit quantized base weights with float16 LoRA adapters
+for maximum memory efficiency:
+
+```python
+from lmt_metal.core.quantize import quantize_model
+from lmt_metal.core.qlora import apply_qlora
+
+# Quantize base model to 4 bits
+quantize_model(model, bits=4)
+
+# Add LoRA on top of quantized layers
+apply_qlora(model, rank=8, targets=['attention'])
+
+# Train normally — base stays int4, LoRA trains in float16
+trainer.train(data)
+```
+
 ## Checkpoints
 
 Save and load via safetensors:
@@ -117,4 +169,18 @@ from lmt_metal.training.checkpoints import save_checkpoint, load_checkpoint
 
 save_checkpoint("checkpoints/step_100", model, optimizer, step=100)
 metadata = load_checkpoint("checkpoints/step_100", model, optimizer)
+```
+
+### LoRA Adapter Checkpoints
+
+For LoRA models, save only the adapter weights (much smaller):
+
+```python
+from lmt_metal.core.lora import save_lora_adapters, load_lora_adapters
+
+# Save only LoRA weights (~100KB-10MB)
+save_lora_adapters("adapters/my-lora", model, rank=8, alpha=16.0)
+
+# Load onto a new model (must have apply_lora called first)
+load_lora_adapters("adapters/my-lora", new_model)
 ```
