@@ -124,7 +124,7 @@ def main() -> None:
         generated = generate(
             model,
             prompt_arr,
-            max_new_tokens=80,
+            max_tokens=80,
             temperature=0.8,
             top_k=40,
         )
