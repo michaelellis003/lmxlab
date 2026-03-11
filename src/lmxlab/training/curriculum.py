@@ -1,6 +1,7 @@
 """Curriculum learning utilities."""
 
 from collections.abc import Iterator
+from typing import cast
 
 import mlx.core as mx
 
@@ -49,10 +50,9 @@ def length_curriculum(
 
             inputs_list = []
             targets_list = []
-            for s in starts.tolist():
-                s = int(s)
-                inputs_list.append(tokens[s : s + seq_len])
-                targets_list.append(tokens[s + 1 : s + seq_len + 1])
+            for s_val in cast(list[int], starts.tolist()):
+                inputs_list.append(tokens[s_val : s_val + seq_len])
+                targets_list.append(tokens[s_val + 1 : s_val + seq_len + 1])
 
             yield mx.stack(inputs_list), mx.stack(targets_list)
 
@@ -96,10 +96,9 @@ def difficulty_curriculum(
                 0, len(easy_data) - seq_len - 1, shape=(n_easy,)
             )
             mx.eval(starts)
-            for s in starts.tolist():
-                s = int(s)
-                inputs_list.append(easy_data[s : s + seq_len])
-                targets_list.append(easy_data[s + 1 : s + seq_len + 1])
+            for s_val in cast(list[int], starts.tolist()):
+                inputs_list.append(easy_data[s_val : s_val + seq_len])
+                targets_list.append(easy_data[s_val + 1 : s_val + seq_len + 1])
 
         # Sample from hard data
         if n_hard > 0:
@@ -107,9 +106,8 @@ def difficulty_curriculum(
                 0, len(hard_data) - seq_len - 1, shape=(n_hard,)
             )
             mx.eval(starts)
-            for s in starts.tolist():
-                s = int(s)
-                inputs_list.append(hard_data[s : s + seq_len])
-                targets_list.append(hard_data[s + 1 : s + seq_len + 1])
+            for s_val in cast(list[int], starts.tolist()):
+                inputs_list.append(hard_data[s_val : s_val + seq_len])
+                targets_list.append(hard_data[s_val + 1 : s_val + seq_len + 1])
 
         yield mx.stack(inputs_list), mx.stack(targets_list)

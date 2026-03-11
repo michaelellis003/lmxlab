@@ -50,33 +50,36 @@ def qwen35_config(
     Returns:
         ModelConfig for a Qwen 3.5-style model.
     """
-    shared = dict(
+    # DeltaNet block (majority of layers)
+    deltanet_block = BlockConfig(
+        attention="gated_deltanet",
         ffn="gated",
         norm="rms_norm",
+        position="none",
         d_model=d_model,
         n_heads=n_heads,
         d_ff=d_ff,
         bias=False,
         max_seq_len=max_seq_len,
         pre_norm=True,
-    )
-
-    # DeltaNet block (majority of layers)
-    deltanet_block = BlockConfig(
-        attention="gated_deltanet",
-        position="none",
         use_short_conv=True,
         conv_kernel_size=4,
-        **shared,
     )
 
     # GQA block (every global_every-th layer)
     gqa_block = BlockConfig(
         attention="gqa",
+        ffn="gated",
+        norm="rms_norm",
         position="rope",
+        d_model=d_model,
+        n_heads=n_heads,
         n_kv_heads=n_kv_heads,
+        d_ff=d_ff,
+        bias=False,
         rope_theta=rope_theta,
-        **shared,
+        max_seq_len=max_seq_len,
+        pre_norm=True,
     )
 
     # Build per-layer configs: 3:1 DeltaNet:GQA pattern

@@ -43,7 +43,9 @@ def gemma3_config(
     Returns:
         ModelConfig for a Gemma 3-style model.
     """
-    shared = dict(
+    # Default block uses sliding window (most common)
+    default_block = BlockConfig(
+        attention="sliding_window_gqa",
         ffn="gated",
         norm="rms_norm",
         position="rope",
@@ -55,19 +57,23 @@ def gemma3_config(
         rope_theta=rope_theta,
         max_seq_len=max_seq_len,
         pre_norm=True,
-    )
-
-    # Default block uses sliding window (most common)
-    default_block = BlockConfig(
-        attention="sliding_window_gqa",
         window_size=window_size,
-        **shared,
     )
 
     # Global block uses standard GQA
     global_block = BlockConfig(
         attention="gqa",
-        **shared,
+        ffn="gated",
+        norm="rms_norm",
+        position="rope",
+        d_model=d_model,
+        n_heads=n_heads,
+        n_kv_heads=n_kv_heads,
+        d_ff=d_ff,
+        bias=False,
+        rope_theta=rope_theta,
+        max_seq_len=max_seq_len,
+        pre_norm=True,
     )
 
     # Build per-layer configs: every global_every-th layer
