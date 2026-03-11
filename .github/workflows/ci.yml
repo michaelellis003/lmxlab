@@ -16,8 +16,8 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
       - run: uv sync --locked --extra dev
-      - run: uv run ruff check src/ tests/
-      - run: uv run ruff format --check src/ tests/
+      - run: uv run ruff check src/ tests/ recipes/
+      - run: uv run ruff format --check src/ tests/ recipes/
 
   test:
     runs-on: macos-14
