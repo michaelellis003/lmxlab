@@ -52,6 +52,7 @@ nav:
     - Unified Memory: architecture/unified-memory.md
   - Models: models/index.md
   - Training: training/index.md
+  - Inference: inference/index.md
   - Experiments:
     - Methodology: experiments/methodology.md
   - Developer Log: devlog/index.md
