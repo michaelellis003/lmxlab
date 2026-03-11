@@ -49,6 +49,7 @@ nav:
     - Configurable Block: architecture/configurable-block.md
     - MLX Idioms: architecture/mlx-idioms.md
     - Compiled Training: architecture/compiled-training.md
+    - Unified Memory: architecture/unified-memory.md
   - Models: models/index.md
   - Training: training/index.md
   - API Reference:
