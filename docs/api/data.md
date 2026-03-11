@@ -16,6 +16,10 @@ Tokenizers, datasets, and batching utilities.
     options:
       members: true
 
+::: lmt_metal.data.dataset.HFDataset
+    options:
+      members: true
+
 ## Batching
 
 ::: lmt_metal.data.batching
