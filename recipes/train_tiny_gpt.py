@@ -88,7 +88,7 @@ def main() -> None:
     generated = generate(
         model,
         prompt_ids,
-        max_new_tokens=100,
+        max_tokens=100,
         temperature=0.8,
         top_k=10,
     )
