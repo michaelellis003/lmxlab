@@ -213,6 +213,30 @@ dequantize_model(model)
 | 8 | ~4x | Near-lossless | Fine-tuning, high-quality inference |
 | 4 | ~8x | Good | Inference, fitting large models in memory |
 
+## LoRA (Low-Rank Adaptation)
+
+Fine-tune pretrained models efficiently by training only small low-rank matrices instead of all weights. Reduces trainable parameters by 10-100x.
+
+```python
+from lmt_metal.core.lora import apply_lora, merge_lora
+
+# Apply LoRA to attention layers (rank=8)
+apply_lora(model, rank=8, targets=['attention'])
+
+# Train — only LoRA params are trainable (~0.1% of total)
+trainer = Trainer(model, train_config)
+trainer.train(data)
+
+# Merge LoRA back into base weights for inference
+merge_lora(model)
+```
+
+**How it works:** Each targeted `nn.Linear` is replaced with `LoRALinear`, which computes `y = xW^T + scaling * x @ A @ B^T`. Matrix B is zero-initialized, so the model starts with the same output as the base model. Only A and B are trainable; W is frozen.
+
+**Targets:**
+- `'attention'` — q/k/v/o projections
+- `'ffn'` — gate/up/down projections
+
 ## Creating a Tiny Model
 
 Every architecture has a `_tiny()` factory for testing:
