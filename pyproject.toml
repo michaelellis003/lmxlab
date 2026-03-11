@@ -77,3 +77,14 @@ known-first-party = ["lmxlab"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "mlx.*",
+    "tiktoken",
+    "transformers",
+    "datasets",
+    "huggingface_hub",
+    "mlflow.*",
+]
+ignore_missing_imports = true
