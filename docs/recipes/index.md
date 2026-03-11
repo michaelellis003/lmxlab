@@ -264,6 +264,7 @@ Scripts for understanding the differences between transformer architectures.
 | [`compare_architectures.py`](#compare_architectures) | Parameter counts, KV cache sizes for all 8 architectures |
 | [`compare_training.py`](#compare_training) | Training dynamics: loss curves across architectures |
 | [`ablation_gpt_to_llama.py`](#ablation_gpt_to_llama) | Feature ablation: which LLaMA innovation matters most? |
+| [`compare_kv_cache.py`](#compare_kv_cache) | MLA vs GQA KV cache and generation speed (Exp 4) |
 
 ### compare_architectures
 
@@ -293,6 +294,18 @@ contributions.
 
 ```bash
 uv run python recipes/ablation_gpt_to_llama.py --steps 200
+```
+
+### compare_kv_cache
+
+Pre-registered Experiment 4: compares DeepSeek-style MLA against
+standard GQA at matched dimensions. Profiles forward pass throughput
+and autoregressive generation at increasing sequence lengths. Tests
+whether MLA's compressed KV cache provides speed or memory benefits
+on unified memory.
+
+```bash
+uv run python recipes/compare_kv_cache.py --d-model 128 --max-gen 512
 ```
 
 ---
