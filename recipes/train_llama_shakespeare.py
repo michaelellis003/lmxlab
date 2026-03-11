@@ -16,14 +16,14 @@ from pathlib import Path
 
 import mlx.core as mx
 
-from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.dataset import TextDataset, TokenDataset
-from lmt_metal.data.tokenizer import TiktokenTokenizer
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.generate import generate
-from lmt_metal.models.llama import llama_tiny
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.trainer import Trainer
+from lmxlab.data.batching import batch_iterator
+from lmxlab.data.dataset import TextDataset, TokenDataset
+from lmxlab.data.tokenizer import TiktokenTokenizer
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.generate import generate
+from lmxlab.models.llama import llama_tiny
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.trainer import Trainer
 
 DATA_URL = (
     "https://raw.githubusercontent.com/karpathy/"

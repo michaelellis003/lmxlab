@@ -1,15 +1,15 @@
-"""Tests for lmt-metal core modules."""
+"""Tests for lmxlab core modules."""
 
 import mlx.core as mx
 import pytest
 
-from lmt_metal.core.attention import GQA, MHA, attention_registry
-from lmt_metal.core.block import ConfigurableBlock
-from lmt_metal.core.config import BlockConfig, ModelConfig
-from lmt_metal.core.ffn import GatedFFN, StandardFFN, ffn_registry
-from lmt_metal.core.norm import LayerNorm, RMSNorm, norm_registry
-from lmt_metal.core.position import RoPE, Sinusoidal, position_registry
-from lmt_metal.core.registry import Registry
+from lmxlab.core.attention import GQA, MHA, attention_registry
+from lmxlab.core.block import ConfigurableBlock
+from lmxlab.core.config import BlockConfig, ModelConfig
+from lmxlab.core.ffn import GatedFFN, StandardFFN, ffn_registry
+from lmxlab.core.norm import LayerNorm, RMSNorm, norm_registry
+from lmxlab.core.position import RoPE, Sinusoidal, position_registry
+from lmxlab.core.registry import Registry
 
 # -- Config tests ----------------------------------------------------------
 

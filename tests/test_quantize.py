@@ -4,13 +4,13 @@ import mlx.core as mx
 import mlx.nn as nn
 import mlx.utils
 
-from lmt_metal.core.quantize import (
+from lmxlab.core.quantize import (
     dequantize_model,
     quantize_model,
 )
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.models.llama import llama_tiny
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.models.llama import llama_tiny
 
 
 class TestQuantizeModel:

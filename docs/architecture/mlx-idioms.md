@@ -2,7 +2,7 @@
 
 MLX looks like PyTorch at first glance -- `nn.Module`, `nn.Linear`,
 `mx.array` -- but the execution model is fundamentally different. This page
-covers the MLX patterns that lmt-metal relies on and how they differ from
+covers the MLX patterns that lmxlab relies on and how they differ from
 their PyTorch equivalents.
 
 ## Lazy evaluation and `mx.eval`
@@ -25,7 +25,7 @@ This matters because MLX can fuse operations and optimize the graph before
 executing it. But it also means you need to be deliberate about when
 evaluation happens.
 
-**The rule in lmt-metal:** call `mx.eval` at explicit boundaries -- after
+**The rule in lmxlab:** call `mx.eval` at explicit boundaries -- after
 a training step, after generation produces a token, after evaluation
 computes a loss. Do not scatter `mx.eval` calls inside model code.
 
@@ -46,7 +46,7 @@ PyTorch uses imperative autograd: call `loss.backward()`, then read
 `.grad` attributes on parameters. MLX uses a functional approach borrowed
 from JAX.
 
-=== "MLX (lmt-metal)"
+=== "MLX (lmxlab)"
 
     ```python
     import mlx.nn as nn
@@ -83,7 +83,7 @@ straightforward to compose with `mx.compile`.
 ## `mx.compile` for training steps
 
 `mx.compile` traces a function and produces an optimized version. In
-lmt-metal, the entire training step (forward + backward + optimizer update)
+lmxlab, the entire training step (forward + backward + optimizer update)
 is compiled:
 
 ```python
@@ -135,7 +135,7 @@ this -- there is no concept of device placement.
     ```
 
 This eliminates an entire category of bugs (tensors on different devices)
-and simplifies the code. In lmt-metal, you will never see a `.to()` call.
+and simplifies the code. In lmxlab, you will never see a `.to()` call.
 
 The tradeoff: you cannot have separate CPU and GPU memory pools. If your
 model and data together exceed unified memory, you are out of luck (there
@@ -144,7 +144,7 @@ is no automatic CPU offloading like PyTorch's `device_map='auto'`).
 ## `mx.fast.scaled_dot_product_attention`
 
 MLX provides a fused attention kernel that is substantially faster than
-manual Q @ K^T / sqrt(d) @ V. lmt-metal uses it in all attention modules:
+manual Q @ K^T / sqrt(d) @ V. lmxlab uses it in all attention modules:
 
 ```python
 out = mx.fast.scaled_dot_product_attention(
@@ -187,7 +187,7 @@ gradient dict rather than modifying the input.
 
 ## `nn.RoPE` and other built-in modules
 
-MLX provides several commonly-used components out of the box. lmt-metal wraps
+MLX provides several commonly-used components out of the box. lmxlab wraps
 them for registry compatibility but delegates to the MLX implementations:
 
 - `nn.RoPE` -- Rotary Position Embedding

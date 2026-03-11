@@ -1,7 +1,7 @@
 """Evaluate a language model with perplexity and bits-per-byte.
 
 Trains a tiny model, then evaluates on held-out data using
-lmt-metal's evaluation metrics. Demonstrates the eval pipeline:
+lmxlab's evaluation metrics. Demonstrates the eval pipeline:
 train/eval split, perplexity, BPB, and metric comparison across
 different architectures.
 
@@ -13,14 +13,14 @@ from dataclasses import replace
 
 import mlx.core as mx
 
-from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.tokenizer import CharTokenizer
-from lmt_metal.eval.metrics import bits_per_byte, perplexity
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.models.llama import llama_tiny
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.trainer import Trainer
+from lmxlab.data.batching import batch_iterator
+from lmxlab.data.tokenizer import CharTokenizer
+from lmxlab.eval.metrics import bits_per_byte, perplexity
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.models.llama import llama_tiny
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.trainer import Trainer
 
 TEXT = (
     "To be, or not to be, that is the question: "

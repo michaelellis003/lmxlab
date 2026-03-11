@@ -2,7 +2,7 @@
 
 Demonstrates the weight conversion pipeline:
 1. Download model from HuggingFace Hub
-2. Convert weight names from HF → lmt-metal format
+2. Convert weight names from HF → lmxlab format
 3. Load into LanguageModel
 4. Generate text
 
@@ -18,8 +18,8 @@ import argparse
 
 import mlx.core as mx
 
-from lmt_metal.models.convert import load_from_hf
-from lmt_metal.models.generate import generate
+from lmxlab.models.convert import load_from_hf
+from lmxlab.models.generate import generate
 
 
 def main() -> None:

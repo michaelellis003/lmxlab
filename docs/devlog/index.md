@@ -1,7 +1,7 @@
 # Developer Log
 
 A learning journal documenting design decisions, trade-offs, and lessons
-learned while building lmt-metal. Following Sebastian Raschka's approach:
+learned while building lmxlab. Following Sebastian Raschka's approach:
 honest uncertainty, practical grounding, and explaining *why* not just *what*.
 
 ## Design Decisions

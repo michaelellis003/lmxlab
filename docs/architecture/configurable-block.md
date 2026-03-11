@@ -1,6 +1,6 @@
 # Configurable Block
 
-`ConfigurableBlock` is the core abstraction in lmt-metal. It is a single
+`ConfigurableBlock` is the core abstraction in lmxlab. It is a single
 `nn.Module` that assembles a complete transformer block from registry
 components based on a `BlockConfig`. This page explains how it works and
 how to extend it.
@@ -123,11 +123,11 @@ Suppose you want to implement sliding window attention:
 **Step 1: Implement the module.**
 
 ```python
-# src/lmt_metal/core/sliding_attention.py
+# src/lmxlab/core/sliding_attention.py
 import mlx.core as mx
 import mlx.nn as nn
-from lmt_metal.core.attention import AttentionBase, attention_registry
-from lmt_metal.core.config import BlockConfig
+from lmxlab.core.attention import AttentionBase, attention_registry
+from lmxlab.core.config import BlockConfig
 
 @attention_registry.register('sliding_window')
 class SlidingWindowAttention(AttentionBase):
@@ -158,7 +158,7 @@ The key requirements:
 
 ```python
 # In your config factory or an __init__.py:
-from lmt_metal.core.sliding_attention import SlidingWindowAttention  # noqa: F401
+from lmxlab.core.sliding_attention import SlidingWindowAttention  # noqa: F401
 ```
 
 **Step 3: Reference it in a config.**

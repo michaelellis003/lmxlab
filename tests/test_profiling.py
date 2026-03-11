@@ -2,16 +2,16 @@
 
 import mlx.core as mx
 
-from lmt_metal.experiments.profiling import (
+from lmxlab.experiments.profiling import (
     benchmark_fn,
     count_parameters_by_module,
     memory_estimate,
     profile_forward,
     profile_generation,
 )
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.models.llama import llama_tiny
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.models.llama import llama_tiny
 
 
 class TestBenchmarkFn:

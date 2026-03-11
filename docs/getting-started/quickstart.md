@@ -11,7 +11,7 @@ describing the transformer block components. The simplest way is to use a
 preset factory function:
 
 ```python
-from lmt_metal.models.llama import llama_config
+from lmxlab.models.llama import llama_config
 
 # A small LLaMA-style model for experimentation
 config = llama_config(
@@ -30,7 +30,7 @@ selects the right components by name:
 
 ```python
 # This is what llama_config builds internally:
-from lmt_metal.core.config import BlockConfig, ModelConfig
+from lmxlab.core.config import BlockConfig, ModelConfig
 
 block = BlockConfig(
     attention='gqa',       # Grouped-Query Attention
@@ -66,7 +66,7 @@ block = BlockConfig(
 Once you have a config, build the model:
 
 ```python
-from lmt_metal.models.base import LanguageModel
+from lmxlab.models.base import LanguageModel
 
 model = LanguageModel(config)
 print(f'Parameters: {model.count_parameters():,}')
@@ -105,11 +105,11 @@ happens on the GPU automatically.
 
 ## 4. Text generation
 
-lmt-metal provides built-in generation with KV caching, sampling strategies,
+lmxlab provides built-in generation with KV caching, sampling strategies,
 and stop tokens:
 
 ```python
-from lmt_metal import generate
+from lmxlab import generate
 
 prompt = mx.array([[1, 234, 567]])  # Token IDs
 
@@ -148,7 +148,7 @@ For interactive applications, `stream_generate` yields tokens one at a
 time as they are produced:
 
 ```python
-from lmt_metal import stream_generate
+from lmxlab import stream_generate
 
 prompt = mx.array([[1, 234, 567]])
 for token_id in stream_generate(
@@ -168,7 +168,7 @@ The power of config factories: switch to DeepSeek-style MLA without changing
 any model code.
 
 ```python
-from lmt_metal.models.deepseek import deepseek_config
+from lmxlab.models.deepseek import deepseek_config
 
 ds_config = deepseek_config(
     vocab_size=32000,
@@ -191,10 +191,10 @@ for LLaMA, `'mla'` for DeepSeek.
 
 ## 6. Training (preview)
 
-lmt-metal includes a `Trainer` that handles the MLX training loop:
+lmxlab includes a `Trainer` that handles the MLX training loop:
 
 ```python
-from lmt_metal import Trainer, TrainConfig
+from lmxlab import Trainer, TrainConfig
 
 train_config = TrainConfig(
     learning_rate=3e-4,
@@ -213,17 +213,17 @@ and `mx.eval` for explicit evaluation boundaries. See
 
 ## 7. CLI tools
 
-lmt-metal includes a CLI for quick architecture exploration:
+lmxlab includes a CLI for quick architecture exploration:
 
 ```bash
 # List all architectures
-lmt-metal list
+lmxlab list
 
 # Show config details
-lmt-metal info llama --tiny
+lmxlab info llama --tiny
 
 # Count parameters with breakdown
-lmt-metal count deepseek --detail
+lmxlab count deepseek --detail
 ```
 
 ## 8. Recipes

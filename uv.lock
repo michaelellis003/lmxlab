@@ -848,7 +848,7 @@ wheels = [
 ]
 
 [[package]]
-name = "lmt-metal"
+name = "lmxlab"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

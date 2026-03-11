@@ -1,6 +1,6 @@
 # Architecture Overview
 
-lmt-metal's central claim is that GPT, LLaMA, and DeepSeek are not different
+lmxlab's central claim is that GPT, LLaMA, and DeepSeek are not different
 architectures -- they are different *configurations* of the same four building
 blocks. This page explains how the library makes that idea concrete.
 
@@ -10,15 +10,15 @@ Most ML codebases define one class per architecture: `GPTModel`, `LlamaModel`,
 `DeepSeekModel`. Each duplicates the transformer skeleton (embed, blocks, norm,
 head) with minor variations in the block internals.
 
-lmt-metal takes a different approach. There is one `LanguageModel` class and
+lmxlab takes a different approach. There is one `LanguageModel` class and
 one `ConfigurableBlock` class. Architecture variants are expressed as
 **config factories** -- plain functions that return a `ModelConfig`:
 
 ```python
 # These three calls produce the same type: ModelConfig
-from lmt_metal.models.llama import llama_config
-from lmt_metal.models.deepseek import deepseek_config
-from lmt_metal.core.config import BlockConfig, ModelConfig
+from lmxlab.models.llama import llama_config
+from lmxlab.models.deepseek import deepseek_config
+from lmxlab.core.config import BlockConfig, ModelConfig
 
 gpt_config = ModelConfig(
     block=BlockConfig(attention='mha', ffn='standard', norm='layer_norm', position='sinusoidal'),
@@ -56,8 +56,8 @@ Each registry is a `Registry[T]` instance -- a typed dictionary with a
 decorator-based registration API:
 
 ```python
-from lmt_metal.core.registry import Registry
-from lmt_metal.core.attention import attention_registry
+from lmxlab.core.registry import Registry
+from lmxlab.core.attention import attention_registry
 
 @attention_registry.register('gqa')
 class GQA(AttentionBase):
@@ -98,7 +98,7 @@ changing the wiring code.
 
 ## Config factories as architecture specifications
 
-The factory functions in `lmt_metal.models` are deliberately simple. Here is
+The factory functions in `lmxlab.models` are deliberately simple. Here is
 `llama_config` in its entirety:
 
 ```python

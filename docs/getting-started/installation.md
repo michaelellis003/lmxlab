@@ -3,14 +3,14 @@
 ## From PyPI
 
 ```bash
-pip install lmt-metal
+pip install lmxlab
 ```
 
 ## From source (development)
 
 ```bash
-git clone https://github.com/michaelellis003/lmt-metal.git
-cd lmt-metal
+git clone https://github.com/michaelellis003/lmxlab.git
+cd lmxlab
 pip install -e ".[dev]"
 ```
 
@@ -28,13 +28,13 @@ Install extras for additional functionality:
 
 ```bash
 # BPE tokenization (tiktoken)
-pip install lmt-metal[tokenizers]
+pip install lmxlab[tokenizers]
 
 # HuggingFace model loading
-pip install lmt-metal[hf]
+pip install lmxlab[hf]
 
 # Experiment tracking (MLflow)
-pip install lmt-metal[experiments]
+pip install lmxlab[experiments]
 
 # Everything for development
 pip install -e ".[dev]"
@@ -44,8 +44,8 @@ pip install -e ".[dev]"
 
 ```python
 import mlx.core as mx
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.models.base import LanguageModel
 
 config = gpt_tiny()
 model = LanguageModel(config)
@@ -61,7 +61,7 @@ print("Installation OK!")
 Or use the CLI:
 
 ```bash
-lmt-metal list
+lmxlab list
 ```
 
 ## Troubleshooting
@@ -72,7 +72,7 @@ back to CPU, but the shared library must still be available. Ensure
 `mlx>=0.25` installed correctly: `pip install mlx`.
 
 **`ModuleNotFoundError: No module named 'tiktoken'`:**
-Install the tokenizers extra: `pip install lmt-metal[tokenizers]`.
+Install the tokenizers extra: `pip install lmxlab[tokenizers]`.
 
 **Slow first run:**
 MLX compiles computation graphs on first execution. Subsequent runs

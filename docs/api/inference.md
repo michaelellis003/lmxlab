@@ -4,8 +4,8 @@ Sampling strategies and speculative decoding.
 
 ## Sampling
 
-::: lmt_metal.inference.sampling
+::: lmxlab.inference.sampling
 
 ## Speculative Decoding
 
-::: lmt_metal.inference.speculative
+::: lmxlab.inference.speculative

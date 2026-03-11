@@ -1,6 +1,6 @@
 # Experiment Methodology
 
-lmt-metal includes an experiment framework inspired by Karpathy's
+lmxlab includes an experiment framework inspired by Karpathy's
 [autoresearch](https://github.com/karpathy/autoresearch) patterns.
 This page explains how experiments are designed, run, and tracked.
 
@@ -13,7 +13,7 @@ This eliminates timing confounds and makes all experiments directly
 comparable — "what's the best loss achievable in N minutes?"
 
 ```python
-from lmt_metal.experiments.runner import ExperimentConfig
+from lmxlab.experiments.runner import ExperimentConfig
 
 config = ExperimentConfig(
     name="llama-lr-sweep",
@@ -35,7 +35,7 @@ When two approaches achieve similar metrics, prefer the simpler one
 function quantifies this:
 
 ```python
-from lmt_metal.experiments.analysis import simplicity_score
+from lmxlab.experiments.analysis import simplicity_score
 
 # Rewards improvements that use fewer parameters
 score = simplicity_score(
@@ -77,7 +77,7 @@ entry records:
 | `metrics` | All collected metrics |
 
 ```python
-from lmt_metal.experiments.tracking import ExperimentLog
+from lmxlab.experiments.tracking import ExperimentLog
 
 log = ExperimentLog("experiments/results.jsonl")
 
@@ -105,7 +105,7 @@ to filter results.
 Exhaustive search over discrete parameter values:
 
 ```python
-from lmt_metal.experiments.sweep import grid_sweep
+from lmxlab.experiments.sweep import grid_sweep
 
 for params in grid_sweep({
     "lr": [1e-4, 3e-4, 1e-3],
@@ -121,7 +121,7 @@ Sample from continuous ranges (often more efficient than grid
 search for high-dimensional spaces):
 
 ```python
-from lmt_metal.experiments.sweep import random_sweep
+from lmxlab.experiments.sweep import random_sweep
 
 for params in random_sweep(
     param_ranges={"lr": (1e-4, 5e-3), "d_model": (32, 256)},
@@ -136,7 +136,7 @@ MLX-specific profiling tools for understanding performance on
 Apple Silicon:
 
 ```python
-from lmt_metal.experiments.profiling import (
+from lmxlab.experiments.profiling import (
     benchmark_fn,
     memory_estimate,
     profile_forward,
@@ -175,7 +175,7 @@ Ready-to-run experiment scripts:
 ## Running Your Own Experiments
 
 ```python
-from lmt_metal.experiments.runner import ExperimentConfig, ExperimentRunner
+from lmxlab.experiments.runner import ExperimentConfig, ExperimentRunner
 
 # 1. Configure
 config = ExperimentConfig(

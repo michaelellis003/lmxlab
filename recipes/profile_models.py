@@ -13,18 +13,18 @@ import argparse
 
 import mlx.core as mx
 
-from lmt_metal.experiments.profiling import (
+from lmxlab.experiments.profiling import (
     count_parameters_by_module,
     memory_estimate,
     profile_forward,
     profile_generation,
 )
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.deepseek import deepseek_tiny
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.models.llama import llama_tiny
-from lmt_metal.models.mixtral import mixtral_tiny
-from lmt_metal.models.qwen import qwen_tiny
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.deepseek import deepseek_tiny
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.models.llama import llama_tiny
+from lmxlab.models.mixtral import mixtral_tiny
+from lmxlab.models.qwen import qwen_tiny
 
 ARCHITECTURES = {
     "GPT": gpt_tiny,

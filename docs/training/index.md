@@ -1,14 +1,14 @@
 # Training
 
-lmt-metal provides a compiled training loop built on MLX idioms: `nn.value_and_grad` for functional gradients, `mx.compile` for the full training step, and explicit `mx.eval()` boundaries.
+lmxlab provides a compiled training loop built on MLX idioms: `nn.value_and_grad` for functional gradients, `mx.compile` for the full training step, and explicit `mx.eval()` boundaries.
 
 ## Quick Start
 
 ```python
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.trainer import Trainer
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.trainer import Trainer
 
 model = LanguageModel(gpt_tiny())
 config = TrainConfig(learning_rate=1e-3, max_steps=100)
@@ -85,7 +85,7 @@ All use MLX's built-in learning rate schedules (`cosine_decay`, `linear_decay`).
 Train on preference pairs without reward modeling:
 
 ```python
-from lmt_metal.training.dpo import dpo_loss
+from lmxlab.training.dpo import dpo_loss
 
 loss = dpo_loss(model, ref_model, chosen, rejected, beta=0.1)
 ```
@@ -95,7 +95,7 @@ loss = dpo_loss(model, ref_model, chosen, rejected, beta=0.1)
 Policy gradient with group-relative rewards:
 
 ```python
-from lmt_metal.training.grpo import grpo_loss
+from lmxlab.training.grpo import grpo_loss
 
 loss = grpo_loss(model, ref_model, prompts, completions, rewards)
 ```
@@ -105,7 +105,7 @@ loss = grpo_loss(model, ref_model, prompts, completions, rewards)
 Train the model to predict multiple future tokens simultaneously:
 
 ```python
-from lmt_metal.training.mtp import MultiTokenPrediction
+from lmxlab.training.mtp import MultiTokenPrediction
 
 mtp = MultiTokenPrediction(model, n_predict=2, mtp_weight=0.3)
 logits, losses = mtp(input_ids, target_ids)
@@ -117,7 +117,7 @@ logits, losses = mtp(input_ids, target_ids)
 Gradually increase training difficulty:
 
 ```python
-from lmt_metal.training.curriculum import length_curriculum
+from lmxlab.training.curriculum import length_curriculum
 
 batches = length_curriculum(
     tokens, batch_size=32,
@@ -133,8 +133,8 @@ low-rank matrices on top. This reduces trainable parameters by 10-100x
 while preserving most fine-tuning quality.
 
 ```python
-from lmt_metal.core.lora import apply_lora, merge_lora
-from lmt_metal.core.lora import save_lora_adapters, load_lora_adapters
+from lmxlab.core.lora import apply_lora, merge_lora
+from lmxlab.core.lora import save_lora_adapters, load_lora_adapters
 
 # 1. Apply LoRA to attention layers
 apply_lora(model, rank=8, alpha=16.0, targets=['attention'])
@@ -165,8 +165,8 @@ QLoRA combines 4-bit quantized base weights with float16 LoRA adapters
 for maximum memory efficiency:
 
 ```python
-from lmt_metal.core.quantize import quantize_model
-from lmt_metal.core.qlora import apply_qlora
+from lmxlab.core.quantize import quantize_model
+from lmxlab.core.qlora import apply_qlora
 
 # Quantize base model to 4 bits
 quantize_model(model, bits=4)
@@ -188,7 +188,7 @@ and early stopping.
 Track tokens/sec and steps/sec during training:
 
 ```python
-from lmt_metal.training.callbacks import ThroughputMonitor
+from lmxlab.training.callbacks import ThroughputMonitor
 
 monitor = ThroughputMonitor(window_size=50)
 trainer = Trainer(model, config, callbacks=[monitor])
@@ -204,7 +204,7 @@ print(f'Avg step time: {1/monitor.avg_steps_per_sec:.3f} s/step')
 Stop training when validation loss stops improving:
 
 ```python
-from lmt_metal.training.callbacks import EarlyStopping
+from lmxlab.training.callbacks import EarlyStopping
 
 stopper = EarlyStopping(patience=5, min_delta=0.01)
 trainer = Trainer(model, config, callbacks=[stopper])
@@ -215,7 +215,7 @@ trainer = Trainer(model, config, callbacks=[stopper])
 Log training metrics to a file:
 
 ```python
-from lmt_metal.training.callbacks import MetricsLogger
+from lmxlab.training.callbacks import MetricsLogger
 
 logger = MetricsLogger('metrics.jsonl')
 trainer = Trainer(model, config, callbacks=[logger])
@@ -226,7 +226,7 @@ trainer = Trainer(model, config, callbacks=[logger])
 Save and load via safetensors:
 
 ```python
-from lmt_metal.training.checkpoints import save_checkpoint, load_checkpoint
+from lmxlab.training.checkpoints import save_checkpoint, load_checkpoint
 
 save_checkpoint("checkpoints/step_100", model, optimizer, step=100)
 metadata = load_checkpoint("checkpoints/step_100", model, optimizer)
@@ -237,7 +237,7 @@ metadata = load_checkpoint("checkpoints/step_100", model, optimizer)
 For LoRA models, save only the adapter weights (much smaller):
 
 ```python
-from lmt_metal.core.lora import save_lora_adapters, load_lora_adapters
+from lmxlab.core.lora import save_lora_adapters, load_lora_adapters
 
 # Save only LoRA weights (~100KB-10MB)
 save_lora_adapters("adapters/my-lora", model, rank=8, alpha=16.0)

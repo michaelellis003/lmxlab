@@ -1,13 +1,13 @@
 """Tests for experiment framework."""
 
-from lmt_metal.experiments.analysis import (
+from lmxlab.experiments.analysis import (
     compare_experiments,
     compute_statistics,
     simplicity_score,
 )
-from lmt_metal.experiments.runner import ExperimentConfig, ExperimentRunner
-from lmt_metal.experiments.sweep import grid_sweep, random_sweep
-from lmt_metal.experiments.tracking import ExperimentLog, LogEntry
+from lmxlab.experiments.runner import ExperimentConfig, ExperimentRunner
+from lmxlab.experiments.sweep import grid_sweep, random_sweep
+from lmxlab.experiments.tracking import ExperimentLog, LogEntry
 
 
 class TestLogEntry:

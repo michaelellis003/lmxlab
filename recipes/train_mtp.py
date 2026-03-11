@@ -20,14 +20,14 @@ from dataclasses import replace
 import mlx.core as mx
 import mlx.nn as nn
 
-from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.tokenizer import CharTokenizer
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.generate import generate
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.mtp import MultiTokenPrediction
-from lmt_metal.training.trainer import Trainer
+from lmxlab.data.batching import batch_iterator
+from lmxlab.data.tokenizer import CharTokenizer
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.generate import generate
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.mtp import MultiTokenPrediction
+from lmxlab.training.trainer import Trainer
 
 TEXT = (
     "To be, or not to be, that is the question: "

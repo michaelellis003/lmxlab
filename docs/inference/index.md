@@ -1,6 +1,6 @@
 # Inference
 
-lmt-metal provides generation utilities ranging from simple greedy
+lmxlab provides generation utilities ranging from simple greedy
 decoding to advanced strategies like speculative decoding and
 best-of-N sampling.
 
@@ -11,8 +11,8 @@ KV caching:
 
 ```python
 import mlx.core as mx
-from lmt_metal.models import LanguageModel, generate
-from lmt_metal.models.llama import llama_tiny
+from lmxlab.models import LanguageModel, generate
+from lmxlab.models.llama import llama_tiny
 
 model = LanguageModel(llama_tiny())
 mx.eval(model.parameters())
@@ -62,7 +62,7 @@ For interactive applications, `stream_generate` yields tokens one
 at a time:
 
 ```python
-from lmt_metal.models import stream_generate
+from lmxlab.models import stream_generate
 
 for token_id in stream_generate(
     model, prompt, max_tokens=100,
@@ -80,7 +80,7 @@ as they are generated rather than waiting for the full sequence.
 Generate multiple candidates and select the highest-scoring one:
 
 ```python
-from lmt_metal.inference import best_of_n
+from lmxlab.inference import best_of_n
 
 # Generate 8 candidates, return the best by log probability
 best = best_of_n(
@@ -106,7 +106,7 @@ For tasks with discrete answers (math, classification, code),
 generate multiple completions and count the most common:
 
 ```python
-from lmt_metal.inference import majority_vote
+from lmxlab.inference import majority_vote
 
 results = majority_vote(
     model, prompt, n=10,
@@ -125,8 +125,8 @@ when the draft model is much faster and agrees with the target
 most of the time.
 
 ```python
-from lmt_metal.inference import speculative_decode
-from lmt_metal.models.gpt import gpt_tiny, gpt_config
+from lmxlab.inference import speculative_decode
+from lmxlab.models.gpt import gpt_tiny, gpt_config
 
 # Small draft model
 draft = LanguageModel(gpt_tiny())
@@ -166,7 +166,7 @@ wall-clock speedup proportional to `draft_tokens * acceptance_rate`.
 After generation, evaluate quality with built-in metrics:
 
 ```python
-from lmt_metal.eval import perplexity, bits_per_byte
+from lmxlab.eval import perplexity, bits_per_byte
 
 # Perplexity on evaluation data
 ppl = perplexity(model, eval_batches)
@@ -178,7 +178,7 @@ bpb = bits_per_byte(model, eval_batches, bytes_per_token=3.5)
 For code generation tasks, use pass@k:
 
 ```python
-from lmt_metal.eval import pass_at_k, evaluate_pass_at_k
+from lmxlab.eval import pass_at_k, evaluate_pass_at_k
 
 # Single problem: 3 correct out of 10 samples
 p = pass_at_k(n=10, c=3, k=1)  # 0.3

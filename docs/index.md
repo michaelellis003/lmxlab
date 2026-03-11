@@ -1,23 +1,23 @@
-# lmt-metal
+# lmxlab
 
 An educational MLX library for transformer language models on Apple Silicon.
 
-## Why lmt-metal?
+## Why lmxlab?
 
 Most transformer implementations optimize for production at the cost of readability.
-lmt-metal takes the opposite approach: every layer is implemented from scratch in
+lmxlab takes the opposite approach: every layer is implemented from scratch in
 [MLX](https://ml-explore.github.io/mlx/), with the explicit goal of helping you
 understand how modern language models work.
 
 The core insight is that GPT, LLaMA, and DeepSeek are not fundamentally different
 architectures. They are different *configurations* of the same building blocks:
-attention, feed-forward networks, normalization, and positional encoding. lmt-metal
+attention, feed-forward networks, normalization, and positional encoding. lmxlab
 makes this concrete by using **config factories** instead of class hierarchies.
 
 ```python
-from lmt_metal.models.llama import llama_config
-from lmt_metal.models.deepseek import deepseek_config
-from lmt_metal.models.base import LanguageModel
+from lmxlab.models.llama import llama_config
+from lmxlab.models.deepseek import deepseek_config
+from lmxlab.models.base import LanguageModel
 
 # Same LanguageModel class, different configs
 llama = LanguageModel(llama_config(d_model=512, n_heads=8, n_kv_heads=4, n_layers=6))
@@ -44,14 +44,14 @@ assembled from registry components based on what the config asks for.
 ## Installation
 
 ```bash
-pip install lmt-metal
+pip install lmxlab
 ```
 
 Or from source:
 
 ```bash
-git clone https://github.com/michaelellis003/lmt-metal.git
-cd lmt-metal
+git clone https://github.com/michaelellis003/lmxlab.git
+cd lmxlab
 pip install -e ".[dev]"
 ```
 

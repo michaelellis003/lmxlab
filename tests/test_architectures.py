@@ -4,24 +4,24 @@ import mlx.core as mx
 import mlx.utils
 import pytest
 
-from lmt_metal.core.attention import SlidingWindowGQA, _apply_sliding_window
-from lmt_metal.core.config import BlockConfig, ModelConfig
-from lmt_metal.core.deltanet import GatedDeltaNet
-from lmt_metal.core.mla import MLA
-from lmt_metal.core.moe import MoEFFN, SharedExpertMoEFFN
-from lmt_metal.models.deepseek import deepseek_config, deepseek_tiny
-from lmt_metal.models.gemma import gemma_config, gemma_tiny
-from lmt_metal.models.gemma3 import gemma3_config, gemma3_tiny
-from lmt_metal.models.gpt import gpt_config, gpt_medium, gpt_small, gpt_tiny
-from lmt_metal.models.llama import (
+from lmxlab.core.attention import SlidingWindowGQA, _apply_sliding_window
+from lmxlab.core.config import BlockConfig, ModelConfig
+from lmxlab.core.deltanet import GatedDeltaNet
+from lmxlab.core.mla import MLA
+from lmxlab.core.moe import MoEFFN, SharedExpertMoEFFN
+from lmxlab.models.deepseek import deepseek_config, deepseek_tiny
+from lmxlab.models.gemma import gemma_config, gemma_tiny
+from lmxlab.models.gemma3 import gemma3_config, gemma3_tiny
+from lmxlab.models.gpt import gpt_config, gpt_medium, gpt_small, gpt_tiny
+from lmxlab.models.llama import (
     llama_7b,
     llama_13b,
     llama_config,
     llama_tiny,
 )
-from lmt_metal.models.mixtral import mixtral_config, mixtral_tiny
-from lmt_metal.models.qwen import qwen_config, qwen_tiny
-from lmt_metal.models.qwen35 import qwen35_config, qwen35_tiny
+from lmxlab.models.mixtral import mixtral_config, mixtral_tiny
+from lmxlab.models.qwen import qwen_config, qwen_tiny
+from lmxlab.models.qwen35 import qwen35_config, qwen35_tiny
 
 ALL_TINY_FACTORIES = [
     ("gpt", gpt_tiny),

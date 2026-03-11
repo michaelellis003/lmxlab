@@ -3,9 +3,9 @@
 import mlx.core as mx
 import pytest
 
-from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.dataset import TextDataset, TokenDataset
-from lmt_metal.data.tokenizer import CharTokenizer
+from lmxlab.data.batching import batch_iterator
+from lmxlab.data.dataset import TextDataset, TokenDataset
+from lmxlab.data.tokenizer import CharTokenizer
 
 
 class TestCharTokenizer:
@@ -143,20 +143,20 @@ class TestBatchIterator:
 class TestHFDataset:
     def test_class_exists(self):
         """HFDataset is importable."""
-        from lmt_metal.data.dataset import HFDataset
+        from lmxlab.data.dataset import HFDataset
 
         assert HFDataset is not None
 
     def test_has_required_methods(self):
         """HFDataset has token_iterator and batch_iterator."""
-        from lmt_metal.data.dataset import HFDataset
+        from lmxlab.data.dataset import HFDataset
 
         assert hasattr(HFDataset, "token_iterator")
         assert hasattr(HFDataset, "batch_iterator")
 
     def _make_hf_dataset(self, fake_data, tok, seq_len=4):
         """Create an HFDataset with mock data."""
-        from lmt_metal.data.dataset import HFDataset
+        from lmxlab.data.dataset import HFDataset
 
         with pytest.MonkeyPatch.context() as mp:
             import types
@@ -216,7 +216,7 @@ class TestHFDataset:
 class TestHFTokenizer:
     def test_protocol_compliance(self):
         """HFTokenizer has required Tokenizer protocol methods."""
-        from lmt_metal.data.tokenizer import HFTokenizer
+        from lmxlab.data.tokenizer import HFTokenizer
 
         assert hasattr(HFTokenizer, "encode")
         assert hasattr(HFTokenizer, "decode")
@@ -224,7 +224,7 @@ class TestHFTokenizer:
 
     def test_has_special_token_properties(self):
         """HFTokenizer exposes eos and bos token IDs."""
-        from lmt_metal.data.tokenizer import HFTokenizer
+        from lmxlab.data.tokenizer import HFTokenizer
 
         assert hasattr(HFTokenizer, "eos_token_id")
         assert hasattr(HFTokenizer, "bos_token_id")

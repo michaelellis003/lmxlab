@@ -3,15 +3,15 @@
 import mlx.core as mx
 import pytest
 
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.training.curriculum import (
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.training.curriculum import (
     difficulty_curriculum,
     length_curriculum,
 )
-from lmt_metal.training.dpo import _sequence_log_probs, dpo_loss
-from lmt_metal.training.grpo import grpo_loss
-from lmt_metal.training.mtp import MultiTokenPrediction
+from lmxlab.training.dpo import _sequence_log_probs, dpo_loss
+from lmxlab.training.grpo import grpo_loss
+from lmxlab.training.mtp import MultiTokenPrediction
 
 
 @pytest.fixture

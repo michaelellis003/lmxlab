@@ -1,10 +1,10 @@
-"""Tests for the lmt-metal CLI."""
+"""Tests for the lmxlab CLI."""
 
 import argparse
 import sys
 from unittest import mock
 
-from lmt_metal.cli import ARCHITECTURES, cmd_count, cmd_info, cmd_list, main
+from lmxlab.cli import ARCHITECTURES, cmd_count, cmd_info, cmd_list, main
 
 
 class TestCmdList:
@@ -101,14 +101,14 @@ class TestMain:
     """Test the main() entry point argument parsing."""
 
     def test_list_command(self, capsys):
-        with mock.patch.object(sys, "argv", ["lmt-metal", "list"]):
+        with mock.patch.object(sys, "argv", ["lmxlab", "list"]):
             main()
         output = capsys.readouterr().out
         assert "Available architectures:" in output
 
     def test_info_command(self, capsys):
         with mock.patch.object(
-            sys, "argv", ["lmt-metal", "info", "gpt", "--tiny"]
+            sys, "argv", ["lmxlab", "info", "gpt", "--tiny"]
         ):
             main()
         output = capsys.readouterr().out
@@ -116,14 +116,14 @@ class TestMain:
 
     def test_count_command(self, capsys):
         with mock.patch.object(
-            sys, "argv", ["lmt-metal", "count", "llama", "--tiny"]
+            sys, "argv", ["lmxlab", "count", "llama", "--tiny"]
         ):
             main()
         output = capsys.readouterr().out
         assert "parameters" in output
 
     def test_no_command_prints_help(self, capsys):
-        with mock.patch.object(sys, "argv", ["lmt-metal"]):
+        with mock.patch.object(sys, "argv", ["lmxlab"]):
             main()
         output = capsys.readouterr().out
-        assert "usage" in output.lower() or "lmt-metal" in output.lower()
+        assert "usage" in output.lower() or "lmxlab" in output.lower()

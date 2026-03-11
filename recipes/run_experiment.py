@@ -18,17 +18,17 @@ from dataclasses import replace
 
 import mlx.core as mx
 
-from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.tokenizer import CharTokenizer
-from lmt_metal.experiments.runner import ExperimentConfig, ExperimentRunner
-from lmt_metal.experiments.tracking import ExperimentLog
-from lmt_metal.models.base import LanguageModel
-from lmt_metal.models.deepseek import deepseek_tiny
-from lmt_metal.models.gpt import gpt_tiny
-from lmt_metal.models.llama import llama_tiny
-from lmt_metal.models.qwen import qwen_tiny
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.trainer import Trainer
+from lmxlab.data.batching import batch_iterator
+from lmxlab.data.tokenizer import CharTokenizer
+from lmxlab.experiments.runner import ExperimentConfig, ExperimentRunner
+from lmxlab.experiments.tracking import ExperimentLog
+from lmxlab.models.base import LanguageModel
+from lmxlab.models.deepseek import deepseek_tiny
+from lmxlab.models.gpt import gpt_tiny
+from lmxlab.models.llama import llama_tiny
+from lmxlab.models.qwen import qwen_tiny
+from lmxlab.training.config import TrainConfig
+from lmxlab.training.trainer import Trainer
 
 ARCH_FACTORIES = {
     "gpt": gpt_tiny,
