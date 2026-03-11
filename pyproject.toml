@@ -3,7 +3,21 @@ name = "lmt-metal"
 version = "0.1.0"
 description = "Educational MLX library for transformer language models on Apple Silicon"
 license = "MIT"
+readme = "README.md"
 requires-python = ">=3.12"
+authors = [
+    { name = "Michael Ellis" },
+]
+keywords = ["mlx", "transformers", "apple-silicon", "language-models", "deep-learning"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "mlx>=0.25",
     "numpy",
@@ -21,6 +35,11 @@ dev = [
     "mkdocs-material",
     "mkdocstrings[python]",
 ]
+
+[project.urls]
+Homepage = "https://github.com/michaelellis003/lmt-metal"
+Repository = "https://github.com/michaelellis003/lmt-metal"
+Documentation = "https://michaelellis003.github.io/lmt-metal/"
 
 [project.scripts]
 lmt-metal = "lmt_metal.cli:main"
