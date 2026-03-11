@@ -39,7 +39,7 @@ assembled from registry components based on what the config asks for.
 - **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
 - **HuggingFace integration**: load pretrained weights from the Hub
 - **Experiment framework**: time-budgeted runs, results tracking, sweeps, MLX profiling
-- **21 recipe scripts**: training, fine-tuning, DPO, GRPO, MTP, curriculum learning, evaluation, streaming generation, checkpointing, ablation studies, architecture comparison, benchmarking
+- **22 recipe scripts**: training, fine-tuning, DPO, GRPO, MTP, curriculum learning, best-of-N sampling, evaluation, streaming generation, checkpointing, ablation studies, architecture comparison, benchmarking
 
 ## Quick start
 
@@ -83,6 +83,7 @@ uv run python recipes/train_grpo.py                   # GRPO reward optimization
 uv run python recipes/train_curriculum.py              # Curriculum learning
 uv run python recipes/train_mtp.py --n-predict 2      # Multi-token prediction
 uv run python recipes/train_moe.py --experts 4        # Mixture of Experts
+uv run python recipes/advanced_sampling.py             # Best-of-N and majority vote
 uv run python recipes/speculative_decoding.py         # Draft-then-verify generation
 uv run python recipes/evaluate_model.py               # Evaluate with perplexity/BPB
 uv run python recipes/interactive_generate.py         # Streaming token-by-token generation
