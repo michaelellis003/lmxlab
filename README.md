@@ -39,7 +39,7 @@ assembled from registry components based on what the config asks for.
 - **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
 - **HuggingFace integration**: load pretrained weights from the Hub
 - **Experiment framework**: time-budgeted runs, results tracking, sweeps, MLX profiling
-- **14 recipe scripts**: training, fine-tuning, ablation studies, architecture comparison, benchmarking
+- **15 recipe scripts**: training, fine-tuning, evaluation, ablation studies, architecture comparison, benchmarking
 
 ## Quick start
 
@@ -74,13 +74,18 @@ Ready-to-run scripts in `recipes/`:
 uv run python recipes/train_tiny_gpt.py              # Train a tiny GPT
 uv run python recipes/train_llama_shakespeare.py      # LLaMA on Shakespeare
 uv run python recipes/compare_training.py             # Compare architectures
+uv run python recipes/compare_architectures.py        # Side-by-side architecture comparison
 uv run python recipes/ablation_gpt_to_llama.py        # Feature ablation study
 uv run python recipes/finetune_lora.py --rank 8       # LoRA fine-tuning
 uv run python recipes/finetune_qlora.py --bits 4      # QLoRA (4-bit + LoRA)
 uv run python recipes/train_moe.py --experts 4        # Mixture of Experts
 uv run python recipes/speculative_decoding.py         # Draft-then-verify generation
+uv run python recipes/evaluate_model.py               # Evaluate with perplexity/BPB
+uv run python recipes/run_experiment.py               # Structured experiment with logging
 uv run python recipes/sweep_learning_rate.py          # Hyperparameter sweep
+uv run python recipes/load_pretrained.py              # Load HuggingFace model
 uv run python recipes/profile_models.py               # Architecture profiling
+uv run python recipes/benchmark_compile.py            # mx.compile speedup benchmark
 ```
 
 ## CLI
@@ -129,6 +134,9 @@ Full documentation at [michaelellis003.github.io/lmt-metal](https://michaelellis
 - [Architecture Overview](https://michaelellis003.github.io/lmt-metal/architecture/overview/)
 - [MLX Idioms](https://michaelellis003.github.io/lmt-metal/architecture/mlx-idioms/)
 - [Models Comparison](https://michaelellis003.github.io/lmt-metal/models/)
+- [Data Pipeline](https://michaelellis003.github.io/lmt-metal/data/)
+- [Training](https://michaelellis003.github.io/lmt-metal/training/)
+- [Inference](https://michaelellis003.github.io/lmt-metal/inference/)
 - [API Reference](https://michaelellis003.github.io/lmt-metal/api/)
 
 ## License
