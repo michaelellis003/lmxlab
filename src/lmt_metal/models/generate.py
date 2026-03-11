@@ -60,6 +60,53 @@ def _sample_top_k(logits: mx.array, top_k: int) -> mx.array:
     return mx.take_along_axis(top_indices, token_idx[:, None], axis=-1)
 
 
+def _apply_repetition_penalty(
+    logits: mx.array,
+    generated_ids: list[mx.array],
+    penalty: float,
+) -> mx.array:
+    """Apply repetition penalty to discourage repeated tokens.
+
+    Tokens that have already been generated get their logits
+    divided by the penalty (if positive) or multiplied (if
+    negative). A penalty of 1.0 has no effect.
+
+    This follows the approach from Keskar et al. (2019): for each
+    previously generated token, divide its logit by the penalty
+    if the logit is positive, or multiply by the penalty if
+    negative. This consistently reduces the probability of the
+    token regardless of logit sign.
+
+    Args:
+        logits: Raw logits (batch, vocab).
+        generated_ids: List of previously generated token arrays.
+        penalty: Repetition penalty factor (> 1.0 discourages
+            repetition).
+
+    Returns:
+        Modified logits.
+    """
+    if not generated_ids or penalty == 1.0:
+        return logits
+
+    # Collect all generated token IDs into a set per batch
+    all_ids = mx.concatenate(generated_ids, axis=1)  # (batch, n)
+
+    # Build a mask of which vocab entries have been generated
+    # by scattering 1s at generated positions
+    batch_size, vocab_size = logits.shape
+    mask = mx.zeros_like(logits)
+    for i in range(all_ids.shape[1]):
+        token_ids = all_ids[:, i]  # (batch,)
+        one_hot = mx.one_hot(token_ids, vocab_size)
+        mask = mx.maximum(mask, one_hot)
+
+    # Apply penalty: divide positive, multiply negative
+    penalized = mx.where(logits > 0, logits / penalty, logits * penalty)
+    # Only apply to tokens that appeared before
+    return mx.where(mask > 0, penalized, logits)
+
+
 def generate(
     model: LanguageModel,
     prompt: mx.array,
@@ -67,6 +114,7 @@ def generate(
     temperature: float = 1.0,
     top_k: int = 0,
     top_p: float = 1.0,
+    repetition_penalty: float = 1.0,
 ) -> mx.array:
     """Generate tokens autoregressively with KV caching.
 
@@ -77,6 +125,8 @@ def generate(
         temperature: Sampling temperature (0 = greedy).
         top_k: If > 0, only sample from top-k tokens.
         top_p: If < 1.0, use nucleus sampling.
+        repetition_penalty: Penalty for repeating tokens (> 1.0
+            discourages repetition, 1.0 = no effect).
 
     Returns:
         Generated token IDs of shape
@@ -89,10 +139,16 @@ def generate(
     logits, cache = model(tokens, cache=cache)
     mx.eval(logits, *[c for pair in cache for c in pair])
 
-    generated = []
+    generated: list[mx.array] = []
     for _ in range(max_tokens):
         # Get logits for last position
         next_logits = logits[:, -1, :]
+
+        # Apply repetition penalty
+        if repetition_penalty != 1.0:
+            next_logits = _apply_repetition_penalty(
+                next_logits, generated, repetition_penalty
+            )
 
         # Apply temperature
         if temperature > 0:
