@@ -133,6 +133,65 @@ class TestTrainer:
         assert len(history) == 5
 
 
+class TestGradientAccumulation:
+    def test_accumulated_step(self, tiny_model, tiny_batches):
+        """Accumulated step runs and produces loss."""
+        config = TrainConfig(
+            max_steps=1,
+            compile_step=False,
+            learning_rate=1e-3,
+            grad_accumulation_steps=2,
+        )
+        trainer = Trainer(tiny_model, config)
+        metrics = trainer.train_step_accumulated(tiny_batches[:2])
+        assert "loss" in metrics
+        assert metrics["loss"] > 0
+
+    def test_train_with_accumulation(self, tiny_model, tiny_batches):
+        """Training loop with accumulation completes."""
+        config = TrainConfig(
+            max_steps=3,
+            compile_step=False,
+            learning_rate=1e-3,
+            grad_accumulation_steps=2,
+        )
+        trainer = Trainer(tiny_model, config)
+        # 10 batches, accum=2 -> 5 optimizer steps, capped at 3
+        history = trainer.train(iter(tiny_batches))
+        assert len(history) == 3
+
+    def test_accumulation_fewer_batches(self, tiny_model):
+        """Remaining micro-batches are still processed."""
+        # 3 batches with accum_steps=2 -> 1 full step + 1 partial
+        batches = []
+        for _ in range(3):
+            tokens = mx.random.randint(0, 256, shape=(4, 17))
+            batches.append((tokens[:, :-1], tokens[:, 1:]))
+
+        config = TrainConfig(
+            max_steps=10,
+            compile_step=False,
+            learning_rate=1e-3,
+            grad_accumulation_steps=2,
+        )
+        trainer = Trainer(tiny_model, config)
+        history = trainer.train(iter(batches))
+        # 3 batches / 2 accum = 1 full + 1 partial = 2 steps
+        assert len(history) == 2
+
+    def test_accumulation_1_is_normal(self, tiny_model, tiny_batches):
+        """grad_accumulation_steps=1 behaves like normal training."""
+        config = TrainConfig(
+            max_steps=3,
+            compile_step=False,
+            learning_rate=1e-3,
+            grad_accumulation_steps=1,
+        )
+        trainer = Trainer(tiny_model, config)
+        history = trainer.train(iter(tiny_batches))
+        assert len(history) == 3
+
+
 class TestCheckpoints:
     def test_save_load_roundtrip(self, tiny_model, tmp_path):
         """Weights survive save/load roundtrip."""

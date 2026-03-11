@@ -27,10 +27,28 @@ history = trainer.train(data_iterator)
 | `warmup_steps` | 100 | Linear warmup steps |
 | `max_steps` | 1000 | Maximum training steps |
 | `batch_size` | 32 | Training batch size |
+| `grad_accumulation_steps` | 1 | Micro-batches per optimizer step |
 | `max_grad_norm` | 1.0 | Gradient clipping norm |
 | `optimizer` | "adamw" | Optimizer name |
 | `lr_schedule` | "cosine" | Learning rate schedule |
 | `compile_step` | True | Whether to `mx.compile` the step |
+
+## Gradient Accumulation
+
+Simulate larger batch sizes by accumulating gradients over multiple
+micro-batches before each optimizer update:
+
+```python
+config = TrainConfig(
+    batch_size=8,                  # Each micro-batch has 8 samples
+    grad_accumulation_steps=4,     # Accumulate 4 micro-batches
+    # Effective batch size: 8 * 4 = 32
+)
+```
+
+Gradients are averaged across micro-batches, then clipped and applied
+in a single optimizer step. This is useful when the effective batch
+size you want doesn't fit in memory.
 
 ## Compiled Training Step
 
