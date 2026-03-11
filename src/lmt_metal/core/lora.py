@@ -174,7 +174,7 @@ def apply_lora(
     if targets is None:
         targets = ["attention"]
 
-    def _maybe_lora(path, m):
+    def _maybe_lora(path: str, m: nn.Module) -> nn.Module:
         if not isinstance(m, nn.Linear):
             return m
         # Check if path matches any target
@@ -223,7 +223,7 @@ def merge_lora(model: nn.Module) -> None:
         model: Model to merge (in-place).
     """
 
-    def _maybe_merge(_path, m):
+    def _maybe_merge(_path: str, m: nn.Module) -> nn.Module:
         if isinstance(m, LoRALinear):
             return m.to_linear()
         return m

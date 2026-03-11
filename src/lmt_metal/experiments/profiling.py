@@ -27,6 +27,7 @@ Example::
 
 import math
 import time
+from collections.abc import Callable
 from typing import Any
 
 import mlx.core as mx
@@ -35,7 +36,7 @@ import mlx.utils
 
 
 def benchmark_fn(
-    fn,
+    fn: Callable[[], Any],
     n_warmup: int = 3,
     n_iter: int = 10,
 ) -> dict[str, float]:
@@ -156,7 +157,7 @@ def profile_forward(
     """
     batch_size, seq_len = tokens.shape
 
-    def run():
+    def run() -> None:
         logits, _ = model(tokens)
         mx.eval(logits)
 

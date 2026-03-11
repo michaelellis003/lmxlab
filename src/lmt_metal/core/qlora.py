@@ -192,7 +192,7 @@ def apply_qlora(
     if targets is None:
         targets = ["attention"]
 
-    def _maybe_qlora(path, m):
+    def _maybe_qlora(path: str, m: nn.Module) -> nn.Module:
         if not isinstance(m, nn.QuantizedLinear):
             return m
         for target in targets:

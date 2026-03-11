@@ -63,7 +63,7 @@ def dequantize_model(model: nn.Module) -> None:
         model: Model to dequantize (modified in-place).
     """
 
-    def _maybe_dequantize(_path, m):
+    def _maybe_dequantize(_path: str, m: nn.Module) -> nn.Module:
         if isinstance(m, nn.QuantizedLinear):
             # Reconstruct float weight from quantized form
             weight = mx.dequantize(
