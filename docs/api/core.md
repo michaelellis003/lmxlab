@@ -38,6 +38,12 @@ The core package provides the building blocks for all architectures.
     options:
       members: ["__init__", "__call__"]
 
+## Gated DeltaNet
+
+::: lmt_metal.core.deltanet.GatedDeltaNet
+    options:
+      members: ["__init__", "__call__"]
+
 ## Feed-Forward Networks
 
 ::: lmt_metal.core.ffn.StandardFFN
