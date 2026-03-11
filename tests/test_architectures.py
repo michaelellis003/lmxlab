@@ -6,7 +6,7 @@ import pytest
 
 from lmt_metal.core.config import BlockConfig, ModelConfig
 from lmt_metal.core.mla import MLA
-from lmt_metal.core.moe import MoEFFN
+from lmt_metal.core.moe import MoEFFN, SharedExpertMoEFFN
 from lmt_metal.models.deepseek import deepseek_config, deepseek_tiny
 from lmt_metal.models.gemma import gemma_config, gemma_tiny
 from lmt_metal.models.gpt import gpt_config, gpt_tiny
@@ -178,8 +178,8 @@ class TestMLA:
         _, cache = mla(x)
         mx.eval(cache[0], cache[1])
 
-        # Cache[0] is compressed latent (B, 1, L, kv_lora_rank)
-        assert cache[0].shape[-1] == 16  # kv_lora_rank, not d_model
+        # Cache[0] is compressed latent (B, L, kv_lora_rank)
+        assert cache[0].shape == (1, 8, 16)  # kv_lora_rank
 
     def test_kv_cache_incremental(self):
         """Test that MLA KV cache works for autoregressive generation."""
@@ -206,7 +206,8 @@ class TestMLA:
         mx.eval(out2, cache2[0], cache2[1])
 
         # Cache should grow by 1 in sequence dimension
-        assert cache2[0].shape[2] == 5  # 4 + 1
+        # c_kv cache is (B, L, kv_lora_rank)
+        assert cache2[0].shape[1] == 5  # 4 + 1
 
     def test_requires_kv_lora_rank(self):
         """MLA should raise if kv_lora_rank is not set."""
@@ -247,5 +248,59 @@ class TestMLA:
 
         x = mx.random.normal(shape=(1, 4, 64))
         out, cache = mla(x)
+        mx.eval(out)
+        assert out.shape == x.shape
+
+
+class TestSharedExpertMoEFFN:
+    """Tests for MoE with shared experts."""
+
+    def test_output_shape(self):
+        """Output shape must match input shape."""
+        config = BlockConfig(d_model=64, n_heads=4, d_ff=128)
+        moe = SharedExpertMoEFFN(config, n_experts=4, top_k=2, n_shared=1)
+        mx.eval(moe.parameters())
+
+        x = mx.random.normal(shape=(2, 8, 64))
+        out = moe(x)
+        mx.eval(out)
+        assert out.shape == x.shape
+
+    def test_shared_expert_always_active(self):
+        """Shared expert should contribute even for a single token."""
+        config = BlockConfig(d_model=64, n_heads=4, d_ff=128)
+        moe = SharedExpertMoEFFN(config, n_experts=4, top_k=1, n_shared=1)
+        mx.eval(moe.parameters())
+
+        x = mx.random.normal(shape=(1, 1, 64))
+        out = moe(x)
+        mx.eval(out)
+
+        # Output should not be zero -- shared expert always
+        # contributes regardless of routing
+        assert mx.any(out != 0.0).item()
+
+    def test_more_experts_more_params(self):
+        """More routed experts means more parameters."""
+        config = BlockConfig(d_model=64, n_heads=4, d_ff=128)
+        moe4 = SharedExpertMoEFFN(config, n_experts=4, top_k=2, n_shared=1)
+        moe8 = SharedExpertMoEFFN(config, n_experts=8, top_k=2, n_shared=1)
+        mx.eval(moe4.parameters(), moe8.parameters())
+
+        p4 = sum(p.size for _, p in mlx.utils.tree_flatten(moe4.parameters()))
+        p8 = sum(p.size for _, p in mlx.utils.tree_flatten(moe8.parameters()))
+        assert p8 > p4
+
+    def test_bias_routing_preserves_shape(self):
+        """Bias-based routing should not change output shape."""
+        config = BlockConfig(d_model=64, n_heads=4, d_ff=128)
+        moe = SharedExpertMoEFFN(config, n_experts=4, top_k=2, n_shared=1)
+        mx.eval(moe.parameters())
+
+        # Set non-zero bias to exercise the bias path
+        moe.expert_bias = mx.array([1.0, -1.0, 0.5, -0.5])
+
+        x = mx.random.normal(shape=(2, 8, 64))
+        out = moe(x)
         mx.eval(out)
         assert out.shape == x.shape

@@ -1,19 +1,20 @@
 """Multi-Head Latent Attention (MLA) from DeepSeek V2/V3.
 
 MLA compresses KV representations into a low-rank latent space
-before caching, reducing KV cache size by up to 28x compared to
-standard MHA. The key insight: instead of caching n_kv_heads * head_dim
-per token, cache a single kv_lora_rank-dimensional latent vector.
+before caching, reducing KV cache size dramatically compared to
+standard MHA.
 
 Architecture:
-    1. Down-project KV: x -> c_kv (d_model -> kv_lora_rank)
-    2. Cache c_kv (compressed latent, much smaller)
-    3. Up-project: c_kv -> K, V (kv_lora_rank -> n_heads * head_dim)
-    4. Optionally compress Q too: x -> c_q -> Q
+    1. Down-project: x -> (c_kv, k_pe) where c_kv is the latent
+       and k_pe is a shared single-head RoPE key
+    2. Cache only c_kv and k_pe (much smaller than full K, V)
+    3. Up-project: c_kv -> K_nope, V (multi-head, from latent)
+    4. Decoupled RoPE: apply RoPE only to k_pe and q_pe
+    5. Full key: K = concat(K_nope, broadcast(k_pe))
 
-RoPE handling: A portion of Q and K dimensions use RoPE (rope_dim),
-while the rest are "nope" (no position encoding). This is the
-"decoupled RoPE" approach from DeepSeek V2.
+Cache per token = kv_lora_rank + rope_dim vs 2*n_heads*head_dim
+for MHA. With typical values (512 + 64 = 576 vs 2*128*128 = 32768),
+this is a ~57x reduction.
 
 Reference: DeepSeek-V2 (arxiv.org/abs/2405.04434)
 """
@@ -30,11 +31,13 @@ class MLA(AttentionBase):
     """Multi-Head Latent Attention.
 
     Compresses KV into a low-rank latent for efficient caching.
+    Uses a shared single-head RoPE key (MQA-style) for the
+    position-dependent portion of K.
 
     Config requirements:
         kv_lora_rank: Latent dimension for KV compression.
         q_lora_rank: Latent dimension for Q compression (optional).
-        rope_dim: Dimensions allocated for RoPE (rest are nope).
+        rope_dim: Dimensions allocated for decoupled RoPE.
     """
 
     def __init__(self, config: BlockConfig) -> None:
@@ -49,24 +52,22 @@ class MLA(AttentionBase):
         self.rope_dim = config.rope_dim or 0
         self.nope_dim = self.head_dim - self.rope_dim
 
-        # KV compression: down-project to latent, up-project to K and V
-        self.kv_down = nn.Linear(self.d_model, kv_lora_rank, bias=False)
-        self.kv_norm = nn.RMSNorm(kv_lora_rank)
-        # Up-project latent to K (nope part) and V
-        self.k_up = nn.Linear(
-            kv_lora_rank, self.n_heads * self.nope_dim, bias=False
-        )
-        self.v_up = nn.Linear(
-            kv_lora_rank, self.n_heads * self.head_dim, bias=False
-        )
-
-        # Decoupled RoPE: separate projection for rope-applied K dims
+        # KV down-projection: produces latent + shared rope key
+        # in a single projection for efficiency
+        kv_down_dim = kv_lora_rank
         if self.rope_dim > 0:
-            self.k_rope_proj = nn.Linear(
-                self.d_model, self.n_heads * self.rope_dim, bias=False
-            )
+            kv_down_dim += self.rope_dim  # shared single-head
+        self.kv_down = nn.Linear(self.d_model, kv_down_dim, bias=False)
+        self.kv_norm = nn.RMSNorm(kv_lora_rank)
 
-        # Q projection (optionally compressed)
+        # KV up-projection: latent -> multi-head K_nope and V
+        self.kv_up = nn.Linear(
+            kv_lora_rank,
+            self.n_heads * (self.nope_dim + self.head_dim),
+            bias=False,
+        )
+
+        # Q projection (optionally compressed via LoRA)
         if self.q_lora_rank is not None:
             self.q_down = nn.Linear(self.d_model, self.q_lora_rank, bias=False)
             self.q_norm = nn.RMSNorm(self.q_lora_rank)
@@ -87,7 +88,9 @@ class MLA(AttentionBase):
         # RoPE for decoupled dimensions
         if self.rope_dim > 0:
             self._rope = nn.RoPE(
-                self.rope_dim, traditional=False, base=config.rope_theta
+                self.rope_dim,
+                traditional=False,
+                base=config.rope_theta,
             )
 
     def __call__(
@@ -108,58 +111,60 @@ class MLA(AttentionBase):
         q = q.reshape(B, L, self.n_heads, self.head_dim)
         q = q.transpose(0, 2, 1, 3)  # (B, n_heads, L, head_dim)
 
-        # --- KV compression ---
-        c_kv = self.kv_norm(self.kv_down(x))  # (B, L, kv_lora_rank)
+        # --- KV down-projection ---
+        compressed = self.kv_down(x)  # (B, L, kv_lora_rank [+ rope])
 
-        # Cache the compressed latent (much smaller than full KV)
-        # Also cache rope K if using decoupled RoPE
         if self.rope_dim > 0:
-            k_rope = self.k_rope_proj(x)  # (B, L, n_heads * rope_dim)
-            k_rope = k_rope.reshape(
-                B, L, self.n_heads, self.rope_dim
-            ).transpose(0, 2, 1, 3)
+            # Split into latent and shared rope key
+            c_kv = compressed[:, :, : self.kv_lora_rank]
+            k_pe = compressed[:, :, self.kv_lora_rank :]
 
-            # Apply RoPE to the rope dimensions
+            # k_pe is shared single-head: (B, L, rope_dim)
+            # -> (B, 1, L, rope_dim) for MQA-style broadcast
+            k_pe = k_pe[:, None, :, :]
+
+            # Apply RoPE
             offset = 0
             if cache is not None:
-                offset = cache[0].shape[2]
-            q_rope = q[:, :, :, : self.rope_dim]
+                offset = cache[0].shape[1]
+            q_pe = q[:, :, :, : self.rope_dim]
             q_nope = q[:, :, :, self.rope_dim :]
-            q_rope = self._rope(q_rope, offset=offset)
-            k_rope = self._rope(k_rope, offset=offset)
-            q = mx.concatenate([q_rope, q_nope], axis=-1)
+            q_pe = self._rope(q_pe, offset=offset)
+            k_pe = self._rope(k_pe, offset=offset)
+            q = mx.concatenate([q_pe, q_nope], axis=-1)
+        else:
+            c_kv = compressed
 
+        # Normalize latent
+        c_kv = self.kv_norm(c_kv)  # (B, L, kv_lora_rank)
+
+        # --- Caching ---
+        # Cache: (c_kv, k_pe) — compressed representations
         if cache is not None:
-            prev_c_kv = cache[0]  # (B, 1, prev_L, kv_lora_rank)
-            c_kv_cached = mx.concatenate(
-                [prev_c_kv.squeeze(1), c_kv], axis=1
-            )  # (B, total_L, kv_lora_rank)
+            prev_c_kv, prev_k_pe = cache
+            c_kv = mx.concatenate([prev_c_kv, c_kv], axis=1)
             if self.rope_dim > 0:
-                prev_k_rope = cache[1]  # (B, n_heads, prev_L, rope_dim)
-                k_rope = mx.concatenate([prev_k_rope, k_rope], axis=2)
-        else:
-            c_kv_cached = c_kv
+                k_pe = mx.concatenate([prev_k_pe, k_pe], axis=2)
+        new_cache = (c_kv, k_pe) if self.rope_dim > 0 else (c_kv, c_kv)
 
-        # Store compressed latent and rope K for cache
-        # c_kv gets unsqueezed to (B, 1, total_L, kv_lora_rank)
-        if self.rope_dim > 0:
-            new_cache = (c_kv_cached[:, None, :, :], k_rope)
-        else:
-            c_kv_exp = c_kv_cached[:, None, :, :]
-            new_cache = (c_kv_exp, c_kv_exp)
+        # --- KV up-projection from latent ---
+        kv = self.kv_up(c_kv)
+        # (B, total_L, n_heads * (nope_dim + head_dim))
+        kv = kv.reshape(
+            B, -1, self.n_heads, self.nope_dim + self.head_dim
+        ).transpose(0, 2, 1, 3)
 
-        # --- Up-project from latent ---
-        k_nope = self.k_up(c_kv_cached)  # (B, total_L, n_heads * nope_dim)
-        v = self.v_up(c_kv_cached)  # (B, total_L, n_heads * head_dim)
-
-        k_nope = k_nope.reshape(B, -1, self.n_heads, self.nope_dim).transpose(
-            0, 2, 1, 3
-        )
-        v = v.reshape(B, -1, self.n_heads, self.head_dim).transpose(0, 2, 1, 3)
+        k_nope = kv[:, :, :, : self.nope_dim]
+        v = kv[:, :, :, self.nope_dim :]
 
         # Combine rope and nope K dimensions
         if self.rope_dim > 0:
-            k = mx.concatenate([k_rope, k_nope], axis=-1)
+            # Broadcast shared k_pe (B,1,L,rope) -> (B,n_heads,L,rope)
+            k_pe_broad = mx.broadcast_to(
+                k_pe,
+                (B, self.n_heads, k_pe.shape[2], self.rope_dim),
+            )
+            k = mx.concatenate([k_pe_broad, k_nope], axis=-1)
         else:
             k = k_nope
 
