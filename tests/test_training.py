@@ -220,6 +220,55 @@ class TestCheckpoints:
         mx.eval(new_logits)
         assert mx.allclose(orig_logits, new_logits).item()
 
+    def test_optimizer_state_roundtrip(self, tiny_model, tmp_path):
+        """Optimizer state survives save/load roundtrip."""
+        mx.eval(tiny_model.parameters())
+
+        # Create optimizer and do a training step to populate state
+        config = TrainConfig(learning_rate=1e-3, compile_step=False)
+        optimizer = create_optimizer(config)
+        trainer = Trainer(tiny_model, config, optimizer=optimizer)
+
+        x = mx.random.randint(0, 256, shape=(2, 16))
+        y = mx.random.randint(0, 256, shape=(2, 16))
+        trainer.train_step((x, y))
+
+        # Save with optimizer
+        save_checkpoint(
+            tmp_path / "ckpt",
+            tiny_model,
+            optimizer=optimizer,
+            step=1,
+        )
+
+        # Load into fresh model + optimizer
+        new_model = LanguageModel(gpt_tiny())
+        mx.eval(new_model.parameters())
+        new_optimizer = create_optimizer(config)
+
+        # Do a step to initialize new_optimizer state structure
+        new_trainer = Trainer(
+            new_model,
+            config,
+            optimizer=new_optimizer,
+        )
+        new_trainer.train_step((x, y))
+
+        # Now load checkpoint over it
+        meta = load_checkpoint(
+            tmp_path / "ckpt",
+            new_model,
+            optimizer=new_optimizer,
+        )
+        assert meta["step"] == 1
+
+        # Verify model weights match
+        test_x = mx.array([[1, 2, 3]])
+        orig_logits, _ = tiny_model(test_x)
+        new_logits, _ = new_model(test_x)
+        mx.eval(orig_logits, new_logits)
+        assert mx.allclose(orig_logits, new_logits).item()
+
 
 class TestCallbacks:
     def test_metrics_logger(self, capsys):
