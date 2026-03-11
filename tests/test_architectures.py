@@ -410,7 +410,7 @@ class TestGemma3Config:
         c = gemma3_tiny()
         assert c.block.window_size == 16
         assert c.block_configs is not None
-        # Layer 5 (index 5) should be global
-        assert c.block_configs[5].attention == "gqa"
+        # Layer 3 (index 3, every 4th) should be global
+        assert c.block_configs[3].attention == "gqa"
         # Layer 0 should be sliding window
         assert c.block_configs[0].attention == "sliding_window_gqa"
