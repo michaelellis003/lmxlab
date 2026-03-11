@@ -66,6 +66,32 @@ The core package provides the building blocks for all architectures.
 
 ::: lmt_metal.core.position
 
+## Quantization
+
+::: lmt_metal.core.quantize.quantize_model
+
+::: lmt_metal.core.quantize.dequantize_model
+
+## LoRA
+
+::: lmt_metal.core.lora.LoRALinear
+    options:
+      members: ["__init__", "__call__", "from_linear", "to_linear"]
+
+::: lmt_metal.core.lora.apply_lora
+
+::: lmt_metal.core.lora.merge_lora
+
+::: lmt_metal.core.lora.lora_parameters
+
+## QLoRA
+
+::: lmt_metal.core.qlora.LoRAQuantizedLinear
+    options:
+      members: ["__init__", "__call__", "from_quantized"]
+
+::: lmt_metal.core.qlora.apply_qlora
+
 ## Registry
 
 ::: lmt_metal.core.registry.Registry
