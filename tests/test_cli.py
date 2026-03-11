@@ -1,8 +1,10 @@
 """Tests for the lmt-metal CLI."""
 
 import argparse
+import sys
+from unittest import mock
 
-from lmt_metal.cli import ARCHITECTURES, cmd_count, cmd_info, cmd_list
+from lmt_metal.cli import ARCHITECTURES, cmd_count, cmd_info, cmd_list, main
 
 
 class TestCmdList:
@@ -93,3 +95,35 @@ class TestCmdCount:
             cmd_count(args)
             output = capsys.readouterr().out
             assert "parameters" in output
+
+
+class TestMain:
+    """Test the main() entry point argument parsing."""
+
+    def test_list_command(self, capsys):
+        with mock.patch.object(sys, "argv", ["lmt-metal", "list"]):
+            main()
+        output = capsys.readouterr().out
+        assert "Available architectures:" in output
+
+    def test_info_command(self, capsys):
+        with mock.patch.object(
+            sys, "argv", ["lmt-metal", "info", "gpt", "--tiny"]
+        ):
+            main()
+        output = capsys.readouterr().out
+        assert "gpt (tiny)" in output
+
+    def test_count_command(self, capsys):
+        with mock.patch.object(
+            sys, "argv", ["lmt-metal", "count", "llama", "--tiny"]
+        ):
+            main()
+        output = capsys.readouterr().out
+        assert "parameters" in output
+
+    def test_no_command_prints_help(self, capsys):
+        with mock.patch.object(sys, "argv", ["lmt-metal"]):
+            main()
+        output = capsys.readouterr().out
+        assert "usage" in output.lower() or "lmt-metal" in output.lower()
