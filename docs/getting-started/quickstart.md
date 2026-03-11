@@ -276,6 +276,12 @@ uv run python recipes/interactive_generate.py --temperature 0.8
 # DPO preference optimization (SFT + DPO)
 uv run python recipes/train_dpo.py --dpo-steps 50
 
+# GRPO reward optimization (SFT + GRPO)
+uv run python recipes/train_grpo.py --grpo-steps 50
+
+# Curriculum learning (short→long sequences)
+uv run python recipes/train_curriculum.py --stages 4
+
 # Checkpoint and resume training
 uv run python recipes/checkpoint_resume.py --steps 200
 ```
