@@ -303,7 +303,7 @@ def load_lora_adapters(
         raise FileNotFoundError(f"Adapter directory not found: {path}")
 
     weights = mx.load(str(path / "adapter.safetensors"))
-    model.load_weights(list(weights.items()))
+    model.load_weights(list(weights.items()), strict=False)
 
     config_path = path / "adapter_config.json"
     if config_path.exists():

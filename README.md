@@ -122,16 +122,18 @@ lmt-metal count deepseek --detail # Parameter breakdown
 ```bash
 git clone https://github.com/michaelellis003/lmt-metal.git
 cd lmt-metal
-pip install -e ".[dev]"
+uv sync --extra dev
+uv run pre-commit install
+uv run pre-commit install --hook-type commit-msg
 
 # Run tests
-pytest
+uv run pytest
 
 # Lint
-ruff check src/ tests/ recipes/
+uv run ruff check src/ tests/ recipes/
 
 # Build docs
-mkdocs serve
+uv run mkdocs serve
 ```
 
 ## Documentation

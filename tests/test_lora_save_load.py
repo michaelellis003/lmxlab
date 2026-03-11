@@ -3,6 +3,7 @@
 import json
 
 import mlx.core as mx
+import mlx.utils
 import pytest
 
 from lmt_metal.core.lora import (
@@ -91,7 +92,7 @@ class TestLoadLoraAdapters:
         """Save then load produces identical LoRA weights."""
         # Get original LoRA weights
         original_params = {}
-        for k, v in mx.utils.tree_flatten(tiny_model.parameters()):
+        for k, v in mlx.utils.tree_flatten(tiny_model.parameters()):
             if "lora_A" in k or "lora_B" in k:
                 original_params[k] = v
 
@@ -115,7 +116,7 @@ class TestLoadLoraAdapters:
         load_lora_adapters(save_dir, new_model)
 
         # Verify LoRA weights match
-        for k, v in mx.utils.tree_flatten(new_model.parameters()):
+        for k, v in mlx.utils.tree_flatten(new_model.parameters()):
             if k in original_params:
                 assert mx.allclose(v, original_params[k]), f"Mismatch at {k}"
 
@@ -139,7 +140,7 @@ class TestLoadLoraAdapters:
         )
         new_model = LanguageModel(config)
         # Load base weights from original
-        base_weights = dict(mx.utils.tree_flatten(tiny_model.parameters()))
+        base_weights = dict(mlx.utils.tree_flatten(tiny_model.parameters()))
         # Filter out LoRA keys for base
         base_only = {
             k: v

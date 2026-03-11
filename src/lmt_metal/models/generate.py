@@ -93,14 +93,16 @@ def _apply_repetition_penalty(
     # Collect all generated token IDs into a set per batch
     all_ids = mx.concatenate(generated_ids, axis=1)  # (batch, n)
 
-    # Build a mask of which vocab entries have been generated
-    # by scattering 1s at generated positions
+    # Build a mask of which vocab entries have been generated.
+    # Compare each vocab index against all generated token IDs to
+    # find which positions need the penalty applied.
     batch_size, vocab_size = logits.shape
-    mask = mx.zeros_like(logits)
+    vocab_range = mx.arange(vocab_size)[None, :]  # (1, V)
+    # all_ids is (batch, n) -- check if any generated id matches
+    mask = mx.zeros((batch_size, vocab_size))
     for i in range(all_ids.shape[1]):
-        token_ids = all_ids[:, i]  # (batch,)
-        one_hot = mx.one_hot(token_ids, vocab_size)
-        mask = mx.maximum(mask, one_hot)
+        token_id = all_ids[:, i : i + 1]  # (batch, 1)
+        mask = mx.maximum(mask, (vocab_range == token_id).astype(logits.dtype))
 
     # Apply penalty: divide positive, multiply negative
     penalized = mx.where(logits > 0, logits / penalty, logits * penalty)

@@ -8,8 +8,15 @@ so clarity and simplicity are valued over performance optimization.
 ```bash
 git clone https://github.com/michaelellis003/lmt-metal.git
 cd lmt-metal
-pip install -e ".[dev]"
+uv sync --extra dev
+uv run pre-commit install
+uv run pre-commit install --hook-type commit-msg
 ```
+
+The pre-commit hooks will automatically:
+- Run ruff lint and format checks on staged files
+- Verify `uv.lock` stays in sync with `pyproject.toml`
+- Enforce conventional commit message format
 
 ## Development workflow
 
@@ -20,19 +27,42 @@ pip install -e ".[dev]"
 
 2. Write tests first (TDD). Tests go in `tests/`:
    ```bash
-   pytest tests/test_my_module.py -v
+   uv run pytest tests/test_my_module.py -v
    ```
 
 3. Implement the feature in `src/lmt_metal/`.
 
-4. Verify everything passes:
+4. Verify everything passes locally before pushing:
    ```bash
-   pytest                          # All tests
-   ruff check src/ tests/ recipes/          # Lint
-   ruff format --check src/ tests/ recipes/ # Formatting
+   uv run pytest                                    # All tests
+   uv run ruff check src/ tests/ recipes/            # Lint
+   uv run ruff format --check src/ tests/ recipes/   # Formatting
+   uv run mkdocs build --strict                      # Docs build
    ```
 
-5. Open a PR against `main`.
+5. Open a PR against `main`. CI must pass before merging.
+
+## CI pipeline
+
+Every PR runs three jobs:
+
+- **lint** (ubuntu): ruff check + format on `src/`, `tests/`, `recipes/`
+- **docs** (ubuntu): `mkdocs build --strict` catches broken links/refs
+- **test** (macos-14): pytest on Apple Silicon (MLX requires M-series)
+
+All three must pass before merging. Do not bypass CI with `--admin`.
+
+## Keeping `uv.lock` in sync
+
+If you change `pyproject.toml` (add/remove/update dependencies), you must
+regenerate the lockfile:
+
+```bash
+uv lock
+```
+
+The `uv-lock` pre-commit hook catches this automatically. If CI fails with
+"lockfile needs to be updated", run `uv lock` and commit the result.
 
 ## Branch naming
 
@@ -44,7 +74,7 @@ pip install -e ".[dev]"
 
 ## Commit messages
 
-Follow the `type: description` format:
+Follow the `type: description` format (enforced by pre-commit hook):
 
 ```
 feat: add sliding window attention
