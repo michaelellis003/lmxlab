@@ -48,4 +48,6 @@ nav:
     - Overview: architecture/overview.md
     - Configurable Block: architecture/configurable-block.md
     - MLX Idioms: architecture/mlx-idioms.md
+  - Models: models/index.md
+  - Training: training/index.md
   - API Reference: api/index.md
