@@ -52,6 +52,10 @@ class BlockConfig:
     kv_lora_rank: int | None = None
     q_lora_rank: int | None = None
     rope_dim: int | None = None
+    # Mixture of Experts parameters
+    n_experts: int | None = None
+    top_k_experts: int = 2
+    n_shared_experts: int | None = None
     # Gated DeltaNet (linear attention) parameters
     conv_kernel_size: int = 4
     use_short_conv: bool = False
