@@ -6,7 +6,7 @@ from lmt_metal.experiments.analysis import (
     simplicity_score,
 )
 from lmt_metal.experiments.runner import ExperimentConfig, ExperimentRunner
-from lmt_metal.experiments.sweep import grid_sweep
+from lmt_metal.experiments.sweep import grid_sweep, random_sweep
 from lmt_metal.experiments.tracking import ExperimentLog, LogEntry
 
 
@@ -139,6 +139,67 @@ class TestGridSweep:
     def test_empty(self):
         configs = list(grid_sweep({}))
         assert len(configs) == 1  # one empty dict
+
+
+class TestRandomSweep:
+    def test_correct_number_of_trials(self):
+        configs = list(
+            random_sweep(
+                param_ranges={"lr": (1e-4, 1e-2), "d_model": (32, 256)},
+                n_trials=5,
+            )
+        )
+        assert len(configs) == 5
+
+    def test_values_within_range(self):
+        configs = list(
+            random_sweep(
+                param_ranges={"lr": (0.1, 0.5), "size": (10.0, 20.0)},
+                n_trials=20,
+            )
+        )
+        for c in configs:
+            assert 0.1 <= c["lr"] <= 0.5
+            assert 10.0 <= c["size"] <= 20.0
+
+    def test_contains_all_keys(self):
+        configs = list(
+            random_sweep(
+                param_ranges={"a": (0.0, 1.0), "b": (0.0, 1.0)},
+                n_trials=3,
+            )
+        )
+        for c in configs:
+            assert "a" in c
+            assert "b" in c
+
+    def test_reproducible_with_seed(self):
+        c1 = list(
+            random_sweep(
+                param_ranges={"x": (0.0, 1.0)},
+                n_trials=5,
+                seed=123,
+            )
+        )
+        c2 = list(
+            random_sweep(
+                param_ranges={"x": (0.0, 1.0)},
+                n_trials=5,
+                seed=123,
+            )
+        )
+        for a, b in zip(c1, c2, strict=True):
+            assert a["x"] == b["x"]
+
+    def test_single_trial(self):
+        configs = list(
+            random_sweep(
+                param_ranges={"x": (0.0, 1.0)},
+                n_trials=1,
+            )
+        )
+        assert len(configs) == 1
+        assert isinstance(configs[0]["x"], float)
 
 
 class TestAnalysis:
