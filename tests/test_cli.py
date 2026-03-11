@@ -4,7 +4,14 @@ import argparse
 import sys
 from unittest import mock
 
-from lmxlab.cli import ARCHITECTURES, cmd_count, cmd_info, cmd_list, main
+from lmxlab.cli import (
+    ARCHITECTURES,
+    cmd_bench,
+    cmd_count,
+    cmd_info,
+    cmd_list,
+    main,
+)
 
 
 class TestCmdList:
@@ -97,6 +104,35 @@ class TestCmdCount:
             assert "parameters" in output
 
 
+class TestCmdBench:
+    """Test the 'bench' command."""
+
+    def test_bench_output(self, capsys):
+        args = argparse.Namespace(
+            arch="gpt", tiny=True, seq_len=8, gen_tokens=5
+        )
+        cmd_bench(args)
+        output = capsys.readouterr().out
+
+        assert "Architecture: gpt (tiny)" in output
+        assert "Parameters:" in output
+        assert "Memory:" in output
+        assert "Forward pass" in output
+        assert "tok/s" in output
+        assert "Generation" in output
+        assert "Prefill:" in output
+        assert "Decode:" in output
+
+    def test_bench_unknown_arch_exits(self):
+        import pytest
+
+        args = argparse.Namespace(
+            arch="nonexistent", tiny=False, seq_len=8, gen_tokens=5
+        )
+        with pytest.raises(SystemExit):
+            cmd_bench(args)
+
+
 class TestMain:
     """Test the main() entry point argument parsing."""
 
@@ -121,6 +157,14 @@ class TestMain:
             main()
         output = capsys.readouterr().out
         assert "parameters" in output
+
+    def test_bench_command(self, capsys):
+        with mock.patch.object(
+            sys, "argv", ["lmxlab", "bench", "gpt", "--tiny"]
+        ):
+            main()
+        output = capsys.readouterr().out
+        assert "Forward pass" in output
 
     def test_no_command_prints_help(self, capsys):
         with mock.patch.object(sys, "argv", ["lmxlab"]):
