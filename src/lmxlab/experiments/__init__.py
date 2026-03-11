@@ -14,13 +14,17 @@ from lmxlab.experiments.profiling import (
     profile_forward,
     profile_generation,
 )
-from lmxlab.experiments.runner import ExperimentRunner
+from lmxlab.experiments.runner import ExperimentConfig, ExperimentRunner
+from lmxlab.experiments.sweep import grid_sweep, random_sweep
 from lmxlab.experiments.tracking import ExperimentLog, LogEntry
 
 __all__ = [
+    "ExperimentConfig",
     "ExperimentLog",
     "ExperimentRunner",
     "LogEntry",
+    "grid_sweep",
+    "random_sweep",
     "benchmark_fn",
     "cohens_d",
     "compare_experiments",
