@@ -55,6 +55,7 @@ nav:
   - Data: data/index.md
   - Training: training/index.md
   - Inference: inference/index.md
+  - Recipes: recipes/index.md
   - Experiments:
     - Methodology: experiments/methodology.md
   - Developer Log: devlog/index.md
