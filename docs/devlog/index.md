@@ -145,6 +145,83 @@ to always picking the same experts. We implement bias-based balancing
 (SharedExpertMoEFFN) which avoids the auxiliary loss used in some
 implementations.
 
+## HuggingFace Integration
+
+### The Three-Part Story
+
+Connecting to the HuggingFace ecosystem required three components, each
+solving a different problem:
+
+1. **`load_from_hf()`** — Download and convert pretrained weights from
+   the Hub. Maps HF config keys to `ModelConfig`, converts weight names,
+   handles architecture-specific quirks (rotated QKV in LLaMA, fused
+   gate-up in Gemma).
+
+2. **`HFTokenizer`** — Wraps `AutoTokenizer` with our `Tokenizer`
+   protocol. Needed because pretrained models expect their own tokenizer,
+   not a character or tiktoken tokenizer.
+
+3. **`HFDataset`** — Wraps `datasets.load_dataset` with streaming
+   support. Yields `(input, target)` batches by tokenizing on-the-fly
+   from a token buffer.
+
+**Design choice:** All three are lazy imports (`from transformers import ...`
+inside `__init__`). This keeps the base library free of heavy dependencies —
+you don't need `transformers` installed unless you actually use HF features.
+
+**What surprised us:** Weight conversion is the hardest part. Different
+architectures store weights in different formats (some fuse QKV, some
+don't; some transpose FFN weights, some don't). The solution was a
+mapping table per architecture, with clear error messages for missing keys.
+
+### Streaming for Large Datasets
+
+`HFDataset.batch_iterator()` uses a token buffer pattern: accumulate
+tokens from the dataset stream until there are enough for one batch, yield
+it, and keep the remainder. This means you never need the full dataset in
+memory — important for multi-GB corpora.
+
+The `streaming=True` flag enables HuggingFace's iterable dataset mode,
+which downloads data on demand instead of caching the full dataset locally.
+
+## Advanced Training Features
+
+### DPO, GRPO, and MTP: Three Approaches to Better Models
+
+These three training objectives each improve model quality in a different
+way, and together they illustrate a useful taxonomy:
+
+| Method | Signal Source | Key Idea |
+|--------|-------------|----------|
+| **DPO** | Preference pairs | Learn from "A is better than B" without a reward model |
+| **GRPO** | Scalar rewards | Group-relative normalization of per-completion rewards |
+| **MTP** | Same data, richer targets | Predict multiple future tokens, not just the next one |
+
+**DPO** replaces RLHF's reward model + PPO pipeline with a single loss
+function. The mathematical insight: the optimal policy under the KL-
+constrained reward maximization objective has a closed-form solution that
+only needs the policy and reference model log probabilities.
+
+**GRPO** is closer to classic policy gradient but normalizes rewards within
+each group of completions (zero mean, unit variance). This removes the need
+for a value function baseline and makes training more stable.
+
+**MTP** is orthogonal — it doesn't change the objective, it enriches the
+training signal. Each position predicts not just the next token but the
+next 2-4 tokens via lightweight auxiliary heads. This provides richer
+gradients and enables speculative decoding at inference time (the auxiliary
+heads serve as draft predictors).
+
+### Curriculum Learning: Start Easy
+
+Length curriculum (short sequences → long sequences) follows a simple
+principle: let the model learn basic patterns on short context before
+tackling long-range dependencies. Empirically, this often converges faster
+than training on the final sequence length from the start.
+
+The implementation is straightforward — linear interpolation of sequence
+length across stages. No complex scheduling needed.
+
 ## Open Questions
 
 - How does training dynamics change between Apple Silicon and CUDA for the
