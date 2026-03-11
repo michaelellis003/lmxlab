@@ -215,6 +215,12 @@ uv run python recipes/compare_training.py
 
 # Run structured experiments with logging
 uv run python recipes/run_experiment.py --arch llama --seeds 3
+
+# Ablation study: GPT → LLaMA one feature at a time
+uv run python recipes/ablation_gpt_to_llama.py --steps 200
+
+# Load a pretrained HuggingFace model (requires huggingface_hub)
+uv run python recipes/load_pretrained.py --repo meta-llama/Llama-3.2-1B
 ```
 
 ## Next steps
