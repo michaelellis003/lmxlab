@@ -23,6 +23,7 @@ demonstrate the core training loop.
 | [`train_llama_shakespeare.py`](#train_llama_shakespeare) | BPE tokenization, compiled training |
 | [`train_curriculum.py`](#train_curriculum) | Length curriculum: short sequences before long |
 | [`checkpoint_resume.py`](#checkpoint_resume) | Save/load checkpoints, resume training |
+| [`train_with_callbacks.py`](#train_with_callbacks) | Logging, throughput monitoring, early stopping |
 
 ### train_tiny_gpt
 
@@ -60,6 +61,16 @@ from the checkpoint. Demonstrates lmxlab's safetensors-based checkpointing.
 
 ```bash
 uv run python recipes/checkpoint_resume.py --steps 200
+```
+
+### train_with_callbacks
+
+Runs all three callback types simultaneously: `MetricsLogger` prints
+loss at intervals, `ThroughputMonitor` reports tokens/sec, and
+`EarlyStopping` halts training when eval loss plateaus.
+
+```bash
+uv run python recipes/train_with_callbacks.py --patience 5 --max-steps 300
 ```
 
 ---
@@ -300,6 +311,7 @@ Structured experiment infrastructure for reproducible research.
 |--------|----------------|
 | [`run_experiment.py`](#run_experiment) | Time-budgeted experiments with logging |
 | [`sweep_learning_rate.py`](#sweep_learning_rate) | Grid and random hyperparameter sweeps |
+| [`analyze_experiments.py`](#analyze_experiments) | Statistical analysis: CI, Cohen's d, simplicity score |
 
 ### run_experiment
 
@@ -318,4 +330,14 @@ configuration and trial-by-trial results table.
 
 ```bash
 uv run python recipes/sweep_learning_rate.py --min-lr 1e-4 --max-lr 1e-2
+```
+
+### analyze_experiments
+
+Demonstrates the experiment analysis toolkit on synthetic data. Covers
+`compare_experiments`, `compute_statistics`, `confidence_interval`,
+`cohens_d`, and `simplicity_score`. No training required — runs instantly.
+
+```bash
+uv run python recipes/analyze_experiments.py
 ```
