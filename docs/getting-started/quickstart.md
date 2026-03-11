@@ -221,6 +221,9 @@ uv run python recipes/ablation_gpt_to_llama.py --steps 200
 
 # Load a pretrained HuggingFace model (requires huggingface_hub)
 uv run python recipes/load_pretrained.py --repo meta-llama/Llama-3.2-1B
+
+# Fine-tune with LoRA (parameter-efficient, ~0.1% trainable)
+uv run python recipes/finetune_lora.py --rank 8 --steps 200
 ```
 
 ## Next steps
