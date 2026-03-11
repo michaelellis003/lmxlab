@@ -9,5 +9,5 @@
 ## Checklist
 
 - [ ] Tests added/updated
-- [ ] Lint passes (`uv run ruff check src/ tests/`)
-- [ ] Format passes (`uv run ruff format --check src/ tests/`)
+- [ ] Lint passes (`uv run ruff check src/ tests/ recipes/`)
+- [ ] Format passes (`uv run ruff format --check src/ tests/ recipes/`)
