@@ -29,7 +29,7 @@ history = trainer.train(data_iterator)
 | `batch_size` | 32 | Training batch size |
 | `grad_accumulation_steps` | 1 | Micro-batches per optimizer step |
 | `max_grad_norm` | 1.0 | Gradient clipping norm |
-| `optimizer` | "adamw" | Optimizer name |
+| `optimizer` | "adamw" | Optimizer: "adamw", "lion", "adafactor", "sgd" |
 | `lr_schedule` | "cosine" | Learning rate schedule |
 | `compile_step` | True | Whether to `mx.compile` the step |
 
@@ -70,11 +70,12 @@ if config.compile_step:
 
 ## Optimizers
 
-Three optimizers are available:
+Four optimizers are available:
 
 - **AdamW** (default): Standard adaptive optimizer with weight decay
 - **Lion**: Sign-based optimizer, lower memory than Adam
 - **Adafactor**: Memory-efficient adaptive optimizer
+- **SGD**: Stochastic gradient descent with momentum (0.9)
 
 All use MLX's built-in learning rate schedules (`cosine_decay`, `linear_decay`).
 
@@ -190,13 +191,13 @@ Track tokens/sec and steps/sec during training:
 ```python
 from lmxlab.training.callbacks import ThroughputMonitor
 
-monitor = ThroughputMonitor(window_size=50)
+monitor = ThroughputMonitor(
+    log_interval=10,
+    tokens_per_step=32 * 128,  # batch_size * seq_len
+)
 trainer = Trainer(model, config, callbacks=[monitor])
 trainer.train(data)
-
-# After training:
-print(f'Avg throughput: {monitor.avg_tokens_per_sec:.0f} tok/s')
-print(f'Avg step time: {1/monitor.avg_steps_per_sec:.3f} s/step')
+# Prints: "step 10: 142.3 steps/s, 582451 tok/s"
 ```
 
 ### EarlyStopping
@@ -212,13 +213,14 @@ trainer = Trainer(model, config, callbacks=[stopper])
 
 ### MetricsLogger
 
-Log training metrics to a file:
+Print loss and learning rate at regular intervals:
 
 ```python
 from lmxlab.training.callbacks import MetricsLogger
 
-logger = MetricsLogger('metrics.jsonl')
+logger = MetricsLogger(log_interval=10)
 trainer = Trainer(model, config, callbacks=[logger])
+# Prints: "step 10: loss=3.1234, lr=3.00e-04"
 ```
 
 ## Checkpoints
