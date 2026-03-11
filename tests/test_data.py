@@ -118,3 +118,20 @@ class TestBatchIterator:
         mx.eval(b1[0][0], b2[0][0])
         differs = not mx.array_equal(b1[0][0], b2[0][0]).item()
         assert differs
+
+
+class TestHFTokenizer:
+    def test_protocol_compliance(self):
+        """HFTokenizer has required Tokenizer protocol methods."""
+        from lmt_metal.data.tokenizer import HFTokenizer
+
+        assert hasattr(HFTokenizer, "encode")
+        assert hasattr(HFTokenizer, "decode")
+        assert hasattr(HFTokenizer, "vocab_size")
+
+    def test_has_special_token_properties(self):
+        """HFTokenizer exposes eos and bos token IDs."""
+        from lmt_metal.data.tokenizer import HFTokenizer
+
+        assert hasattr(HFTokenizer, "eos_token_id")
+        assert hasattr(HFTokenizer, "bos_token_id")

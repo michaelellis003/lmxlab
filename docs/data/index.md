@@ -48,6 +48,25 @@ print(ids)  # [15496, 11, 995, 0]
 tok = TiktokenTokenizer('cl100k_base')
 ```
 
+### HFTokenizer
+
+Wraps a HuggingFace `AutoTokenizer` (requires `pip install transformers`):
+
+```python
+from lmt_metal.data import HFTokenizer
+
+# Use the tokenizer from a pretrained model
+tok = HFTokenizer('meta-llama/Llama-3.2-1B')
+ids = tok.encode('Hello, world!')
+print(tok.decode(ids))
+
+# Access special tokens
+print(f'EOS: {tok.eos_token_id}, BOS: {tok.bos_token_id}')
+```
+
+This is the tokenizer to use when working with models loaded via
+`load_from_hf()`.
+
 ### Custom Tokenizers
 
 Any object implementing the `Tokenizer` protocol works:
@@ -190,7 +209,9 @@ for token_id in stream_generate(
 | `CharTokenizer` | ~65-95 | Testing, tiny experiments, debugging |
 | `TiktokenTokenizer('gpt2')` | 50,257 | General text, GPT-style models |
 | `TiktokenTokenizer('cl100k_base')` | 100,256 | Large models, multilingual |
+| `HFTokenizer('repo-id')` | Varies | Pretrained HuggingFace models |
 
 For real training, BPE tokenizers produce better results because
-they capture subword patterns. Character tokenizers are useful for
-fast iteration and testing where tokenizer quality doesn't matter.
+they capture subword patterns. Use `HFTokenizer` when working with
+pretrained models from HuggingFace (loaded via `load_from_hf`).
+Character tokenizers are useful for fast iteration and testing.

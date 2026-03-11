@@ -167,3 +167,80 @@ class TiktokenTokenizer:
             Decoded string.
         """
         return self._enc.decode(tokens)
+
+
+class HFTokenizer:
+    """HuggingFace tokenizer wrapper.
+
+    Wraps a HuggingFace ``AutoTokenizer`` for use with lmt-metal.
+    Use this when working with pretrained models loaded via
+    ``load_from_hf``.
+
+    Requires ``transformers`` to be installed::
+
+        pip install transformers
+
+    Args:
+        repo_id: HuggingFace model repo ID or local path
+            (e.g., 'meta-llama/Llama-3.2-1B').
+
+    Example:
+        >>> tok = HFTokenizer('meta-llama/Llama-3.2-1B')
+        >>> tok.encode('hello world')
+        [15339, 1917]
+        >>> tok.decode([15339, 1917])
+        'hello world'
+    """
+
+    def __init__(self, repo_id: str) -> None:
+        try:
+            from transformers import AutoTokenizer
+        except ImportError as e:
+            raise ImportError(
+                "transformers is required for HFTokenizer. "
+                "Install with: pip install transformers"
+            ) from e
+
+        self._tok = AutoTokenizer.from_pretrained(repo_id)
+        self._repo_id = repo_id
+
+    @property
+    def vocab_size(self) -> int:
+        """Size of the vocabulary."""
+        return len(self._tok)
+
+    @property
+    def eos_token_id(self) -> int | None:
+        """End-of-sequence token ID, if available."""
+        return self._tok.eos_token_id
+
+    @property
+    def bos_token_id(self) -> int | None:
+        """Beginning-of-sequence token ID, if available."""
+        return self._tok.bos_token_id
+
+    def encode(self, text: str) -> list[int]:
+        """Encode text to token IDs.
+
+        Does not add special tokens (BOS/EOS) by default,
+        so the output matches what the model expects for
+        continuation.
+
+        Args:
+            text: Input string.
+
+        Returns:
+            List of token IDs.
+        """
+        return self._tok.encode(text, add_special_tokens=False)
+
+    def decode(self, tokens: list[int]) -> str:
+        """Decode token IDs back to text.
+
+        Args:
+            tokens: List of token IDs.
+
+        Returns:
+            Decoded string.
+        """
+        return self._tok.decode(tokens)
