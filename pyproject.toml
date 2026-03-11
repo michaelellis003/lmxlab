@@ -28,6 +28,12 @@ packages = ["src/lmt_metal"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: tests that take >10s (training loops, large models)",
+    "gpu: requires Apple Silicon GPU",
+    "integration: end-to-end tests",
+]
+addopts = ["--strict-markers", "--tb=short", "-q"]
 
 [tool.ruff]
 line-length = 79
