@@ -24,6 +24,8 @@ demonstrate the core training loop.
 | [`train_curriculum.py`](#train_curriculum) | Length curriculum: short sequences before long |
 | [`checkpoint_resume.py`](#checkpoint_resume) | Save/load checkpoints, resume training |
 | [`train_with_callbacks.py`](#train_with_callbacks) | Logging, throughput monitoring, early stopping |
+| [`train_with_datasets.py`](#train_with_datasets) | TextDataset vs TokenDataset classes |
+| [`compare_schedules.py`](#compare_schedules) | LR schedules and optimizer comparison |
 
 ### train_tiny_gpt
 
@@ -71,6 +73,26 @@ loss at intervals, `ThroughputMonitor` reports tokens/sec, and
 
 ```bash
 uv run python recipes/train_with_callbacks.py --patience 5 --max-steps 300
+```
+
+### train_with_datasets
+
+Compares `TextDataset` (raw text in, handles tokenization) with
+`TokenDataset` (pre-tokenized arrays). Shows that both produce
+identical training windows and when to use each.
+
+```bash
+uv run python recipes/train_with_datasets.py --seq-len 64
+```
+
+### compare_schedules
+
+Trains the same model with different LR schedule and optimizer
+combinations. Compares cosine vs linear vs constant decay, and
+AdamW vs Lion vs Adafactor. Shows loss curves at checkpoints.
+
+```bash
+uv run python recipes/compare_schedules.py --optimizers adamw lion
 ```
 
 ---
