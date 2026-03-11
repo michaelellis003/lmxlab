@@ -50,6 +50,7 @@ nav:
     - MLX Idioms: architecture/mlx-idioms.md
     - Compiled Training: architecture/compiled-training.md
     - Unified Memory: architecture/unified-memory.md
+    - Production Optimizations: architecture/production-optimizations.md
   - Models: models/index.md
   - Data: data/index.md
   - Training: training/index.md
