@@ -39,7 +39,7 @@ assembled from registry components based on what the config asks for.
 - **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
 - **HuggingFace integration**: load pretrained weights from the Hub
 - **Experiment framework**: time-budgeted runs, results tracking, sweeps, MLX profiling
-- **16 recipe scripts**: training, fine-tuning, evaluation, streaming generation, ablation studies, architecture comparison, benchmarking
+- **17 recipe scripts**: training, fine-tuning, evaluation, streaming generation, checkpointing, ablation studies, architecture comparison, benchmarking
 
 ## Quick start
 
@@ -82,6 +82,7 @@ uv run python recipes/train_moe.py --experts 4        # Mixture of Experts
 uv run python recipes/speculative_decoding.py         # Draft-then-verify generation
 uv run python recipes/evaluate_model.py               # Evaluate with perplexity/BPB
 uv run python recipes/interactive_generate.py         # Streaming token-by-token generation
+uv run python recipes/checkpoint_resume.py            # Save and resume training
 uv run python recipes/run_experiment.py               # Structured experiment with logging
 uv run python recipes/sweep_learning_rate.py          # Hyperparameter sweep
 uv run python recipes/load_pretrained.py              # Load HuggingFace model
