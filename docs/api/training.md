@@ -34,6 +34,8 @@ Compiled training loop, optimizers, and training utilities.
 
 ::: lmt_metal.training.callbacks.EarlyStopping
 
+::: lmt_metal.training.callbacks.ThroughputMonitor
+
 ## DPO
 
 ::: lmt_metal.training.dpo

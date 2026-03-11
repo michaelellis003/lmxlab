@@ -4,6 +4,7 @@ from lmt_metal.training.callbacks import (
     Callback,
     EarlyStopping,
     MetricsLogger,
+    ThroughputMonitor,
 )
 from lmt_metal.training.checkpoints import load_checkpoint, save_checkpoint
 from lmt_metal.training.config import TrainConfig
@@ -20,6 +21,7 @@ __all__ = [
     "Callback",
     "EarlyStopping",
     "MetricsLogger",
+    "ThroughputMonitor",
     "Trainer",
     "TrainConfig",
     "create_optimizer",
