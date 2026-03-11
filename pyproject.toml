@@ -10,6 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+tokenizers = ["tiktoken"]
 experiments = ["mlflow-skinny"]
 dev = [
     "pytest>=8.0",
