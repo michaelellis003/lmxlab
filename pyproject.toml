@@ -20,6 +20,9 @@ dev = [
     "mkdocstrings[python]",
 ]
 
+[project.scripts]
+lmt-metal = "lmt_metal.cli:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
