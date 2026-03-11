@@ -1,6 +1,8 @@
 """Hyperparameter sweep utilities."""
 
 import itertools
+import math
+import random
 from collections.abc import Iterator
 from typing import Any
 
@@ -41,6 +43,10 @@ def random_sweep(
     log-space, which is standard for learning rates and
     other parameters spanning multiple orders of magnitude.
 
+    Uses Python's ``random`` module (no MLX dependency),
+    so sweep configuration can be computed without Apple
+    Silicon hardware.
+
     Args:
         param_ranges: Dict mapping parameter names to
             (min, max) tuples.
@@ -60,12 +66,8 @@ def random_sweep(
         ...     log_scale={"lr"},
         ... ))
     """
-    import math
-
-    import mlx.core as mx
-
     log_params = log_scale or set()
-    mx.random.seed(seed)
+    rng = random.Random(seed)
     keys = list(param_ranges.keys())
     ranges = list(param_ranges.values())
 
@@ -75,11 +77,7 @@ def random_sweep(
             if key in log_params:
                 log_lo = math.log(lo)
                 log_hi = math.log(hi)
-                val = mx.random.uniform(low=log_lo, high=log_hi)
-                mx.eval(val)
-                config[key] = math.exp(float(val.item()))
+                config[key] = math.exp(rng.uniform(log_lo, log_hi))
             else:
-                val = mx.random.uniform(low=lo, high=hi)
-                mx.eval(val)
-                config[key] = float(val.item())
+                config[key] = rng.uniform(lo, hi)
         yield config
