@@ -1,1 +1,3 @@
-"""lmt-metal: Port LMT to Apple MLX for native Apple Silicon GPU training and inference."""
+"""lmt-metal: Educational MLX library for transformer LMs on Apple Silicon."""
+
+__version__ = "0.1.0"

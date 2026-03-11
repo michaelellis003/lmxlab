@@ -3,10 +3,21 @@ name = "lmt-metal"
 version = "0.1.0"
 description = "Port LMT to Apple MLX for native Apple Silicon GPU training and inference"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "mlx>=0.25",
+    "numpy",
+    "safetensors",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.7"]
+experiments = ["mlflow-skinny"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.7",
+    "mypy>=1.11",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -20,3 +31,13 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 79
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["lmt_metal"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
