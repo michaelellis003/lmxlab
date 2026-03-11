@@ -1,7 +1,7 @@
 """Data pipeline: tokenizers, datasets, and batching."""
 
 from lmt_metal.data.batching import batch_iterator
-from lmt_metal.data.dataset import TextDataset, TokenDataset
+from lmt_metal.data.dataset import HFDataset, TextDataset, TokenDataset
 from lmt_metal.data.tokenizer import (
     CharTokenizer,
     HFTokenizer,
@@ -11,6 +11,7 @@ from lmt_metal.data.tokenizer import (
 
 __all__ = [
     "CharTokenizer",
+    "HFDataset",
     "HFTokenizer",
     "TextDataset",
     "TiktokenTokenizer",

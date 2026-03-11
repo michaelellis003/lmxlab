@@ -120,6 +120,79 @@ class TestBatchIterator:
         assert differs
 
 
+class TestHFDataset:
+    def test_class_exists(self):
+        """HFDataset is importable."""
+        from lmt_metal.data.dataset import HFDataset
+
+        assert HFDataset is not None
+
+    def test_has_required_methods(self):
+        """HFDataset has token_iterator and batch_iterator."""
+        from lmt_metal.data.dataset import HFDataset
+
+        assert hasattr(HFDataset, "token_iterator")
+        assert hasattr(HFDataset, "batch_iterator")
+
+    def _make_hf_dataset(self, fake_data, tok, seq_len=4):
+        """Create an HFDataset with mock data."""
+        from lmt_metal.data.dataset import HFDataset
+
+        with pytest.MonkeyPatch.context() as mp:
+            import types
+
+            fake_module = types.ModuleType("datasets")
+            fake_module.load_dataset = lambda *a, **kw: fake_data
+            mp.setitem(__import__("sys").modules, "datasets", fake_module)
+            return HFDataset(
+                "fake/dataset",
+                tok,
+                seq_len=seq_len,
+                split="train",
+            )
+
+    def test_batch_iterator_shapes(self):
+        """batch_iterator yields correct shapes."""
+        text = "abcdefghijklmnopqrstuvwxyz" * 10
+        tok = CharTokenizer("abcdefghijklmnopqrstuvwxyz")
+        ds = self._make_hf_dataset([{"text": text}], tok, seq_len=4)
+        batches = list(ds.batch_iterator(batch_size=2, max_batches=3))
+        assert len(batches) <= 3
+        for x, y in batches:
+            assert x.shape == (2, 4)
+            assert y.shape == (2, 4)
+
+    def test_token_iterator(self):
+        """token_iterator yields tokens from mock dataset."""
+        tok = CharTokenizer("helloworld")
+        ds = self._make_hf_dataset(
+            [{"text": "hello"}, {"text": "world"}],
+            tok,
+            seq_len=4,
+        )
+        tokens = list(ds.token_iterator())
+        assert len(tokens) == 10  # 'hello' + 'world'
+
+    def test_max_batches_respected(self):
+        """batch_iterator stops at max_batches."""
+        text = "abcdefghijklmnop" * 100
+        tok = CharTokenizer("abcdefghijklmnop")
+        ds = self._make_hf_dataset([{"text": text}], tok, seq_len=4)
+        batches = list(ds.batch_iterator(batch_size=2, max_batches=1))
+        assert len(batches) == 1
+
+    def test_empty_text_skipped(self):
+        """Empty text entries are skipped."""
+        tok = CharTokenizer("hello")
+        ds = self._make_hf_dataset(
+            [{"text": ""}, {"text": "   "}, {"text": "hello"}],
+            tok,
+            seq_len=4,
+        )
+        tokens = list(ds.token_iterator())
+        assert len(tokens) == 5  # only 'hello'
+
+
 class TestHFTokenizer:
     def test_protocol_compliance(self):
         """HFTokenizer has required Tokenizer protocol methods."""

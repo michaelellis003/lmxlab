@@ -124,6 +124,42 @@ x, y = dataset[0]
 # x: [1, 2, 3, 4], y: [2, 3, 4, 5]
 ```
 
+### HFDataset
+
+Load data directly from HuggingFace datasets (requires `pip install datasets`):
+
+```python
+from lmt_metal.data import HFDataset, HFTokenizer
+
+# Use a HuggingFace tokenizer with a HuggingFace dataset
+tok = HFTokenizer('meta-llama/Llama-3.2-1B')
+ds = HFDataset('wikitext', tok, seq_len=128, config_name='wikitext-2-raw-v1')
+
+# Stream batches for training
+for inputs, targets in ds.batch_iterator(batch_size=8, max_batches=100):
+    # inputs shape: (8, 128)
+    # targets shape: (8, 128)
+    logits, _ = model(inputs)
+    ...
+```
+
+HFDataset supports streaming mode for large datasets that don't fit in memory:
+
+```python
+ds = HFDataset(
+    'wikitext', tok, seq_len=128,
+    config_name='wikitext-2-raw-v1',
+    streaming=True,
+)
+```
+
+You can also iterate over individual tokens:
+
+```python
+for token_id in ds.token_iterator():
+    print(token_id)
+```
+
 ## Batching
 
 `batch_iterator` creates non-overlapping windows from a flat token
