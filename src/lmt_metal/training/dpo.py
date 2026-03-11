@@ -50,7 +50,8 @@ def dpo_loss(
     chosen_rewards = beta * (chosen_logps - chosen_ref_logps)
     rejected_rewards = beta * (rejected_logps - rejected_ref_logps)
 
-    loss = -nn.losses.log_sigmoid(chosen_rewards - rejected_rewards)
+    # log_sigmoid(x) = -softplus(-x) for numerical stability
+    loss = mx.logaddexp(0, -(chosen_rewards - rejected_rewards))
     return mx.mean(loss)
 
 
