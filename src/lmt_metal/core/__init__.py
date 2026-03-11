@@ -5,6 +5,7 @@ from lmt_metal.core.block import ConfigurableBlock
 from lmt_metal.core.config import BlockConfig, ModelConfig
 from lmt_metal.core.deltanet import GatedDeltaNet
 from lmt_metal.core.ffn import GatedFFN, StandardFFN
+from lmt_metal.core.lora import LoRALinear, apply_lora, merge_lora
 from lmt_metal.core.mla import MLA
 from lmt_metal.core.norm import layer_norm, rms_norm
 from lmt_metal.core.position import alibi, rope, sinusoidal
@@ -17,13 +18,16 @@ __all__ = [
     "GQA",
     "GatedDeltaNet",
     "GatedFFN",
+    "LoRALinear",
     "MHA",
     "MLA",
     "SlidingWindowGQA",
     "ModelConfig",
     "Registry",
     "StandardFFN",
+    "apply_lora",
     "dequantize_model",
+    "merge_lora",
     "alibi",
     "quantize_model",
     "layer_norm",
