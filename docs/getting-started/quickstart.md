@@ -109,7 +109,7 @@ lmt-metal provides built-in generation with KV caching, sampling strategies,
 and stop tokens:
 
 ```python
-from lmt_metal.models import generate
+from lmt_metal import generate
 
 prompt = mx.array([[1, 234, 567]])  # Token IDs
 
@@ -148,7 +148,7 @@ For interactive applications, `stream_generate` yields tokens one at a
 time as they are produced:
 
 ```python
-from lmt_metal.models import stream_generate
+from lmt_metal import stream_generate
 
 prompt = mx.array([[1, 234, 567]])
 for token_id in stream_generate(
@@ -194,8 +194,7 @@ for LLaMA, `'mla'` for DeepSeek.
 lmt-metal includes a `Trainer` that handles the MLX training loop:
 
 ```python
-from lmt_metal.training.config import TrainConfig
-from lmt_metal.training.trainer import Trainer
+from lmt_metal import Trainer, TrainConfig
 
 train_config = TrainConfig(
     learning_rate=3e-4,
