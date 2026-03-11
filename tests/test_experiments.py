@@ -201,6 +201,49 @@ class TestRandomSweep:
         assert len(configs) == 1
         assert isinstance(configs[0]["x"], float)
 
+    def test_log_scale(self):
+        configs = list(
+            random_sweep(
+                param_ranges={
+                    "lr": (1e-5, 1e-1),
+                    "d_model": (64.0, 512.0),
+                },
+                n_trials=50,
+                log_scale={"lr"},
+            )
+        )
+        assert len(configs) == 50
+        for c in configs:
+            assert 1e-5 <= c["lr"] <= 1e-1
+            assert 64.0 <= c["d_model"] <= 512.0
+
+        # Log-scale should produce values across orders
+        # of magnitude. Most uniform samples of 1e-5..1e-1
+        # would cluster near 1e-1; log-scale spreads them.
+        lr_values = [c["lr"] for c in configs]
+        small = sum(1 for v in lr_values if v < 1e-3)
+        assert small > 0, "log-scale should sample small values"
+
+    def test_log_scale_reproducible(self):
+        c1 = list(
+            random_sweep(
+                param_ranges={"lr": (1e-4, 1e-1)},
+                n_trials=5,
+                seed=99,
+                log_scale={"lr"},
+            )
+        )
+        c2 = list(
+            random_sweep(
+                param_ranges={"lr": (1e-4, 1e-1)},
+                n_trials=5,
+                seed=99,
+                log_scale={"lr"},
+            )
+        )
+        for a, b in zip(c1, c2, strict=True):
+            assert a["lr"] == b["lr"]
+
 
 class TestAnalysis:
     def test_compute_statistics(self):
