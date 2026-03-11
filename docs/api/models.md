@@ -23,11 +23,19 @@ architecture when passed to `LanguageModel`.
 
 ::: lmt_metal.models.gpt.gpt_tiny
 
+::: lmt_metal.models.gpt.gpt_small
+
+::: lmt_metal.models.gpt.gpt_medium
+
 ### LLaMA
 
 ::: lmt_metal.models.llama.llama_config
 
 ::: lmt_metal.models.llama.llama_tiny
+
+::: lmt_metal.models.llama.llama_7b
+
+::: lmt_metal.models.llama.llama_13b
 
 ### Gemma
 
