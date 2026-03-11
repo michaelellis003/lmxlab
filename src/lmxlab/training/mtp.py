@@ -15,7 +15,8 @@ lightweight projection layers trained alongside the backbone.
 
 Loss = main_loss + sum(mtp_weight * mtp_loss_k) for k=1..n_predict
 
-Reference: DeepSeek-V3 (arxiv.org/abs/2501.12948), Meta (2024)
+Reference: DeepSeek-V3 (arxiv.org/abs/2412.19437),
+    Meta (arxiv.org/abs/2404.19737)
 """
 
 import mlx.core as mx
