@@ -184,9 +184,43 @@ The trainer uses `nn.value_and_grad` for functional gradient computation
 and `mx.eval` for explicit evaluation boundaries. See
 [MLX Idioms](../architecture/mlx-idioms.md) for why these patterns matter.
 
+## 7. CLI tools
+
+lmt-metal includes a CLI for quick architecture exploration:
+
+```bash
+# List all architectures
+lmt-metal list
+
+# Show config details
+lmt-metal info llama --tiny
+
+# Count parameters with breakdown
+lmt-metal count deepseek --detail
+```
+
+## 8. Recipes
+
+Ready-to-run scripts in the `recipes/` directory:
+
+```bash
+# Train a tiny GPT on Shakespeare
+uv run python recipes/train_tiny_gpt.py
+
+# Train LLaMA with BPE tokenization
+uv run python recipes/train_llama_shakespeare.py
+
+# Compare architectures side-by-side
+uv run python recipes/compare_training.py
+
+# Run structured experiments with logging
+uv run python recipes/run_experiment.py --arch llama --seeds 3
+```
+
 ## Next steps
 
 - **[Architecture Overview](../architecture/overview.md)** -- Understand the
   config/registry/block design in depth.
 - **[MLX Idioms](../architecture/mlx-idioms.md)** -- Learn the MLX patterns
   that differ from PyTorch.
+- **[Models](../models/index.md)** -- Compare all 8 architectures side-by-side.
