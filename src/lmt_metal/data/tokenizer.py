@@ -46,19 +46,24 @@ class CharTokenizer:
     Simple tokenizer that maps each unique character to an ID.
     Useful for testing and small-scale experiments.
 
-    Can be initialized with text directly, or created empty
-    and fitted later via ``fit()``.
+    Can be initialized with text directly, or created with
+    default ASCII printable characters (no args). Use
+    ``fit()`` to rebuild the vocabulary from new text.
 
     Args:
-        text: Text to build vocabulary from. If None, call
-            ``fit()`` before encoding.
+        text: Text to build vocabulary from. If None, uses
+            ASCII printable characters (32-126).
     """
 
     def __init__(self, text: str | None = None) -> None:
-        self._char_to_id: dict[str, int] = {}
-        self._id_to_char: dict[int, str] = {}
         if text is not None:
-            self.fit(text)
+            chars = sorted(set(text))
+        else:
+            chars = [chr(i) for i in range(32, 127)]
+        self._char_to_id: dict[str, int] = {c: i for i, c in enumerate(chars)}
+        self._id_to_char: dict[int, str] = {
+            i: c for c, i in self._char_to_id.items()
+        }
 
     def fit(self, text: str) -> None:
         """Build vocabulary from text.
