@@ -39,7 +39,7 @@ assembled from registry components based on what the config asks for.
 - **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
 - **HuggingFace integration**: load pretrained weights from the Hub
 - **Experiment framework**: time-budgeted runs, results tracking, sweeps, MLX profiling
-- **17 recipe scripts**: training, fine-tuning, evaluation, streaming generation, checkpointing, ablation studies, architecture comparison, benchmarking
+- **18 recipe scripts**: training, fine-tuning, DPO, evaluation, streaming generation, checkpointing, ablation studies, architecture comparison, benchmarking
 
 ## Quick start
 
@@ -78,6 +78,7 @@ uv run python recipes/compare_architectures.py        # Side-by-side architectur
 uv run python recipes/ablation_gpt_to_llama.py        # Feature ablation study
 uv run python recipes/finetune_lora.py --rank 8       # LoRA fine-tuning
 uv run python recipes/finetune_qlora.py --bits 4      # QLoRA (4-bit + LoRA)
+uv run python recipes/train_dpo.py                    # DPO preference optimization
 uv run python recipes/train_moe.py --experts 4        # Mixture of Experts
 uv run python recipes/speculative_decoding.py         # Draft-then-verify generation
 uv run python recipes/evaluate_model.py               # Evaluate with perplexity/BPB

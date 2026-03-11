@@ -273,6 +273,9 @@ uv run python recipes/evaluate_model.py
 # Interactive streaming generation with token-by-token output
 uv run python recipes/interactive_generate.py --temperature 0.8
 
+# DPO preference optimization (SFT + DPO)
+uv run python recipes/train_dpo.py --dpo-steps 50
+
 # Checkpoint and resume training
 uv run python recipes/checkpoint_resume.py --steps 200
 ```
