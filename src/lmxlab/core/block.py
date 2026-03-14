@@ -5,6 +5,7 @@ import mlx.nn as nn
 
 import lmxlab.core.mamba2  # noqa: F401 — registers mamba2
 import lmxlab.core.moe  # noqa: F401 — registers moe/shared_moe/latent_moe
+import lmxlab.core.sparse_attention  # noqa: F401 — registers sparse_gqa
 from lmxlab.core.attention import attention_registry
 from lmxlab.core.config import BlockConfig
 from lmxlab.core.ffn import ffn_registry

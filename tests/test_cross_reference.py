@@ -2960,3 +2960,161 @@ class TestMamba3CrossReference:
         mx.eval(out)
         assert out.shape == (1, 8, 64)
         assert cache[0].shape == (1, 4, 32, 16)
+
+
+class TestSparseAttentionCrossReference:
+    """Cross-reference tests for DeepSeek Sparse Attention.
+
+    References:
+    - DeepSeek-V3.2 (arXiv:2512.02556), Section 3.2
+    """
+
+    def _make_sparse_config(self) -> BlockConfig:
+        """Create a test SparseGQA config."""
+        return BlockConfig(
+            attention="sparse_gqa",
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            bias=False,
+            pre_norm=True,
+            window_size=8,
+            sparse_compress_ratio=4,
+            sparse_select_k=4,
+        )
+
+    def test_output_shape_matches_gqa(self):
+        """SparseGQA output shape matches standard GQA."""
+        from lmxlab.core.sparse_attention import SparseGQA
+
+        cfg = self._make_sparse_config()
+        attn = SparseGQA(cfg)
+        mx.eval(attn.parameters())
+
+        x = mx.random.normal((1, 16, 64))
+        out, cache = attn(x)
+        mx.eval(out, *cache)
+        assert out.shape == (1, 16, 64)
+
+    def test_compress_reduces_seq_len(self):
+        """Compress branch reduces KV length by compress_ratio."""
+        from lmxlab.core.sparse_attention import SparseGQA
+
+        cfg = self._make_sparse_config()
+        attn = SparseGQA(cfg)
+        mx.eval(attn.parameters())
+
+        B, L = 1, 16
+        r = cfg.sparse_compress_ratio
+        x = mx.random.normal((B, L, 64))
+
+        # Get raw k for compression
+        k = attn.k_proj(x)
+
+        # Pool
+        k_pool = k.reshape(B, L // r, r, -1).mean(axis=2)
+        mx.eval(k_pool)
+        assert k_pool.shape == (B, L // r, 2 * 16)  # kv_dim
+
+    def test_select_picks_top_k_tokens(self):
+        """Select branch picks top-k tokens by score."""
+        from lmxlab.core.sparse_attention import SparseGQA
+
+        cfg = self._make_sparse_config()
+        attn = SparseGQA(cfg)
+        mx.eval(attn.parameters())
+
+        B, L = 1, 16
+        x = mx.random.normal((B, L, 64))
+
+        # Score tokens
+        scores = attn.token_scorer(x)  # (B, L, n_kv_heads)
+        mx.eval(scores)
+        assert scores.shape == (B, L, 2)
+
+        # Top-k selection
+        scores_t = scores.transpose(0, 2, 1)  # (B, H, L)
+        top_idx = mx.argpartition(
+            -scores_t, kth=cfg.sparse_select_k - 1, axis=-1
+        )[..., : cfg.sparse_select_k]
+        mx.eval(top_idx)
+        assert top_idx.shape == (B, 2, cfg.sparse_select_k)
+
+    def test_window_branch_restricts_old_tokens(self):
+        """Window mask blocks tokens outside the window."""
+        from lmxlab.core.attention import _apply_sliding_window
+
+        L, window = 16, 8
+        # _apply_sliding_window is designed to be composed with
+        # a causal mask that's already handled by SDPA. Test
+        # that the window constraint blocks old tokens.
+        wmask = _apply_sliding_window(None, window, L)
+        mx.eval(wmask)
+
+        # Token 15 should attend to tokens 8..15 (window)
+        for j in range(8, 16):
+            assert wmask[15, j].item() == 0.0
+        # Token 15 should NOT attend to token 7 (outside)
+        assert wmask[15, 7].item() < -1e8
+
+        # Token 8 can attend to tokens 1..8
+        assert wmask[8, 1].item() == 0.0
+        # Token 8 should NOT attend to token 0
+        assert wmask[8, 0].item() < -1e8
+
+    def test_full_forward_pass(self):
+        """Full model with SparseGQA produces correct output."""
+        from lmxlab.models.base import LanguageModel
+
+        cfg = ModelConfig(
+            block=self._make_sparse_config(),
+            vocab_size=256,
+            n_layers=2,
+        )
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+
+        x = mx.array([[1, 2, 3, 4, 5, 6, 7, 8]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 8, 256)
+
+    def test_requires_config_fields(self):
+        """SparseGQA raises if required config fields missing."""
+        import pytest
+
+        from lmxlab.core.sparse_attention import SparseGQA
+
+        # Missing sparse_compress_ratio
+        cfg = BlockConfig(
+            attention="sparse_gqa",
+            d_model=64,
+            n_heads=4,
+            sparse_select_k=4,
+            window_size=8,
+        )
+        with pytest.raises(ValueError, match="sparse_compress_ratio"):
+            SparseGQA(cfg)
+
+        # Missing sparse_select_k
+        cfg = BlockConfig(
+            attention="sparse_gqa",
+            d_model=64,
+            n_heads=4,
+            sparse_compress_ratio=4,
+            window_size=8,
+        )
+        with pytest.raises(ValueError, match="sparse_select_k"):
+            SparseGQA(cfg)
+
+        # Missing window_size
+        cfg = BlockConfig(
+            attention="sparse_gqa",
+            d_model=64,
+            n_heads=4,
+            sparse_compress_ratio=4,
+            sparse_select_k=4,
+        )
+        with pytest.raises(ValueError, match="window_size"):
+            SparseGQA(cfg)

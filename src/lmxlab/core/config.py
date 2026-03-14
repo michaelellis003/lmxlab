@@ -95,6 +95,9 @@ class BlockConfig:
     attention_chunk_size: int | None = None
     # μP (Maximal Update Parameterization) flag
     mup: bool = False
+    # DeepSeek Sparse Attention (DSA) parameters
+    sparse_compress_ratio: int | None = None
+    sparse_select_k: int | None = None
 
     @property
     def head_dim(self) -> int:
