@@ -153,3 +153,77 @@ class EarlyStopping:
                     f"Early stopping at step {step} "
                     f"(best loss: {self._best_loss:.4f})"
                 )
+
+
+class FLOPCounter:
+    """Tracks cumulative FLOPs during training.
+
+    Accumulates FLOPs per step, injects total into metrics,
+    and optionally stops training at a FLOP budget.
+
+    Args:
+        flops_per_step: FLOPs consumed per training step.
+        log_interval: Steps between TFLOP/s reports.
+        flop_budget: Stop training after this many FLOPs.
+            None means no budget (run indefinitely).
+    """
+
+    def __init__(
+        self,
+        flops_per_step: float,
+        log_interval: int = 10,
+        flop_budget: float | None = None,
+    ) -> None:
+        self.flops_per_step = flops_per_step
+        self.log_interval = log_interval
+        self.flop_budget = flop_budget
+        self.total_flops: float = 0.0
+        self.should_stop: bool = False
+        self._start_time: float = 0.0
+
+    def on_train_begin(self, config: TrainConfig) -> None:
+        """Reset counters and record start time."""
+        self.total_flops = 0.0
+        self.should_stop = False
+        self._start_time = time.monotonic()
+
+    def on_step_end(self, step: int, metrics: dict[str, Any]) -> None:
+        """Accumulate FLOPs and check budget."""
+        self.total_flops += self.flops_per_step
+        metrics['total_flops'] = self.total_flops
+
+        if (
+            self.flop_budget is not None
+            and self.total_flops >= self.flop_budget
+        ):
+            self.should_stop = True
+            pflops = self.total_flops / 1e15
+            print(
+                f'FLOP budget reached at step {step} '
+                f'({pflops:.3f} PFLOPs)'
+            )
+
+        if step % self.log_interval == 0:
+            elapsed = time.monotonic() - self._start_time
+            if elapsed > 0:
+                tflops_sec = self.total_flops / elapsed / 1e12
+                print(
+                    f'step {step}: {tflops_sec:.2f} TFLOP/s '
+                    f'({self.total_flops:.2e} total)'
+                )
+
+    def on_eval_end(self, step: int, metrics: dict[str, Any]) -> None:
+        """No action on eval."""
+
+    def on_train_end(self, history: list[dict[str, Any]]) -> None:
+        """Print FLOP summary."""
+        elapsed = time.monotonic() - self._start_time
+        pflops = self.total_flops / 1e15
+        if elapsed > 0:
+            tflops_sec = self.total_flops / elapsed / 1e12
+            print(
+                f'FLOPs summary: {pflops:.4f} PFLOPs '
+                f'in {elapsed:.1f}s ({tflops_sec:.2f} TFLOP/s)'
+            )
+        else:
+            print(f'FLOPs summary: {pflops:.4f} PFLOPs')
