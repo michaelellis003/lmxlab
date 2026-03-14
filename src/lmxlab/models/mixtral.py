@@ -2,6 +2,8 @@
 
 Mixtral uses the same base as LLaMA but with Mixture of Experts
 (MoE) FFN layers. Each token is routed to the top-2 of 8 experts.
+
+Reference: Mixtral of Experts (Jiang et al., 2024, arXiv:2401.04088)
 """
 
 from lmxlab.core.config import BlockConfig, ModelConfig

@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **16 new architecture config factories**: DeepSeek V3 (MLA + MoE),
+  Nemotron (hybrid Mamba-Transformer MoE), Llama 4 Scout/Maverick
+  (iRoPE + chunked attention + MoE), Mistral Small (sliding window),
+  OLMo 2 (QK-norm), GPT-OSS (QK-norm), Grok (SharedExpertMoE),
+  Kimi K2.5 (DeltaNet + MoE), Qwen-Next (gated attention),
+  SmolLM3 (iRoPE), Qwen 3 MoE, Falcon H1 (hybrid Mamba-2),
+  Jamba (Mamba-2 + MoE), Bamba (hybrid Mamba-2), GLM-4.5 (MLA NoPE)
+- **Mamba-2 SSD**: structured state-space sequence mixer with chunked
+  parallel scan and recurrent inference paths
+- **Mamba-3**: trapezoidal discretization, BCNorm, complex A
+  (data-dependent RoPE on B/C)
+- **QK-norm**: per-head RMSNorm on Q and K projections (OLMo 2 style)
+- **GatedGQA**: sigmoid output gating on attention
+  (arXiv:2505.06708)
+- **ChunkedGQA**: fixed-size local attention with per-chunk RoPE
+  (Llama 4 iRoPE pattern)
+- **LatentMoE**: down-project before routing for many-expert MoE
+  (arXiv:2601.18089)
+- **SharedExpertMoE**: shared expert alongside routed experts
+  (DeepSeek V3 style)
+- **ReluSquaredFFN**: squared ReLU activation (Primer / Nemotron)
+- **muP parameterization**: width-independent hyperparameter transfer
+- **Dropout support**: configurable dropout in attention and FFN
+- **SparseGQA (DSA)**: DeepSeek Sparse Attention with compressed tokens,
+  selected tokens, and sliding window (arXiv:2512.02556)
+- **GRPOTrainer**: full GRPO training loop with group sampling, reward
+  scoring, and clipped surrogate objective (arXiv:2501.12948)
+- **Beam search**: standard beam search with optional custom scoring
+- **RewardModel**: language model + scalar head for reward scoring
+
 ## [0.1.0] - 2026-03-11
 
 Initial release.

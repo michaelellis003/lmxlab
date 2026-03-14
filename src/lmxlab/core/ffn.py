@@ -57,7 +57,7 @@ class ReluSquaredFFN(FFNBase):
     """Non-gated FFN with squared ReLU activation.
 
     FFN(x) = W_down * ReLU(W_up * x)^2
-    From Primer (So et al. 2021). Used in Nemotron 3 for
+    From Primer (So et al. 2021, arXiv:2109.08668). Used in Nemotron 3 for
     both dense (*) layers and MoE expert FFNs.
     """
 

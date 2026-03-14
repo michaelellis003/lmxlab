@@ -17,8 +17,8 @@ base model is used.
 
 Loss = main_loss + mtp_lambda * mean(mtp_loss_k)
 
-Reference: DeepSeek-V3 (arxiv.org/abs/2412.19437),
-    Meta (arxiv.org/abs/2404.19737)
+Reference: DeepSeek-V3 (DeepSeek-AI, 2025, arXiv:2412.19437),
+    Meta (Gloeckle et al., 2024, arXiv:2404.19737)
 """
 
 import mlx.core as mx

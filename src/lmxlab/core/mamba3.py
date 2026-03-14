@@ -16,6 +16,8 @@ scan from ``mamba2.py``.
 
 References:
 - Mamba-3 (Dao & Gu, ICLR 2026 oral)
+
+Cross-references:
 - mamba3-minimal reference implementation
 - state-spaces/mamba official repo
 """

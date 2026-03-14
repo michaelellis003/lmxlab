@@ -13,8 +13,8 @@ Key features:
 - V3: SharedExpertMoE with sigmoid routing
 
 References:
-- DeepSeek-V2 (Bi et al., 2024)
-- DeepSeek-V3 Technical Report (DeepSeek-AI, 2025)
+- DeepSeek-V2 (Bi et al., 2024, arXiv:2405.04434)
+- DeepSeek-V3 Technical Report (DeepSeek-AI, 2025, arXiv:2412.19437)
 """
 
 from lmxlab.core.config import BlockConfig, ModelConfig
@@ -138,7 +138,7 @@ def deepseek_v3_config(
         ModelConfig for a DeepSeek V3 model.
 
     References:
-        DeepSeek-V3 Technical Report (DeepSeek-AI, 2025).
+        DeepSeek-V3 (DeepSeek-AI, 2025, arXiv:2412.19437).
     """
     common_attn = dict(
         attention="mla",
