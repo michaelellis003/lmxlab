@@ -1238,3 +1238,241 @@ class TestNemotronWeightMap:
         cfg = config_from_hf(hf_cfg)
         assert cfg.n_layers == 4
         assert cfg.vocab_size == 1000
+
+
+class TestDeepSeekV3Config:
+    def test_tiny_config(self):
+        """deepseek_v3_tiny creates valid config."""
+        from lmxlab.models.deepseek import deepseek_v3_tiny
+
+        cfg = deepseek_v3_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+        assert len(cfg.block_configs) == 4
+
+    def test_dense_then_moe(self):
+        """First layer is dense, rest are MoE."""
+        from lmxlab.models.deepseek import deepseek_v3_tiny
+
+        cfg = deepseek_v3_tiny()
+        assert cfg.block_configs[0].ffn == "gated"
+        for bc in cfg.block_configs[1:]:
+            assert bc.ffn == "shared_moe"
+
+    def test_forward_shape(self):
+        """DeepSeek V3 forward pass produces correct shape."""
+        from lmxlab.models.deepseek import deepseek_v3_tiny
+
+        cfg = deepseek_v3_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
+
+
+class TestOLMo2Config:
+    def test_tiny_config(self):
+        """olmo2_tiny creates valid config with qk_norm."""
+        from lmxlab.models.olmo import olmo2_tiny
+
+        cfg = olmo2_tiny()
+        assert cfg.block.qk_norm is True
+        assert cfg.block.attention == "gqa"
+
+    def test_forward_shape(self):
+        """OLMo 2 forward pass produces correct shape."""
+        from lmxlab.models.olmo import olmo2_tiny
+
+        cfg = olmo2_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 3, cfg.vocab_size)
+
+
+class TestLlama4ScoutConfig:
+    def test_tiny_config(self):
+        """llama4_scout_tiny creates valid hybrid config."""
+        from lmxlab.models.llama4 import llama4_scout_tiny
+
+        cfg = llama4_scout_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+        assert len(cfg.block_configs) == 4
+
+    def test_irope_pattern(self):
+        """iRoPE: 3 chunked + 1 NoPE per cycle."""
+        from lmxlab.models.llama4 import llama4_scout_tiny
+
+        cfg = llama4_scout_tiny()
+        # Layers 0,1,2 = chunked, layer 3 = NoPE
+        for i in range(3):
+            assert cfg.block_configs[i].attention == "chunked_gqa"
+            assert cfg.block_configs[i].position == "rope"
+        assert cfg.block_configs[3].attention == "gqa"
+        assert cfg.block_configs[3].position == "none"
+
+    def test_forward_shape(self):
+        """Llama 4 Scout forward pass produces correct shape."""
+        from lmxlab.models.llama4 import llama4_scout_tiny
+
+        cfg = llama4_scout_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
+
+
+class TestQwenNextConfig:
+    def test_tiny_config(self):
+        """qwen_next_tiny creates valid config."""
+        from lmxlab.models.qwen_next import qwen_next_tiny
+
+        cfg = qwen_next_tiny()
+        assert cfg.block.attention == "gated_gqa"
+
+    def test_forward_shape(self):
+        """Qwen3-Next forward pass produces correct shape."""
+        from lmxlab.models.qwen_next import qwen_next_tiny
+
+        cfg = qwen_next_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 3, cfg.vocab_size)
+
+
+class TestSmolLM3Config:
+    def test_tiny_config(self):
+        """smollm3_tiny creates valid hybrid config."""
+        from lmxlab.models.smollm import smollm3_tiny
+
+        cfg = smollm3_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+
+    def test_irope_pattern(self):
+        """iRoPE: 3 RoPE + 1 NoPE per cycle."""
+        from lmxlab.models.smollm import smollm3_tiny
+
+        cfg = smollm3_tiny()
+        for i in range(3):
+            assert cfg.block_configs[i].position == "rope"
+        assert cfg.block_configs[3].position == "none"
+
+    def test_forward_shape(self):
+        """SmolLM3 forward pass produces correct shape."""
+        from lmxlab.models.smollm import smollm3_tiny
+
+        cfg = smollm3_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 3, cfg.vocab_size)
+
+
+class TestMistralSmallConfig:
+    def test_tiny_config(self):
+        """mistral_small_tiny creates valid config."""
+        from lmxlab.models.mistral import mistral_small_tiny
+
+        cfg = mistral_small_tiny()
+        assert cfg.block.attention == "sliding_window_gqa"
+        assert cfg.block.window_size == 32
+
+    def test_forward_shape(self):
+        """Mistral Small forward pass produces correct shape."""
+        from lmxlab.models.mistral import mistral_small_tiny
+
+        cfg = mistral_small_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 3, cfg.vocab_size)
+
+
+class TestGPTOSSConfig:
+    def test_tiny_config(self):
+        """gpt_oss_tiny creates valid config."""
+        from lmxlab.models.gpt_oss import gpt_oss_tiny
+
+        cfg = gpt_oss_tiny()
+        assert cfg.block.qk_norm is True
+        assert cfg.tie_embeddings is True
+
+    def test_forward_shape(self):
+        """GPT-OSS forward pass produces correct shape."""
+        from lmxlab.models.gpt_oss import gpt_oss_tiny
+
+        cfg = gpt_oss_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 3, cfg.vocab_size)
+
+
+class TestGrokConfig:
+    def test_tiny_config(self):
+        """grok_tiny creates valid config."""
+        from lmxlab.models.grok import grok_tiny
+
+        cfg = grok_tiny()
+        assert cfg.block.ffn == "shared_moe"
+        assert cfg.block.n_experts == 4
+
+    def test_forward_shape(self):
+        """Grok forward pass produces correct shape."""
+        from lmxlab.models.grok import grok_tiny
+
+        cfg = grok_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 3, cfg.vocab_size)
+
+
+class TestKimiConfig:
+    def test_tiny_config(self):
+        """kimi_tiny creates valid hybrid config."""
+        from lmxlab.models.kimi import kimi_tiny
+
+        cfg = kimi_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+
+    def test_hybrid_pattern(self):
+        """3 GQA + 1 DeltaNet per cycle."""
+        from lmxlab.models.kimi import kimi_tiny
+
+        cfg = kimi_tiny()
+        for i in range(3):
+            assert cfg.block_configs[i].attention == "gqa"
+        assert cfg.block_configs[3].attention == "gated_deltanet"
+
+    def test_forward_shape(self):
+        """Kimi K2.5 forward pass produces correct shape."""
+        from lmxlab.models.kimi import kimi_tiny
+
+        cfg = kimi_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
