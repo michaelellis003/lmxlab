@@ -19,6 +19,7 @@ from lmxlab.training.distillation import (
 )
 from lmxlab.training.dpo import dpo_loss
 from lmxlab.training.grpo import grpo_loss
+from lmxlab.training.grpo_trainer import GRPOConfig, GRPOTrainer
 from lmxlab.training.mtp import MTPHead, MultiTokenPrediction
 from lmxlab.training.optimizers import create_optimizer, create_schedule
 from lmxlab.training.trainer import Trainer
@@ -36,6 +37,8 @@ __all__ = [
     "difficulty_curriculum",
     "distillation_loss",
     "dpo_loss",
+    "GRPOConfig",
+    "GRPOTrainer",
     "grpo_loss",
     "MTPHead",
     "MultiTokenPrediction",
