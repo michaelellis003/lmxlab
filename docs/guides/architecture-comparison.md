@@ -45,8 +45,9 @@ Fewer KV heads than Q heads. Reduces KV cache size
 proportionally. Most modern architectures use GQA.
 
 **Multi-head Latent Attention** (DeepSeek, GLM): Projects KV into
-a low-rank latent space. ~28x KV cache reduction. Decoupled RoPE
-applied only to a subset of dimensions.
+a low-rank latent space. Significant KV cache reduction (93.3%
+in DeepSeek-V2). Decoupled RoPE applied only to a subset of
+dimensions.
 
 **Sliding Window** (Mistral, Gemma-3): Each token attends only to
 a fixed window of past tokens. O(n * w) instead of O(n^2).
@@ -62,7 +63,7 @@ hardware-efficient chunked scan.
 ## Normalization
 
 **LayerNorm** (GPT only): Subtracts mean AND divides by std.
-The mean subtraction provides implicit regularization.
+The mean subtraction centers activations, aiding stability.
 
 **RMSNorm** ([Zhang & Sennrich, 2019](https://arxiv.org/abs/1910.07467)):
 Divides by root mean square only. Faster than LayerNorm, no mean
