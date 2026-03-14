@@ -19,6 +19,7 @@ class LogEntry:
         val_loss: Validation loss.
         train_loss: Final training loss.
         param_count: Number of model parameters.
+        total_flops: Total FLOPs consumed during training.
         peak_memory_mb: Peak memory usage in MB.
         wall_time_s: Wall clock time in seconds.
         description: Human-readable description.
@@ -35,6 +36,7 @@ class LogEntry:
     val_loss: float = 0.0
     train_loss: float = 0.0
     param_count: int = 0
+    total_flops: float = 0.0
     peak_memory_mb: float = 0.0
     wall_time_s: float = 0.0
     description: str = ""

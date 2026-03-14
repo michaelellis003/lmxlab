@@ -3,6 +3,7 @@
 from lmxlab.training.callbacks import (
     Callback,
     EarlyStopping,
+    FLOPCounter,
     MetricsLogger,
     ThroughputMonitor,
 )
@@ -25,6 +26,7 @@ from lmxlab.training.trainer import Trainer
 __all__ = [
     "Callback",
     "EarlyStopping",
+    "FLOPCounter",
     "MetricsLogger",
     "ThroughputMonitor",
     "Trainer",
@@ -42,3 +44,10 @@ __all__ = [
     "save_checkpoint",
     "soft_target_loss",
 ]
+
+try:
+    from lmxlab.experiments.mlflow import MLflowCallback
+
+    __all__ += ["MLflowCallback"]
+except ImportError:
+    pass

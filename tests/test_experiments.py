@@ -1,8 +1,10 @@
 """Tests for experiment framework."""
 
 from lmxlab.experiments.analysis import (
+    cohens_d,
     compare_experiments,
     compute_statistics,
+    confidence_interval,
     simplicity_score,
 )
 from lmxlab.experiments.runner import ExperimentConfig, ExperimentRunner
@@ -301,3 +303,66 @@ class TestAnalysis:
             baseline_metric=2.0,
         )
         assert score2 < 0
+
+    def test_cohens_d_identical_groups(self):
+        a = [1.0, 2.0, 3.0]
+        b = [1.0, 2.0, 3.0]
+        assert cohens_d(a, b) == 0.0
+
+    def test_cohens_d_positive_when_a_greater(self):
+        a = [10.0, 11.0, 12.0]
+        b = [1.0, 2.0, 3.0]
+        d = cohens_d(a, b)
+        assert d > 0
+
+    def test_cohens_d_negative_when_b_greater(self):
+        a = [1.0, 2.0, 3.0]
+        b = [10.0, 11.0, 12.0]
+        d = cohens_d(a, b)
+        assert d < 0
+
+    def test_cohens_d_large_effect(self):
+        # Well-separated groups should have |d| > 0.8
+        a = [10.0, 11.0, 12.0, 13.0]
+        b = [1.0, 2.0, 3.0, 4.0]
+        d = cohens_d(a, b)
+        assert abs(d) > 0.8
+
+    def test_cohens_d_too_few_samples(self):
+        assert cohens_d([1.0], [2.0]) == 0.0
+        assert cohens_d([], [1.0, 2.0]) == 0.0
+
+    def test_cohens_d_zero_variance(self):
+        a = [5.0, 5.0, 5.0]
+        b = [5.0, 5.0, 5.0]
+        assert cohens_d(a, b) == 0.0
+
+    def test_confidence_interval_contains_mean(self):
+        values = [2.0, 4.0, 6.0, 8.0, 10.0]
+        lo, hi = confidence_interval(values, confidence=0.95)
+        mean = sum(values) / len(values)
+        assert lo < mean < hi
+
+    def test_confidence_interval_wider_at_higher_confidence(self):
+        values = [1.0, 2.0, 3.0, 4.0, 5.0]
+        lo_90, hi_90 = confidence_interval(values, confidence=0.90)
+        lo_99, hi_99 = confidence_interval(values, confidence=0.99)
+        width_90 = hi_90 - lo_90
+        width_99 = hi_99 - lo_99
+        assert width_99 > width_90
+
+    def test_confidence_interval_single_value(self):
+        lo, hi = confidence_interval([42.0])
+        assert lo == hi == 42.0
+
+    def test_confidence_interval_empty(self):
+        lo, hi = confidence_interval([])
+        assert lo == hi == 0.0
+
+    def test_confidence_interval_large_n_uses_z(self):
+        # n >= 30 uses z-approximation
+        values = [float(i) for i in range(50)]
+        lo, hi = confidence_interval(values, confidence=0.95)
+        mean = sum(values) / len(values)
+        assert lo < mean < hi
+        assert hi - lo > 0

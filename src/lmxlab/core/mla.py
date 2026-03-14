@@ -98,6 +98,7 @@ class MLA(AttentionBase):
         x: mx.array,
         mask: mx.array | None = None,
         cache: tuple[mx.array, mx.array] | None = None,
+        rope: nn.Module | None = None,
     ) -> tuple[mx.array, tuple[mx.array, mx.array] | None]:
         B, L, _ = x.shape
 
