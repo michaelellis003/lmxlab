@@ -1476,3 +1476,196 @@ class TestKimiConfig:
         logits, _ = model(x)
         mx.eval(logits)
         assert logits.shape == (1, 4, cfg.vocab_size)
+
+
+class TestFalconH1Config:
+    def test_tiny_config(self):
+        """falcon_h1_tiny creates valid hybrid config."""
+        from lmxlab.models.falcon import falcon_h1_tiny
+
+        cfg = falcon_h1_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+        assert len(cfg.block_configs) == 4
+
+    def test_hybrid_pattern(self):
+        """3 Mamba-2 + 1 GQA in MMM* pattern."""
+        from lmxlab.models.falcon import falcon_h1_tiny
+
+        cfg = falcon_h1_tiny()
+        for i in range(3):
+            assert cfg.block_configs[i].attention == "mamba2"
+        assert cfg.block_configs[3].attention == "gqa"
+
+    def test_forward_shape(self):
+        """Falcon H1 forward pass produces correct shape."""
+        from lmxlab.models.falcon import falcon_h1_tiny
+
+        cfg = falcon_h1_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
+
+
+class TestJambaConfig:
+    def test_tiny_config(self):
+        """jamba_tiny creates valid hybrid config."""
+        from lmxlab.models.jamba import jamba_tiny
+
+        cfg = jamba_tiny()
+        assert cfg.n_layers == 8
+        assert cfg.block_configs is not None
+        assert len(cfg.block_configs) == 8
+
+    def test_hybrid_pattern(self):
+        """MMMA pattern: 3 Mamba + 1 attention per cycle."""
+        from lmxlab.models.jamba import jamba_tiny
+
+        cfg = jamba_tiny()
+        # First cycle: layers 0,1,2 = Mamba, layer 3 = attn
+        for i in range(3):
+            assert cfg.block_configs[i].attention == "mamba2"
+        assert cfg.block_configs[3].attention == "gqa"
+
+    def test_moe_layers(self):
+        """Even-indexed attention layers use MoE FFN."""
+        from lmxlab.models.jamba import jamba_tiny
+
+        cfg = jamba_tiny()
+        # Layer 3 is 1st attn (index 0, even) -> MoE
+        assert cfg.block_configs[3].ffn == "moe"
+        # Layer 7 is 2nd attn (index 1, odd) -> dense
+        assert cfg.block_configs[7].ffn == "gated"
+
+    def test_forward_shape(self):
+        """Jamba forward pass produces correct shape."""
+        from lmxlab.models.jamba import jamba_tiny
+
+        cfg = jamba_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
+
+
+class TestBambaConfig:
+    def test_tiny_config(self):
+        """bamba_tiny creates valid hybrid config."""
+        from lmxlab.models.bamba import bamba_tiny
+
+        cfg = bamba_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+        assert len(cfg.block_configs) == 4
+
+    def test_hybrid_pattern(self):
+        """3 Mamba-2 + 1 GQA in MMM* pattern."""
+        from lmxlab.models.bamba import bamba_tiny
+
+        cfg = bamba_tiny()
+        for i in range(3):
+            assert cfg.block_configs[i].attention == "mamba2"
+        assert cfg.block_configs[3].attention == "gqa"
+
+    def test_forward_shape(self):
+        """Bamba forward pass produces correct shape."""
+        from lmxlab.models.bamba import bamba_tiny
+
+        cfg = bamba_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
+
+
+class TestLlama4MaverickConfig:
+    def test_tiny_config(self):
+        """llama4_maverick_tiny creates valid hybrid config."""
+        from lmxlab.models.llama4 import llama4_maverick_tiny
+
+        cfg = llama4_maverick_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+
+    def test_irope_pattern(self):
+        """iRoPE: 3 chunked + 1 NoPE per cycle."""
+        from lmxlab.models.llama4 import llama4_maverick_tiny
+
+        cfg = llama4_maverick_tiny()
+        for i in range(3):
+            assert cfg.block_configs[i].attention == "chunked_gqa"
+            assert cfg.block_configs[i].position == "rope"
+        assert cfg.block_configs[3].attention == "gqa"
+        assert cfg.block_configs[3].position == "none"
+
+    def test_more_experts_than_scout(self):
+        """Maverick has more experts than Scout."""
+        from lmxlab.models.llama4 import llama4_maverick_tiny
+
+        cfg = llama4_maverick_tiny()
+        assert cfg.block_configs[0].n_experts == 8
+        assert cfg.block_configs[0].top_k_experts == 1
+
+    def test_forward_shape(self):
+        """Llama 4 Maverick forward pass produces correct shape."""
+        from lmxlab.models.llama4 import llama4_maverick_tiny
+
+        cfg = llama4_maverick_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
+
+
+class TestQwen3MoeConfig:
+    def test_tiny_config(self):
+        """qwen3_moe_tiny creates valid config."""
+        from lmxlab.models.qwen import qwen3_moe_tiny
+
+        cfg = qwen3_moe_tiny()
+        assert cfg.block.ffn == "shared_moe"
+        assert cfg.block.n_experts == 4
+
+    def test_forward_shape(self):
+        """Qwen3 MoE forward pass produces correct shape."""
+        from lmxlab.models.qwen import qwen3_moe_tiny
+
+        cfg = qwen3_moe_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 3, cfg.vocab_size)
+
+
+class TestGLM45Config:
+    def test_tiny_config(self):
+        """glm45_tiny creates valid MLA config with no RoPE."""
+        from lmxlab.models.glm import glm45_tiny
+
+        cfg = glm45_tiny()
+        assert cfg.block.attention == "mla"
+        assert cfg.block.position == "none"
+        assert cfg.block.rope_dim == 0
+
+    def test_forward_shape(self):
+        """GLM-4.5 forward pass produces correct shape."""
+        from lmxlab.models.glm import glm45_tiny
+
+        cfg = glm45_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 3, cfg.vocab_size)
