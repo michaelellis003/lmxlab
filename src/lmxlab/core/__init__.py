@@ -1,6 +1,12 @@
 """Core abstractions for transformer blocks and components."""
 
-from lmxlab.core.attention import GQA, MHA, SlidingWindowGQA
+from lmxlab.core.attention import (
+    GQA,
+    MHA,
+    ChunkedGQA,
+    GatedGQA,
+    SlidingWindowGQA,
+)
 from lmxlab.core.block import ConfigurableBlock
 from lmxlab.core.config import BlockConfig, ModelConfig
 from lmxlab.core.deltanet import GatedDeltaNet
@@ -23,9 +29,11 @@ from lmxlab.core.registry import Registry
 
 __all__ = [
     "BlockConfig",
+    "ChunkedGQA",
     "ConfigurableBlock",
     "GQA",
     "GatedDeltaNet",
+    "GatedGQA",
     "GatedFFN",
     "LoRALinear",
     "LoRAQuantizedLinear",

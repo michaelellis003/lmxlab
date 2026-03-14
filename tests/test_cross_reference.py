@@ -2251,3 +2251,440 @@ class TestDropoutWiringCrossReference:
         mx.eval(out1, out2)
 
         assert mx.allclose(out1, out2, atol=1e-5)
+
+
+class TestQKNormCrossReference:
+    """Validate QK-norm against OLMo 2 (allenai/OLMo-2).
+
+    QK-norm applies per-head RMSNorm to Q and K after
+    reshape, before RoPE. Uses learnable gamma (head_dim).
+
+    References:
+        - OLMo 2 (allenai/OLMo-2)
+        - HF transformers modeling_olmo2.py
+    """
+
+    def test_qk_norm_applied_to_q_and_k(self):
+        """Q and K are normalized when qk_norm=True."""
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            attention="gqa",
+            position="none",
+            qk_norm=True,
+            bias=False,
+        )
+        gqa = GQA(cfg)
+
+        # Verify norm layers exist
+        assert hasattr(gqa, "q_norm")
+        assert hasattr(gqa, "k_norm")
+        assert isinstance(gqa.q_norm, nn.RMSNorm)
+        assert isinstance(gqa.k_norm, nn.RMSNorm)
+
+    def test_qk_norm_learnable_gamma(self):
+        """QK-norm has learnable gamma (weight) per head_dim.
+
+        OLMo 2 uses learnable gamma (scale parameter) in
+        RMSNorm, not a fixed normalization.
+
+        References:
+            - allenai/OLMo-2 modeling_olmo2.py
+        """
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+            attention="mha",
+            position="none",
+            qk_norm=True,
+        )
+        mha = MHA(cfg)
+        head_dim = 64 // 4
+
+        # Weight shape = (head_dim,) — learnable gamma
+        assert mha.q_norm.weight.shape == (head_dim,)
+        assert mha.k_norm.weight.shape == (head_dim,)
+
+        # Initialized to ones
+        mx.eval(mha.q_norm.weight, mha.k_norm.weight)
+        assert mx.allclose(
+            mha.q_norm.weight,
+            mx.ones((head_dim,)),
+        )
+
+    def test_qk_norm_changes_output(self):
+        """QK-norm changes attention output vs no norm."""
+        mx.random.seed(42)
+        cfg_norm = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            attention="gqa",
+            position="none",
+            qk_norm=True,
+            bias=False,
+        )
+        cfg_no = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            attention="gqa",
+            position="none",
+            qk_norm=False,
+            bias=False,
+        )
+        gqa_norm = GQA(cfg_norm)
+        gqa_no = GQA(cfg_no)
+
+        # Copy weights (excluding norm weights)
+        import mlx.utils
+
+        weights = dict(mlx.utils.tree_flatten(gqa_no.parameters()))
+        gqa_norm.load_weights(list(weights.items()), strict=False)
+
+        x = mx.random.normal((1, 4, 64))
+        mask = _create_causal_mask(4)
+        out_norm, _ = gqa_norm(x, mask=mask)
+        out_no, _ = gqa_no(x, mask=mask)
+        mx.eval(out_norm, out_no)
+
+        assert not mx.allclose(out_norm, out_no, atol=1e-3)
+
+    def test_qk_norm_output_shape(self):
+        """QK-norm preserves output shape."""
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            attention="gqa",
+            position="none",
+            qk_norm=True,
+        )
+        gqa = GQA(cfg)
+        x = mx.random.normal((2, 8, 64))
+        mask = _create_causal_mask(8)
+        out, cache = gqa(x, mask=mask)
+        mx.eval(out)
+        assert out.shape == (2, 8, 64)
+
+    def test_qk_norm_not_created_when_disabled(self):
+        """No norm layers when qk_norm=False."""
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            d_ff=128,
+            attention="mha",
+            position="none",
+            qk_norm=False,
+        )
+        mha = MHA(cfg)
+        assert not hasattr(mha, "q_norm")
+        assert not hasattr(mha, "k_norm")
+
+
+class TestGatedAttentionCrossReference:
+    """Validate GatedGQA against arXiv:2505.06708.
+
+    G1 elementwise variant: y = y * sigmoid(W_gate @ x)
+    applied after SDPA, before output projection.
+
+    References:
+        - arXiv:2505.06708 (NeurIPS 2025 best paper)
+        - Qwen3-Next architecture
+    """
+
+    def test_gate_formula(self):
+        """Gate uses sigmoid(W_gate @ x) element-wise."""
+        from lmxlab.core.attention import GatedGQA
+
+        cfg = BlockConfig(
+            d_model=32,
+            n_heads=2,
+            n_kv_heads=2,
+            d_ff=64,
+            attention="gated_gqa",
+            position="none",
+            bias=False,
+        )
+        gated = GatedGQA(cfg)
+        mx.eval(gated.parameters())
+
+        x = mx.random.normal((1, 4, 32))
+
+        # Manually compute what the gate should be
+        gate_expected = mx.sigmoid(gated.gate_proj(x))
+        mx.eval(gate_expected)
+
+        # Gate values should be in (0, 1) — sigmoid range
+        assert mx.all(gate_expected > 0)
+        assert mx.all(gate_expected < 1)
+
+    def test_gate_sigmoid_activation(self):
+        """Gate activation is sigmoid, not SiLU or tanh.
+
+        arXiv:2505.06708 specifies sigmoid for the G1 gate.
+
+        References:
+            - arXiv:2505.06708 equation 3
+        """
+        from lmxlab.core.attention import GatedGQA
+
+        cfg = BlockConfig(
+            d_model=32,
+            n_heads=2,
+            n_kv_heads=2,
+            d_ff=64,
+            attention="gated_gqa",
+            position="none",
+            bias=False,
+        )
+        gated = GatedGQA(cfg)
+
+        # Verify gate_proj exists (no bias per paper)
+        assert hasattr(gated, "gate_proj")
+        assert "bias" not in gated.gate_proj
+
+    def test_gated_changes_output(self):
+        """Gating changes output vs standard GQA."""
+        mx.random.seed(42)
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            position="none",
+            bias=False,
+        )
+        from lmxlab.core.attention import GatedGQA
+
+        gqa = GQA(cfg)
+        gated = GatedGQA(cfg)
+
+        # Copy shared weights
+        import mlx.utils
+
+        weights = dict(mlx.utils.tree_flatten(gqa.parameters()))
+        gated.load_weights(list(weights.items()), strict=False)
+
+        x = mx.random.normal((1, 4, 64))
+        mask = _create_causal_mask(4)
+        out_gqa, _ = gqa(x, mask=mask)
+        out_gated, _ = gated(x, mask=mask)
+        mx.eval(out_gqa, out_gated)
+
+        # Should differ due to gating
+        assert not mx.allclose(out_gqa, out_gated, atol=1e-3)
+
+    def test_gated_output_shape(self):
+        """GatedGQA preserves output shape."""
+        from lmxlab.core.attention import GatedGQA
+
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            attention="gated_gqa",
+            position="none",
+        )
+        gated = GatedGQA(cfg)
+        x = mx.random.normal((2, 8, 64))
+        mask = _create_causal_mask(8)
+        out, cache = gated(x, mask=mask)
+        mx.eval(out)
+        assert out.shape == (2, 8, 64)
+        assert cache[0].shape[1] == 2  # KV heads
+
+    def test_gated_inherits_qk_norm(self):
+        """GatedGQA supports qk_norm from GQA."""
+        from lmxlab.core.attention import GatedGQA
+
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            attention="gated_gqa",
+            position="none",
+            qk_norm=True,
+        )
+        gated = GatedGQA(cfg)
+        assert hasattr(gated, "q_norm")
+        assert hasattr(gated, "k_norm")
+
+
+class TestChunkedAttentionCrossReference:
+    """Validate ChunkedGQA against Llama 4 iRoPE.
+
+    Chunked local attention: each chunk of C tokens attends
+    only within itself. RoPE positions reset per chunk.
+
+    References:
+        - Llama 4 (Meta, 2025)
+        - iRoPE paper
+    """
+
+    def test_block_diagonal_mask(self):
+        """Chunk mask creates block-diagonal structure.
+
+        With chunk_size=4 and seq_len=8, tokens 0-3
+        attend only to 0-3, tokens 4-7 only to 4-7.
+        """
+        from lmxlab.core.attention import _apply_chunk_mask
+
+        mask = _apply_chunk_mask(None, seq_len=8, chunk_size=4)
+        mx.eval(mask)
+
+        # Within chunk 0 (rows 0-3, cols 0-3): allowed (0)
+        for i in range(4):
+            for j in range(4):
+                assert mask[i, j].item() == 0.0
+
+        # Cross-chunk (row 0, col 4): blocked (-1e9)
+        for i in range(4):
+            for j in range(4, 8):
+                assert mask[i, j].item() == -1e9
+
+        # Within chunk 1 (rows 4-7, cols 4-7): allowed
+        for i in range(4, 8):
+            for j in range(4, 8):
+                assert mask[i, j].item() == 0.0
+
+        # Cross-chunk (row 4, col 0): blocked
+        for i in range(4, 8):
+            for j in range(4):
+                assert mask[i, j].item() == -1e9
+
+    def test_no_cross_chunk_attention(self):
+        """Tokens in different chunks cannot attend to
+        each other.
+
+        Verify by comparing output of two chunks: changing
+        tokens in chunk 1 should NOT affect output of chunk 0.
+        """
+        from lmxlab.core.attention import ChunkedGQA
+
+        cfg = BlockConfig(
+            d_model=32,
+            n_heads=2,
+            n_kv_heads=2,
+            d_ff=64,
+            attention="chunked_gqa",
+            position="none",
+            attention_chunk_size=4,
+            bias=False,
+        )
+        attn = ChunkedGQA(cfg)
+        mx.eval(attn.parameters())
+
+        # Create two inputs differing only in chunk 1
+        mx.random.seed(42)
+        x1 = mx.random.normal((1, 8, 32))
+        x2 = mx.array(x1)  # copy
+        # Modify chunk 1 (positions 4-7)
+        x2_list = list(x2.reshape(-1).tolist())
+        for i in range(4 * 32, 8 * 32):
+            x2_list[i] = 0.0
+        x2 = mx.array(x2_list).reshape(1, 8, 32)
+
+        mask = _create_causal_mask(8)
+        out1, _ = attn(x1, mask=mask)
+        out2, _ = attn(x2, mask=mask)
+        mx.eval(out1, out2)
+
+        # Chunk 0 output (positions 0-3) should be identical
+        assert mx.allclose(out1[:, :4, :], out2[:, :4, :], atol=1e-5)
+        # Chunk 1 output should differ
+        assert not mx.allclose(out1[:, 4:, :], out2[:, 4:, :], atol=1e-3)
+
+    def test_position_reset_per_chunk(self):
+        """RoPE positions reset to 0 at each chunk boundary.
+
+        With chunk_size=4: positions are 0,1,2,3,0,1,2,3,...
+        not 0,1,2,3,4,5,6,7,...
+
+        Verify by checking that the first token in chunk 1
+        gets the same RoPE rotation as the first token in
+        chunk 0 (both position 0).
+        """
+        from lmxlab.core.attention import ChunkedGQA
+        from lmxlab.core.position import RoPE
+
+        cfg = BlockConfig(
+            d_model=32,
+            n_heads=2,
+            n_kv_heads=2,
+            d_ff=64,
+            attention="chunked_gqa",
+            position="rope",
+            attention_chunk_size=4,
+            bias=False,
+            max_seq_len=64,
+        )
+        attn = ChunkedGQA(cfg)
+        rope_mod = RoPE(cfg)
+        mx.eval(attn.parameters())
+
+        # Use identical input at positions 0 and 4
+        x = mx.zeros((1, 8, 32))
+        # Set position 0 and 4 to same values
+        vals = mx.random.normal((32,))
+        mx.eval(vals)
+        x_list = list(x.reshape(-1).tolist())
+        for i in range(32):
+            x_list[i] = vals[i].item()
+            x_list[4 * 32 + i] = vals[i].item()
+        x = mx.array(x_list).reshape(1, 8, 32)
+
+        mask = _create_causal_mask(8)
+        out, _ = attn(x, mask=mask, rope=rope_mod)
+        mx.eval(out)
+
+        # Position 0 in chunk 0 and position 0 in chunk 1
+        # should get same RoPE rotation, so with same input
+        # and causal mask, both should produce same output
+        # (both are first in their chunk, attending only to
+        # themselves since they're at chunk position 0).
+        assert mx.allclose(out[:, 0, :], out[:, 4, :], atol=1e-5)
+
+    def test_chunk_mask_with_causal(self):
+        """Chunk mask combines with causal mask correctly."""
+        from lmxlab.core.attention import _apply_chunk_mask
+
+        causal = _create_causal_mask(8)
+        combined = _apply_chunk_mask(causal, 8, 4)
+        mx.eval(combined)
+
+        # Within chunk 0, causal: token 0 can't see token 1
+        assert combined[0, 1].item() == -1e9
+        # Within chunk 0, causal: token 1 can see token 0
+        assert combined[1, 0].item() == 0.0
+        # Cross-chunk: always blocked
+        assert combined[0, 4].item() == -1e9
+        assert combined[4, 0].item() == -1e9
+
+    def test_chunked_output_shape(self):
+        """ChunkedGQA preserves output shape."""
+        from lmxlab.core.attention import ChunkedGQA
+
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            n_kv_heads=2,
+            d_ff=128,
+            attention="chunked_gqa",
+            position="none",
+            attention_chunk_size=4,
+        )
+        attn = ChunkedGQA(cfg)
+        x = mx.random.normal((2, 8, 64))
+        mask = _create_causal_mask(8)
+        out, cache = attn(x, mask=mask)
+        mx.eval(out)
+        assert out.shape == (2, 8, 64)

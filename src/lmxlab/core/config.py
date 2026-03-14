@@ -30,6 +30,10 @@ class BlockConfig:
             If False, apply after (post-norm).
         window_size: Sliding window size for local attention.
             None means full (global) attention.
+        qk_norm: If True, apply per-head RMSNorm to Q and K
+            after reshape, before RoPE (OLMo 2 style).
+        attention_chunk_size: Chunk size for chunked local
+            attention. None means full (global) attention.
         mup: If True, use μP attention scaling (1/d_head
             instead of 1/√d_head).
     """
@@ -75,6 +79,10 @@ class BlockConfig:
     moe_routed_scaling_factor: float = 1.0
     moe_n_groups: int = 1
     moe_topk_groups: int = 1
+    # QK-norm (per-head RMSNorm on Q and K)
+    qk_norm: bool = False
+    # Chunked local attention chunk size
+    attention_chunk_size: int | None = None
     # μP (Maximal Update Parameterization) flag
     mup: bool = False
 
