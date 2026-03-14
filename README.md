@@ -33,12 +33,12 @@ assembled from registry components based on what the config asks for.
 
 ## What's included
 
-- **18 architectures** as config factories: GPT, LLaMA, Gemma, Gemma 3 (sliding window), Qwen, Qwen 3.5 (hybrid DeltaNet), Qwen-Next (gated attention), Mixtral (MoE), DeepSeek V2/V3 (MLA + MoE), Nemotron (hybrid Mamba-Transformer MoE), Llama 4 Scout (iRoPE + chunked attention), Mistral Small (sliding window), OLMo 2 (QK-norm), GPT-OSS (QK-norm), Grok (SharedExpertMoE), Kimi K2.5 (DeltaNet + MoE), SmolLM3 (iRoPE)
-- **Building blocks**: MHA, GQA, MLA, GatedGQA, SlidingWindowGQA, ChunkedGQA, Mamba-2 SSD, Mamba-3 (trapezoidal), GatedDeltaNet, MoE, SharedExpertMoE, LatentMoE, QK-norm, SwiGLU, squared ReLU
+- **24 architectures** as config factories: GPT, LLaMA, Gemma, Gemma 3 (sliding window), Qwen, Qwen 3 MoE, Qwen 3.5 (hybrid DeltaNet), Qwen-Next (gated attention), Mixtral (MoE), DeepSeek V2/V3 (MLA + MoE), Nemotron (hybrid Mamba-Transformer MoE), Llama 4 Scout/Maverick (iRoPE + chunked attention), Mistral Small (sliding window), OLMo 2 (QK-norm), GPT-OSS (QK-norm), Grok (SharedExpertMoE), Kimi K2.5 (DeltaNet + MoE), SmolLM3 (iRoPE), Falcon H1 (hybrid Mamba-2), Jamba (Mamba-2 + MoE), Bamba (hybrid Mamba-2), GLM-4.5 (MLA NoPE)
+- **Building blocks**: MHA, GQA, MLA, GatedGQA, SlidingWindowGQA, ChunkedGQA, SparseGQA (DSA), Mamba-2 SSD, Mamba-3 (trapezoidal), GatedDeltaNet, MoE, SharedExpertMoE, LatentMoE, QK-norm, SwiGLU, squared ReLU
 - **Compiled training** with `mx.compile`, functional gradients, gradient clipping, cosine schedules, dropout, muP parameterization
 - **Advanced training**: DPO, GRPO, multi-token prediction, curriculum learning, knowledge distillation
 - **LoRA & QLoRA**: parameter-efficient fine-tuning with optional 4-bit quantization
-- **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
+- **Inference**: autoregressive generation, speculative decoding, best-of-N sampling, beam search, reward model scoring
 - **HuggingFace integration**: load pretrained weights from the Hub
 - **Experiment framework**: time/FLOP-budgeted runs, MLflow tracking, results logging, hyperparameter sweeps, MLX profiling
 - **35 recipe scripts**: training, fine-tuning, DPO, GRPO, MTP, distillation, curriculum learning, DeltaNet hybrid, MoE, best-of-N sampling, evaluation, quantization, callbacks, optimizer comparison, KV cache analysis, experiment sweeps, benchmarking

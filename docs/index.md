@@ -64,12 +64,12 @@ characteristics will differ.
 
 ## What's included
 
-- **18 architectures** as config factories: GPT, LLaMA, Gemma, Gemma 3, Qwen, Qwen 3.5, Qwen-Next, Mixtral, DeepSeek V2/V3, Nemotron, Llama 4 Scout, Mistral Small, OLMo 2, GPT-OSS, Grok, Kimi K2.5, SmolLM3
-- **Building blocks**: MHA, GQA, MLA, GatedGQA, SlidingWindowGQA, ChunkedGQA, Mamba-2 SSD, Mamba-3, GatedDeltaNet, MoE, SharedExpertMoE, LatentMoE, QK-norm, SwiGLU, squared ReLU
+- **24 architectures** as config factories: GPT, LLaMA, Gemma, Gemma 3, Qwen, Qwen 3 MoE, Qwen 3.5, Qwen-Next, Mixtral, DeepSeek V2/V3, Nemotron, Llama 4 Scout/Maverick, Mistral Small, OLMo 2, GPT-OSS, Grok, Kimi K2.5, SmolLM3, Falcon H1, Jamba, Bamba, GLM-4.5
+- **Building blocks**: MHA, GQA, MLA, GatedGQA, SlidingWindowGQA, ChunkedGQA, SparseGQA (DSA), Mamba-2 SSD, Mamba-3, GatedDeltaNet, MoE, SharedExpertMoE, LatentMoE, QK-norm, SwiGLU, squared ReLU
 - **Compiled training** with `mx.compile`, functional gradients, gradient clipping, cosine schedules, dropout, muP parameterization
 - **Advanced training**: DPO, GRPO, multi-token prediction, curriculum learning, knowledge distillation
 - **LoRA & QLoRA**: parameter-efficient fine-tuning with optional 4-bit quantization
-- **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
+- **Inference**: autoregressive generation, speculative decoding, best-of-N sampling, beam search, reward model scoring
 - **HuggingFace integration**: load pretrained weights from the Hub
 - **Experiment framework**: time/FLOP-budgeted runs, MLflow tracking, results logging, hyperparameter sweeps, MLX profiling
 - **35 recipe scripts**: training, fine-tuning, ablation studies, architecture comparison, benchmarking
@@ -84,7 +84,7 @@ characteristics will differ.
   and `ConfigurableBlock` fit together.
 - **[MLX Idioms](architecture/mlx-idioms.md)** -- How MLX differs from PyTorch
   and why it matters for this library.
-- **[Models](models/index.md)** -- Compare all 18 architectures side-by-side.
+- **[Models](models/index.md)** -- Compare all 24 architectures side-by-side.
 - **[Compiled Training](architecture/compiled-training.md)** -- How `mx.compile`
   fuses the training step.
 - **[Unified Memory](architecture/unified-memory.md)** -- What Apple Silicon's

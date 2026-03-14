@@ -1,6 +1,6 @@
 # Model Architectures
 
-lmxlab implements 18 architectures as **config factories** — functions that return a `ModelConfig`. The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
+lmxlab implements 24 architectures as **config factories** — functions that return a `ModelConfig`. The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
 
 ## Architecture Comparison
 
@@ -11,6 +11,7 @@ lmxlab implements 18 architectures as **config factories** — functions that re
 | **Gemma** | GQA (MQA) | Gated | RMSNorm | RoPE | No | 1 | Tied embeddings |
 | **Gemma 3** | SlidingWindowGQA + GQA | Gated | RMSNorm | RoPE | No | < n_heads | Sliding window |
 | **Qwen** | GQA | Gated | RMSNorm | RoPE (θ=1M) | Yes | < n_heads | High RoPE theta |
+| **Qwen 3 MoE** | GQA | SharedExpertMoE | RMSNorm | RoPE | No | < n_heads | 64 experts, top-8 |
 | **Qwen 3.5** | DeltaNet + GQA | Gated | RMSNorm | Conv + RoPE | No | < n_heads | 3:1 hybrid |
 | **Qwen-Next** | GatedGQA | Gated | RMSNorm | RoPE | No | < n_heads | Sigmoid output gate |
 | **Mixtral** | GQA | Gated (MoE) | RMSNorm | RoPE (θ=1M) | No | < n_heads | 8 experts, top-2 |
@@ -18,12 +19,17 @@ lmxlab implements 18 architectures as **config factories** — functions that re
 | **DeepSeek V3** | MLA | SharedExpertMoE | RMSNorm | Decoupled RoPE | No | Latent | MLA + MoE |
 | **Nemotron** | Mamba-2 + GQA | ReLU² / MoE | RMSNorm | RoPE | No | < n_heads | M/E/* hybrid pattern |
 | **Llama 4 Scout** | ChunkedGQA | SharedExpertMoE | RMSNorm | iRoPE | No | < n_heads | Chunked attn + NoPE |
+| **Llama 4 Maverick** | ChunkedGQA | SharedExpertMoE | RMSNorm | iRoPE | No | < n_heads | 128 experts, top-1 |
 | **Mistral Small** | SlidingWindowGQA | Gated | RMSNorm | RoPE | No | < n_heads | All-local window |
 | **OLMo 2** | GQA | Gated | RMSNorm | RoPE | No | < n_heads | QK-norm |
 | **GPT-OSS** | GQA | Gated | RMSNorm | RoPE | No | < n_heads | QK-norm, tied embs |
 | **Grok** | GQA | SharedExpertMoE | RMSNorm | RoPE | No | < n_heads | 8 experts + shared |
 | **Kimi K2.5** | DeltaNet + GQA | SharedExpertMoE | RMSNorm | Conv + RoPE | No | < n_heads | 128 experts + shared |
 | **SmolLM3** | GQA | Gated | RMSNorm | iRoPE | No | < n_heads | RoPE + NoPE layers |
+| **Falcon H1** | Mamba-2 + GQA | Gated | RMSNorm | RoPE | No | < n_heads | Hybrid M/*/* pattern |
+| **Jamba** | Mamba-2 + GQA | Gated / MoE | RMSNorm | RoPE | No | < n_heads | MMMA + MoE alternation |
+| **Bamba** | Mamba-2 + GQA | Gated | RMSNorm | RoPE | No | < n_heads | IBM hybrid M/*/* |
+| **GLM-4.5** | MLA | Gated | RMSNorm | NoPE | No | Latent | MLA without RoPE |
 
 ## GPT
 
@@ -270,6 +276,79 @@ config = smollm3_config()
 # 75% gqa with RoPE + 25% gqa without position encoding
 # Tied embeddings
 ```
+
+## Qwen 3 MoE
+
+Alibaba's MoE variant of Qwen 3 with GQA attention and SharedExpertMoE FFN (64 routed experts, top-8 routing, plus 1 shared expert).
+
+```python
+from lmxlab.models.qwen import qwen3_moe_config
+
+config = qwen3_moe_config()
+# GQA + SharedExpertMoE (64 experts, top_k=8, 1 shared)
+```
+
+## Llama 4 Maverick (iRoPE + 128 Experts)
+
+The larger Llama 4 variant with the same iRoPE pattern as Scout but with 128 routed experts and top-1 routing.
+
+```python
+from lmxlab.models.llama4 import llama4_maverick_config
+
+config = llama4_maverick_config()
+# Same iRoPE pattern as Scout
+# SharedExpertMoE (128 routed + 1 shared, top_k=1)
+```
+
+## Falcon H1 (Hybrid Mamba-2 + GQA)
+
+TII's hybrid architecture with most layers using Mamba-2 SSM and periodic GQA attention layers for global context. All layers use GatedFFN (SwiGLU).
+
+```python
+from lmxlab.models.falcon import falcon_h1_config
+
+config = falcon_h1_config()
+# hybrid_pattern: "MMMM*MMM*MMM*MMM*"
+# Mamba-2 layers (M) + GQA attention layers (*)
+```
+
+## Jamba (Mamba-2 + GQA + MoE)
+
+AI21's hybrid using an MMMA pattern (3 Mamba-2 + 1 GQA per cycle) with MoE FFN on alternating attention layers.
+
+```python
+from lmxlab.models.jamba import jamba_config
+
+config = jamba_config()
+# MMMA pattern: 3 Mamba-2 + 1 GQA per cycle
+# MoE (16 experts, top-2) on even attention layers
+```
+
+## Bamba (Hybrid Mamba-2 + GQA)
+
+IBM's hybrid variant similar to Falcon H1. Mamba-2 layers handle sequence mixing with periodic GQA layers for global attention.
+
+```python
+from lmxlab.models.bamba import bamba_config
+
+config = bamba_config()
+# hybrid_pattern: "MMMM*MMM*MMM*MMM*"
+# Similar to Falcon H1 with different hyperparameters
+```
+
+## GLM-4.5 (MLA NoPE)
+
+Zhipu AI's architecture using MLA attention with `rope_dim=0` (no positional encoding). Relies entirely on learned attention patterns for position information.
+
+```python
+from lmxlab.models.glm import glm45_config
+
+config = glm45_config()
+# MLA attention with rope_dim=0 (NoPE)
+# KV compression via kv_lora_rank=512
+```
+
+**Key insight:** Disabling RoPE in MLA removes the decoupled RoPE key entirely, letting the model learn position-dependent patterns implicitly through the latent representations.
 
 ## Loading Pretrained Weights
 
