@@ -76,6 +76,42 @@ def llama_tiny() -> ModelConfig:
     )
 
 
+def llama_10m() -> ModelConfig:
+    """LLaMA ~10M params for research experiments.
+
+    Uses BPE vocab (50257) with tied embeddings.
+    d=128, 14 layers, 4 heads, 2 KV heads. ~9.9M params.
+    """
+    return llama_config(
+        vocab_size=50257,
+        d_model=128,
+        n_heads=4,
+        n_kv_heads=2,
+        n_layers=14,
+        d_ff=512,
+        max_seq_len=512,
+        tie_embeddings=True,
+    )
+
+
+def llama_30m() -> ModelConfig:
+    """LLaMA ~30M params for research experiments.
+
+    Uses BPE vocab (50257) with tied embeddings.
+    d=256, 18 layers, 8 heads, 4 KV heads. ~30.6M params.
+    """
+    return llama_config(
+        vocab_size=50257,
+        d_model=256,
+        n_heads=8,
+        n_kv_heads=4,
+        n_layers=18,
+        d_ff=1024,
+        max_seq_len=512,
+        tie_embeddings=True,
+    )
+
+
 def llama_7b() -> ModelConfig:
     """LLaMA-7B configuration."""
     return llama_config()

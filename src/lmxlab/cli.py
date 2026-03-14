@@ -20,7 +20,7 @@ import sys
 import mlx.core as mx
 import mlx.utils
 
-from lmxlab.models.bamba import bamba_config, bamba_tiny
+from lmxlab.models.bamba import bamba_10m, bamba_config, bamba_tiny
 from lmxlab.models.base import LanguageModel
 from lmxlab.models.deepseek import (
     deepseek_config,
@@ -28,16 +28,30 @@ from lmxlab.models.deepseek import (
     deepseek_v3_config,
     deepseek_v3_tiny,
 )
-from lmxlab.models.falcon import falcon_h1_config, falcon_h1_tiny
+from lmxlab.models.falcon import (
+    falcon_h1_10m,
+    falcon_h1_config,
+    falcon_h1_tiny,
+)
 from lmxlab.models.gemma import gemma_config, gemma_tiny
 from lmxlab.models.gemma3 import gemma3_config, gemma3_tiny
 from lmxlab.models.glm import glm45_config, glm45_tiny
-from lmxlab.models.gpt import gpt_config, gpt_tiny
+from lmxlab.models.gpt import (
+    gpt_10m,
+    gpt_30m,
+    gpt_config,
+    gpt_tiny,
+)
 from lmxlab.models.gpt_oss import gpt_oss_config, gpt_oss_tiny
 from lmxlab.models.grok import grok_config, grok_tiny
-from lmxlab.models.jamba import jamba_config, jamba_tiny
+from lmxlab.models.jamba import jamba_10m, jamba_config, jamba_tiny
 from lmxlab.models.kimi import kimi_config, kimi_tiny
-from lmxlab.models.llama import llama_config, llama_tiny
+from lmxlab.models.llama import (
+    llama_10m,
+    llama_30m,
+    llama_config,
+    llama_tiny,
+)
 from lmxlab.models.llama4 import (
     llama4_maverick_config,
     llama4_maverick_tiny,
@@ -92,6 +106,14 @@ ARCHITECTURES = {
     "jamba": (jamba_config, jamba_tiny),
     "bamba": (bamba_config, bamba_tiny),
     "glm45": (glm45_config, glm45_tiny),
+    # Scaled research configs (10M / 30M params, BPE vocab)
+    "gpt_10m": (gpt_10m, gpt_10m),
+    "gpt_30m": (gpt_30m, gpt_30m),
+    "llama_10m": (llama_10m, llama_10m),
+    "llama_30m": (llama_30m, llama_30m),
+    "falcon_h1_10m": (falcon_h1_10m, falcon_h1_10m),
+    "jamba_10m": (jamba_10m, jamba_10m),
+    "bamba_10m": (bamba_10m, bamba_10m),
 }
 
 

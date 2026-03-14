@@ -138,6 +138,34 @@ def jamba_config(
     )
 
 
+def jamba_10m() -> ModelConfig:
+    """Jamba ~10M params for research experiments.
+
+    12 layers (MMMA pattern x3), d=128, 4 MoE experts,
+    BPE vocab (50257), tied embeddings. ~10.2M params.
+    """
+    return jamba_config(
+        vocab_size=50257,
+        d_model=128,
+        n_heads=4,
+        n_kv_heads=2,
+        n_layers=12,
+        d_ff=384,
+        mamba_n_heads=8,
+        mamba_head_dim=32,
+        ssm_state_size=16,
+        mamba_expand=2,
+        mamba_n_groups=1,
+        mamba_chunk_size=64,
+        n_experts=4,
+        top_k_experts=2,
+        moe_every=2,
+        attn_every=4,
+        max_seq_len=512,
+        tie_embeddings=True,
+    )
+
+
 def jamba_tiny() -> ModelConfig:
     """Tiny Jamba for testing.
 
