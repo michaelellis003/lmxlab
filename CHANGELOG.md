@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-14
+
 ### Added
 
 - **16 new architecture config factories**: DeepSeek V3 (MLA + MoE),
@@ -85,5 +87,6 @@ Initial release.
   idioms, model comparison, API reference, recipes index, devlog
 - **PyPI publish workflow** via trusted publishing (OIDC)
 
-[Unreleased]: https://github.com/michaelellis003/lmxlab/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/michaelellis003/lmxlab/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/michaelellis003/lmxlab/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/michaelellis003/lmxlab/releases/tag/v0.1.0
