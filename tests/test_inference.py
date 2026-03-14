@@ -443,3 +443,115 @@ class TestStreamGenerate:
         prompt = mx.array([[1, 2]])
         tokens = list(stream_generate(tiny_model, prompt, max_tokens=0))
         assert tokens == []
+
+
+class TestRewardModel:
+    def test_output_shape(self, tiny_model):
+        """RewardModel returns scalar score per sequence."""
+        from lmxlab.inference.reward_model import RewardModel
+
+        rm = RewardModel(tiny_model)
+        mx.eval(rm.parameters())
+
+        x = mx.array([[1, 2, 3]])
+        scores = rm(x)
+        mx.eval(scores)
+        assert scores.shape == (1, 1)
+
+    def test_batch_output(self, tiny_model):
+        """RewardModel handles batched input."""
+        from lmxlab.inference.reward_model import RewardModel
+
+        rm = RewardModel(tiny_model)
+        mx.eval(rm.parameters())
+
+        x = mx.array([[1, 2, 3], [4, 5, 6]])
+        scores = rm(x)
+        mx.eval(scores)
+        assert scores.shape == (2, 1)
+
+
+class TestBeamSearch:
+    def test_returns_beam_width_candidates(self, tiny_model):
+        """beam_search returns beam_width candidates."""
+        from lmxlab.inference.beam_search import beam_search
+
+        prompt = mx.array([[1, 2, 3]])
+        results = beam_search(tiny_model, prompt, beam_width=3, max_tokens=4)
+        assert len(results) == 3
+
+    def test_sequences_longer_than_prompt(self, tiny_model):
+        """Generated sequences are longer than prompt."""
+        from lmxlab.inference.beam_search import beam_search
+
+        prompt = mx.array([[1, 2]])
+        results = beam_search(tiny_model, prompt, beam_width=2, max_tokens=3)
+        for seq, _score in results:
+            assert seq.shape[1] == 5  # prompt(2) + generated(3)
+
+    def test_scores_descending(self, tiny_model):
+        """Results are sorted by score descending."""
+        from lmxlab.inference.beam_search import beam_search
+
+        prompt = mx.array([[1, 2, 3]])
+        results = beam_search(tiny_model, prompt, beam_width=4, max_tokens=4)
+        scores = [s for _, s in results]
+        assert scores == sorted(scores, reverse=True)
+
+    def test_custom_score_fn(self, tiny_model):
+        """beam_search works with custom score_fn for reranking."""
+        from lmxlab.inference.beam_search import beam_search
+        from lmxlab.inference.reward_model import RewardModel
+
+        rm = RewardModel(tiny_model)
+        mx.eval(rm.parameters())
+
+        prompt = mx.array([[1, 2, 3]])
+        results = beam_search(
+            tiny_model,
+            prompt,
+            beam_width=2,
+            max_tokens=3,
+            score_fn=rm,
+        )
+        assert len(results) == 2
+        # Scores should still be descending
+        assert results[0][1] >= results[1][1]
+
+
+class TestBestOfNCallable:
+    def test_callable_score_fn(self, tiny_model):
+        """best_of_n works with a callable score_fn."""
+        from lmxlab.inference.sampling import best_of_n
+
+        # Score by negative sequence sum (arbitrary)
+        def custom_score(seqs):
+            return -mx.sum(seqs.astype(mx.float32), axis=-1)
+
+        prompt = mx.array([[1, 2, 3]])
+        result = best_of_n(
+            tiny_model,
+            prompt,
+            n=3,
+            max_tokens=4,
+            temperature=1.0,
+            score_fn=custom_score,
+        )
+        mx.eval(result)
+        assert result.shape[0] == 1
+        assert result.shape[1] > prompt.shape[1]
+
+    def test_string_score_fn_still_works(self, tiny_model):
+        """best_of_n still works with string score_fn."""
+        from lmxlab.inference.sampling import best_of_n
+
+        prompt = mx.array([[1, 2, 3]])
+        result = best_of_n(
+            tiny_model,
+            prompt,
+            n=2,
+            max_tokens=4,
+            score_fn="log_prob",
+        )
+        mx.eval(result)
+        assert result.shape[0] == 1
