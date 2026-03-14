@@ -3,7 +3,8 @@
 import mlx.core as mx
 import mlx.nn as nn
 
-import lmxlab.core.moe  # noqa: F401 — registers moe/shared_moe
+import lmxlab.core.mamba2  # noqa: F401 — registers mamba2
+import lmxlab.core.moe  # noqa: F401 — registers moe/shared_moe/latent_moe
 from lmxlab.core.attention import attention_registry
 from lmxlab.core.config import BlockConfig
 from lmxlab.core.ffn import ffn_registry
@@ -44,9 +45,23 @@ class ConfigurableBlock(nn.Module):
         self.attn_norm = norm_cls(config)
         self.ffn_norm = norm_cls(config)
 
-        # Position encoding (created but applied externally
-        # for RoPE, or internally for additive encodings)
+        # Residual dropout (applied after sublayer output)
+        self.resid_dropout = nn.Dropout(p=config.dropout)
+
+        # Position encoding
         self.position = position_registry.get(config.position)(config)
+
+        # RoPE is passed to attention for Q/K rotation
+        self._rope = (
+            self.position if config.position == 'rope'
+            else None
+        )
+
+        # ALiBi is applied to the attention mask
+        self._alibi = (
+            self.position if config.position == 'alibi'
+            else None
+        )
 
     def __call__(
         self,
@@ -74,18 +89,30 @@ class ConfigurableBlock(nn.Module):
         mask: mx.array | None,
         cache: tuple[mx.array, mx.array] | None,
     ) -> tuple[mx.array, tuple[mx.array, mx.array] | None]:
-        """Pre-norm: norm -> sublayer -> residual."""
+        """Pre-norm: norm -> sublayer -> dropout -> residual."""
+        # Apply ALiBi bias to attention mask
+        if self._alibi is not None:
+            L = x.shape[1]
+            cache_len = (
+                mask.shape[-1] - L if mask is not None else 0
+            )
+            mask = self._alibi(
+                mask=mask, seq_len=L, cache_len=cache_len,
+            )
+
         # Attention sublayer
         residual = x
         h = self.attn_norm(x)
-        h, new_cache = self.attention(h, mask=mask, cache=cache)
-        x = residual + h
+        h, new_cache = self.attention(
+            h, mask=mask, cache=cache, rope=self._rope,
+        )
+        x = residual + self.resid_dropout(h)
 
         # FFN sublayer
         residual = x
         h = self.ffn_norm(x)
         h = self.ffn(h)
-        x = residual + h
+        x = residual + self.resid_dropout(h)
 
         return x, new_cache
 
@@ -95,13 +122,25 @@ class ConfigurableBlock(nn.Module):
         mask: mx.array | None,
         cache: tuple[mx.array, mx.array] | None,
     ) -> tuple[mx.array, tuple[mx.array, mx.array] | None]:
-        """Post-norm: sublayer -> residual -> norm."""
+        """Post-norm: sublayer -> dropout -> residual -> norm."""
+        # Apply ALiBi bias to attention mask
+        if self._alibi is not None:
+            L = x.shape[1]
+            cache_len = (
+                mask.shape[-1] - L if mask is not None else 0
+            )
+            mask = self._alibi(
+                mask=mask, seq_len=L, cache_len=cache_len,
+            )
+
         # Attention sublayer
-        h, new_cache = self.attention(x, mask=mask, cache=cache)
-        x = self.attn_norm(x + h)
+        h, new_cache = self.attention(
+            x, mask=mask, cache=cache, rope=self._rope,
+        )
+        x = self.attn_norm(x + self.resid_dropout(h))
 
         # FFN sublayer
         h = self.ffn(x)
-        x = self.ffn_norm(x + h)
+        x = self.ffn_norm(x + self.resid_dropout(h))
 
         return x, new_cache

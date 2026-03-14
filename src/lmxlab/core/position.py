@@ -74,9 +74,14 @@ class Sinusoidal(nn.Module):
 
 @position_registry.register("alibi")
 class ALiBi(nn.Module):
-    """Attention with Linear Biases.
+    """Attention with Linear Biases (Press et al. ICLR 2022).
 
-    Returns a bias tensor to add to attention scores.
+    Adds head-specific distance-based biases to the attention
+    mask. Each head gets a fixed slope from a geometric
+    sequence, penalizing distant tokens more strongly. Replaces
+    explicit positional embeddings — no PE is added to inputs.
+
+    Applied to the attention mask before softmax, not to Q/K.
     """
 
     def __init__(self, config: BlockConfig) -> None:
@@ -87,16 +92,26 @@ class ALiBi(nn.Module):
     def __call__(
         self,
         mask: mx.array | None = None,
+        seq_len: int = 0,
+        cache_len: int = 0,
     ) -> mx.array:
-        """Create ALiBi attention bias.
+        """Create ALiBi-biased attention mask.
 
         Args:
-            mask: Optional existing attention mask to augment.
+            mask: Optional causal mask (T_q, T_k).
+            seq_len: Query sequence length.
+            cache_len: Cached key sequence length (offset).
 
         Returns:
-            ALiBi bias tensor.
+            Combined ALiBi bias + mask (1, H, T_q, T_k).
         """
-        return self._alibi(mask)
+        t_q = mask.shape[-2] if mask is not None else seq_len
+        t_k = (
+            mask.shape[-1] if mask is not None
+            else seq_len + cache_len
+        )
+        dummy = mx.zeros((1, self.n_heads, t_q, t_k))
+        return self._alibi(dummy, offset=cache_len, mask=mask)
 
 
 @position_registry.register("none")

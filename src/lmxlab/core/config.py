@@ -30,6 +30,8 @@ class BlockConfig:
             If False, apply after (post-norm).
         window_size: Sliding window size for local attention.
             None means full (global) attention.
+        mup: If True, use μP attention scaling (1/d_head
+            instead of 1/√d_head).
     """
 
     attention: str = "mha"
@@ -59,6 +61,22 @@ class BlockConfig:
     # Gated DeltaNet (linear attention) parameters
     conv_kernel_size: int = 4
     use_short_conv: bool = False
+    # Mamba-2 (SSM) parameters
+    mamba_n_heads: int | None = None
+    mamba_head_dim: int | None = None
+    ssm_state_size: int = 128
+    mamba_expand: int = 2
+    mamba_n_groups: int = 1
+    mamba_chunk_size: int = 128
+    # LatentMoE parameters
+    moe_latent_size: int | None = None
+    moe_d_ff: int | None = None
+    shared_expert_d_ff: int | None = None
+    moe_routed_scaling_factor: float = 1.0
+    moe_n_groups: int = 1
+    moe_topk_groups: int = 1
+    # μP (Maximal Update Parameterization) flag
+    mup: bool = False
 
     @property
     def head_dim(self) -> int:
@@ -82,6 +100,12 @@ class ModelConfig:
         tie_embeddings: Whether to tie input/output embeddings.
         block_configs: Per-layer block overrides (optional).
             If provided, must have length n_layers.
+        mup_base_width: Base model width for μP. When set,
+            enables μP scaling. None means standard
+            parameterization (SP).
+        mtp_n_predict: Number of multi-token prediction heads.
+            0 disables MTP.
+        mtp_lambda: Weight for MTP auxiliary loss.
     """
 
     block: BlockConfig = field(default_factory=BlockConfig)
@@ -89,6 +113,19 @@ class ModelConfig:
     n_layers: int = 6
     tie_embeddings: bool = True
     block_configs: tuple[BlockConfig, ...] | None = None
+    mup_base_width: int | None = None
+    mtp_n_predict: int = 0
+    mtp_lambda: float = 0.1
+
+    @property
+    def width_mult(self) -> float:
+        """Width multiplier for μP (d_model / base_width).
+
+        Returns 1.0 when μP is disabled.
+        """
+        if self.mup_base_width is None:
+            return 1.0
+        return self.block.d_model / self.mup_base_width
 
     def get_block_config(self, layer_idx: int) -> BlockConfig:
         """Get block config for a specific layer.

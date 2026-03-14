@@ -176,6 +176,7 @@ class GatedDeltaNet(AttentionBase):
         x: mx.array,
         mask: mx.array | None = None,
         cache: tuple[mx.array, ...] | None = None,
+        rope: nn.Module | None = None,
     ) -> tuple[mx.array, tuple[mx.array, ...] | None]:
         """Forward pass with delta rule state updates.
 
@@ -201,7 +202,7 @@ class GatedDeltaNet(AttentionBase):
         update_logits = self.update_proj(x)  # (B, L, H)
 
         # Output gate
-        out_gate = mx.sigmoid(self.out_gate_proj(x))
+        out_gate = nn.silu(self.out_gate_proj(x))
         # (B, L, d_model)
 
         # Reshape to (B, H, L, head_dim)

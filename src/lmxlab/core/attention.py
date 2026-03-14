@@ -29,6 +29,7 @@ class AttentionBase(nn.Module):
         x: mx.array,
         mask: mx.array | None = None,
         cache: tuple[mx.array, mx.array] | None = None,
+        rope: nn.Module | None = None,
     ) -> tuple[mx.array, tuple[mx.array, mx.array] | None]:
         """Forward pass.
 
@@ -36,6 +37,7 @@ class AttentionBase(nn.Module):
             x: Input tensor of shape (batch, seq_len, d_model).
             mask: Optional attention mask.
             cache: Optional KV cache tuple (keys, values).
+            rope: Optional RoPE module for Q/K rotation.
 
         Returns:
             Tuple of (output, updated_cache).
@@ -56,13 +58,16 @@ class MHA(AttentionBase):
         self.k_proj = nn.Linear(self.d_model, self.d_model, bias=config.bias)
         self.v_proj = nn.Linear(self.d_model, self.d_model, bias=config.bias)
         self.o_proj = nn.Linear(self.d_model, self.d_model, bias=config.bias)
-        self.scale = self.head_dim**-0.5
+        # μP uses 1/d_head; SP uses 1/√d_head
+        exp = -1.0 if config.mup else -0.5
+        self.scale = self.head_dim ** exp
 
     def __call__(
         self,
         x: mx.array,
         mask: mx.array | None = None,
         cache: tuple[mx.array, mx.array] | None = None,
+        rope: nn.Module | None = None,
     ) -> tuple[mx.array, tuple[mx.array, mx.array] | None]:
         B, L, _ = x.shape
 
@@ -73,6 +78,13 @@ class MHA(AttentionBase):
         q = q.reshape(B, L, self.n_heads, self.head_dim).transpose(0, 2, 1, 3)
         k = k.reshape(B, L, self.n_heads, self.head_dim).transpose(0, 2, 1, 3)
         v = v.reshape(B, L, self.n_heads, self.head_dim).transpose(0, 2, 1, 3)
+
+        if rope is not None:
+            offset = (
+                cache[0].shape[2]
+                if cache is not None else 0
+            )
+            q, k = rope(q, k, offset=offset)
 
         if cache is not None:
             k = mx.concatenate([cache[0], k], axis=2)
@@ -104,13 +116,16 @@ class GQA(AttentionBase):
         self.k_proj = nn.Linear(self.d_model, kv_dim, bias=config.bias)
         self.v_proj = nn.Linear(self.d_model, kv_dim, bias=config.bias)
         self.o_proj = nn.Linear(self.d_model, self.d_model, bias=config.bias)
-        self.scale = self.head_dim**-0.5
+        # μP uses 1/d_head; SP uses 1/√d_head
+        exp = -1.0 if config.mup else -0.5
+        self.scale = self.head_dim ** exp
 
     def __call__(
         self,
         x: mx.array,
         mask: mx.array | None = None,
         cache: tuple[mx.array, mx.array] | None = None,
+        rope: nn.Module | None = None,
     ) -> tuple[mx.array, tuple[mx.array, mx.array] | None]:
         B, L, _ = x.shape
 
@@ -126,6 +141,13 @@ class GQA(AttentionBase):
             0, 2, 1, 3
         )
 
+        if rope is not None:
+            offset = (
+                cache[0].shape[2]
+                if cache is not None else 0
+            )
+            q, k = rope(q, k, offset=offset)
+
         if cache is not None:
             k = mx.concatenate([cache[0], k], axis=2)
             v = mx.concatenate([cache[1], v], axis=2)
@@ -136,6 +158,29 @@ class GQA(AttentionBase):
         )
         out = out.transpose(0, 2, 1, 3).reshape(B, L, self.d_model)
         return self.o_proj(out), new_cache
+
+
+@attention_registry.register("none")
+class NoneAttention(AttentionBase):
+    """Identity attention — returns input unchanged.
+
+    Used in hybrid architectures where some layers don't need
+    attention (e.g. Mamba layers in Nemotron 3).
+    """
+
+    def __init__(self, config: BlockConfig) -> None:
+        nn.Module.__init__(self)
+        self.config = config
+
+    def __call__(
+        self,
+        x: mx.array,
+        mask: mx.array | None = None,
+        cache: tuple[mx.array, mx.array] | None = None,
+        rope: nn.Module | None = None,
+    ) -> tuple[mx.array, None]:
+        """Return input unchanged with no cache."""
+        return x, None
 
 
 def _apply_sliding_window(
@@ -193,13 +238,16 @@ class SlidingWindowGQA(AttentionBase):
         self.k_proj = nn.Linear(self.d_model, kv_dim, bias=config.bias)
         self.v_proj = nn.Linear(self.d_model, kv_dim, bias=config.bias)
         self.o_proj = nn.Linear(self.d_model, self.d_model, bias=config.bias)
-        self.scale = self.head_dim**-0.5
+        # μP uses 1/d_head; SP uses 1/√d_head
+        exp = -1.0 if config.mup else -0.5
+        self.scale = self.head_dim ** exp
 
     def __call__(
         self,
         x: mx.array,
         mask: mx.array | None = None,
         cache: tuple[mx.array, mx.array] | None = None,
+        rope: nn.Module | None = None,
     ) -> tuple[mx.array, tuple[mx.array, mx.array] | None]:
         B, L, _ = x.shape
 
@@ -215,9 +263,15 @@ class SlidingWindowGQA(AttentionBase):
             0, 2, 1, 3
         )
 
-        cache_len = 0
+        cache_len = (
+            cache[0].shape[2]
+            if cache is not None else 0
+        )
+
+        if rope is not None:
+            q, k = rope(q, k, offset=cache_len)
+
         if cache is not None:
-            cache_len = cache[0].shape[2]
             k = mx.concatenate([cache[0], k], axis=2)
             v = mx.concatenate([cache[1], v], axis=2)
         new_cache = (k, v)
