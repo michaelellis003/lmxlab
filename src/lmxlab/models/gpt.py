@@ -12,6 +12,7 @@ def gpt_config(
     max_seq_len: int = 1024,
     tie_embeddings: bool = True,
     dropout: float = 0.0,
+    mup_base_width: int | None = None,
 ) -> ModelConfig:
     """Create a GPT-style model configuration.
 
@@ -27,6 +28,8 @@ def gpt_config(
         max_seq_len: Maximum sequence length.
         tie_embeddings: Whether to tie input/output embeddings.
         dropout: Dropout rate.
+        mup_base_width: Base width for μP. When set, enables
+            μP attention scaling and logit scaling.
 
     Returns:
         ModelConfig for a GPT-style model.
@@ -43,12 +46,14 @@ def gpt_config(
         dropout=dropout,
         max_seq_len=max_seq_len,
         pre_norm=True,
+        mup=mup_base_width is not None,
     )
     return ModelConfig(
         block=block,
         vocab_size=vocab_size,
         n_layers=n_layers,
         tie_embeddings=tie_embeddings,
+        mup_base_width=mup_base_width,
     )
 
 
