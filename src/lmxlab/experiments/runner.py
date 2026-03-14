@@ -19,6 +19,7 @@ class ExperimentConfig:
         name: Experiment name/tag.
         description: Human-readable description.
         time_budget_s: Maximum wall-clock time in seconds.
+        flop_budget: Maximum FLOPs budget (e.g. 1e15 for 1 PFLOPs).
         seed: Random seed.
         output_dir: Directory for outputs.
     """
@@ -26,6 +27,7 @@ class ExperimentConfig:
     name: str = "experiment"
     description: str = ""
     time_budget_s: float = 300.0  # 5 minutes default
+    flop_budget: float | None = None  # e.g., 1e15 for 1 PFLOPs
     seed: int = 42
     output_dir: str = "experiments"
 

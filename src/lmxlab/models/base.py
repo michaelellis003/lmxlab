@@ -1,5 +1,7 @@
 """Base language model built from ModelConfig."""
 
+import math
+
 import mlx.core as mx
 import mlx.nn as nn
 import mlx.utils
@@ -22,7 +24,7 @@ def _create_causal_mask(
     Returns:
         Additive mask of shape (seq_len, cache_len + seq_len)
         where allowed positions are 0 and masked positions
-        are -inf.
+        are -1e9.
     """
     total_len = cache_len + seq_len
     # Row i can attend to columns 0..cache_len+i (inclusive)
@@ -50,11 +52,17 @@ class LanguageModel(nn.Module):
         # Token embedding
         self.embed = nn.Embedding(config.vocab_size, block_cfg.d_model)
 
+        # Embedding dropout
+        self.embed_dropout = nn.Dropout(p=block_cfg.dropout)
+
         # Transformer blocks
         self.blocks = [
             ConfigurableBlock(config.get_block_config(i))
             for i in range(config.n_layers)
         ]
+
+        # Sinusoidal PE applied once at model level
+        self._sinusoidal = block_cfg.position == "sinusoidal"
 
         # Final norm
         final_norm_cls = norm_registry.get(block_cfg.norm)
@@ -66,32 +74,62 @@ class LanguageModel(nn.Module):
                 block_cfg.d_model, config.vocab_size, bias=False
             )
 
+        # Apply μP weight initialization scaling
+        if config.mup_base_width is not None:
+            self._apply_mup_init(config.width_mult)
+
     def __call__(
         self,
         x: mx.array,
-        cache: list[tuple[mx.array, mx.array]] | None = None,
-    ) -> tuple[mx.array, list[tuple[mx.array, mx.array]]]:
+        cache: list | None = None,
+        return_hidden: bool = False,
+    ) -> tuple[mx.array, list] | tuple[mx.array, list, mx.array]:
         """Forward pass.
 
         Args:
             x: Token IDs of shape (batch, seq_len).
-            cache: Optional list of KV caches per layer.
+            cache: Optional list of caches per layer. Cache
+                types may be heterogeneous in hybrid models
+                (KV tuples for attention, SSM state tuples
+                for Mamba, None for identity layers).
+            return_hidden: If True, also return hidden states
+                from final_norm (before lm_head projection).
+                Used by Multi-Token Prediction.
 
         Returns:
-            Tuple of (logits, updated_caches).
-                logits shape: (batch, seq_len, vocab_size)
+            Tuple of (logits, updated_caches) by default.
+            If return_hidden is True, returns
+            (logits, updated_caches, hidden_states).
         """
-        h = self.embed(x)
+        h = self.embed_dropout(self.embed(x))
+
+        # Sinusoidal position encoding (at model level)
+        if self._sinusoidal:
+            h = self.blocks[0].position(h)
 
         # Create causal mask
         T = h.shape[1]
-        if cache is not None and cache[0] is not None:
-            cache_len = cache[0][0].shape[2]
-            mask = _create_causal_mask(T, cache_len)
-        else:
-            mask = _create_causal_mask(T)
+        cache_len = 0
+        if cache is not None:
+            # Find cache_len from first attention-style KV cache.
+            # KV caches are (K, V) where both are 4D arrays
+            # (B, heads, seq, head_dim) with matching seq dim.
+            # SSM caches differ: (ssm_state_4D, conv_state_3D).
+            for layer_cache in cache:
+                if (
+                    layer_cache is not None
+                    and isinstance(layer_cache, tuple)
+                    and len(layer_cache) == 2
+                    and isinstance(layer_cache[0], mx.array)
+                    and isinstance(layer_cache[1], mx.array)
+                    and layer_cache[0].ndim == 4
+                    and layer_cache[1].ndim == 4
+                ):
+                    cache_len = layer_cache[0].shape[2]
+                    break
+        mask = _create_causal_mask(T, cache_len)
 
-        new_caches: list[tuple[mx.array, mx.array]] = []
+        new_caches: list = []
         for i, block in enumerate(self.blocks):
             layer_cache = cache[i] if cache is not None else None
             h, new_cache = block(h, mask=mask, cache=layer_cache)
@@ -105,7 +143,44 @@ class LanguageModel(nn.Module):
         else:
             logits = self.head(h)
 
+        # μP: scale logits by 1/width_mult
+        if self.config.mup_base_width is not None:
+            logits = logits / self.config.width_mult
+
+        if return_hidden:
+            return logits, new_caches, h
+
         return logits, new_caches
+
+    def _apply_mup_init(self, width_mult: float) -> None:
+        """Rescale hidden layer weights for μP.
+
+        Scales hidden layer weight init by 1/√width_mult.
+        Embedding weights are left unchanged (μP prescribes
+        constant embedding init across widths).
+
+        Args:
+            width_mult: d_model / base_d_model ratio.
+        """
+        if width_mult == 1.0:
+            return
+
+        scale = 1.0 / math.sqrt(width_mult)
+
+        # Rescale all block (hidden layer) weights
+        for block in self.blocks:
+            flat = mlx.utils.tree_flatten(block.parameters())
+            updates = [
+                (k, v * scale)
+                for k, v in flat
+                if v.ndim >= 2  # only weight matrices, not biases
+            ]
+            if updates:
+                block.load_weights(updates, strict=False)
+
+        # Rescale output head if untied
+        if not self.config.tie_embeddings and hasattr(self, "head"):
+            self.head.weight = self.head.weight * scale
 
     def count_parameters(self) -> int:
         """Count total trainable parameters."""

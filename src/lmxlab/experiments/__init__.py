@@ -7,6 +7,10 @@ from lmxlab.experiments.analysis import (
     confidence_interval,
     simplicity_score,
 )
+from lmxlab.experiments.flops import (
+    estimate_flops_per_step,
+    estimate_flops_per_token,
+)
 from lmxlab.experiments.profiling import (
     benchmark_fn,
     count_parameters_by_module,
@@ -23,6 +27,8 @@ __all__ = [
     "ExperimentLog",
     "ExperimentRunner",
     "LogEntry",
+    "estimate_flops_per_step",
+    "estimate_flops_per_token",
     "grid_sweep",
     "random_sweep",
     "benchmark_fn",
@@ -36,3 +42,13 @@ __all__ = [
     "profile_generation",
     "simplicity_score",
 ]
+
+try:
+    from lmxlab.experiments.mlflow import (
+        MLflowCallback,
+        MLflowExperimentRunner,
+    )
+
+    __all__ += ["MLflowCallback", "MLflowExperimentRunner"]
+except ImportError:
+    pass

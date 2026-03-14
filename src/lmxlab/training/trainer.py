@@ -6,12 +6,15 @@ from typing import Any
 import mlx.core as mx
 import mlx.nn as nn
 import mlx.optimizers as optim
-from mlx.utils import tree_map
+from mlx.utils import tree_flatten, tree_map
 
 from lmxlab.models.base import LanguageModel
 from lmxlab.training.callbacks import Callback
 from lmxlab.training.config import TrainConfig
-from lmxlab.training.optimizers import create_optimizer
+from lmxlab.training.optimizers import (
+    create_mup_optimizer,
+    create_optimizer,
+)
 
 
 def _loss_fn(
@@ -60,7 +63,15 @@ class Trainer:
     ) -> None:
         self.model = model
         self.config = config
-        self.optimizer = optimizer or create_optimizer(config)
+        if optimizer is not None:
+            self.optimizer = optimizer
+        elif model.config.mup_base_width is not None:
+            self.optimizer = create_mup_optimizer(
+                config,
+                model.config.width_mult,
+            )
+        else:
+            self.optimizer = create_optimizer(config)
         self.callbacks = callbacks or []
         self.step = 0
         self._accum_steps = config.grad_accumulation_steps
@@ -70,7 +81,12 @@ class Trainer:
 
         if self._accum_steps <= 1:
             # No accumulation: compile full step (fwd + bwd + update)
-            if config.compile_step:
+            # MultiOptimizer (μP) is incompatible with mx.compile
+            can_compile = config.compile_step and not isinstance(
+                self.optimizer,
+                optim.MultiOptimizer,
+            )
+            if can_compile:
                 self._step_fn = mx.compile(
                     self._single_step,
                     inputs=model.trainable_parameters(),
@@ -83,7 +99,7 @@ class Trainer:
         self,
         x: mx.array,
         y: mx.array,
-    ) -> mx.array:
+    ) -> tuple[mx.array, mx.array]:
         """Single training step: forward + backward + update.
 
         Args:
@@ -91,23 +107,27 @@ class Trainer:
             y: Target tokens (batch, seq_len).
 
         Returns:
-            Scalar loss value.
+            Tuple of (loss, grad_norm) where grad_norm is the
+            L2 norm of gradients before clipping.
         """
         loss, grads = self._loss_and_grad(self.model, x, y)
 
         # Gradient clipping
         if self.config.max_grad_norm > 0:
-            grads, _ = optim.clip_grad_norm(
+            grads, grad_norm = optim.clip_grad_norm(
                 grads, max_norm=self.config.max_grad_norm
             )
+        else:
+            flat = tree_flatten(grads)
+            grad_norm = mx.sqrt(sum(mx.sum(g * g) for _, g in flat))
 
         self.optimizer.update(self.model, grads)
-        return loss
+        return loss, grad_norm
 
     def _accumulation_step(
         self,
         micro_batches: list[tuple[mx.array, mx.array]],
-    ) -> mx.array:
+    ) -> tuple[mx.array, mx.array]:
         """Gradient accumulation step over multiple micro-batches.
 
         Computes gradients for each micro-batch, averages them,
@@ -117,7 +137,7 @@ class Trainer:
             micro_batches: List of (input, target) micro-batches.
 
         Returns:
-            Averaged loss across micro-batches.
+            Tuple of (avg_loss, grad_norm).
         """
         n = len(micro_batches)
         total_loss = mx.array(0.0)
@@ -129,7 +149,11 @@ class Trainer:
             if acc_grads is None:
                 acc_grads = grads
             else:
-                acc_grads = tree_map(lambda a, b: a + b, acc_grads, grads)
+                acc_grads = tree_map(
+                    lambda a, b: a + b,
+                    acc_grads,
+                    grads,
+                )
 
         # Average gradients
         avg_grads = tree_map(lambda g: g / n, acc_grads)
@@ -137,12 +161,15 @@ class Trainer:
 
         # Gradient clipping
         if self.config.max_grad_norm > 0:
-            avg_grads, _ = optim.clip_grad_norm(
+            avg_grads, grad_norm = optim.clip_grad_norm(
                 avg_grads, max_norm=self.config.max_grad_norm
             )
+        else:
+            flat = tree_flatten(avg_grads)
+            grad_norm = mx.sqrt(sum(mx.sum(g * g) for _, g in flat))
 
         self.optimizer.update(self.model, avg_grads)
-        return avg_loss
+        return avg_loss, grad_norm
 
     def train_step(
         self,
@@ -154,13 +181,19 @@ class Trainer:
             batch: Tuple of (input_tokens, target_tokens).
 
         Returns:
-            Dict with 'loss' and 'learning_rate'.
+            Dict with 'loss', 'learning_rate', and
+            'grad_norm'.
         """
         x, y = batch
-        loss = self._step_fn(x, y)
+        loss, grad_norm = self._step_fn(x, y)
 
         # Explicit eval boundary
-        mx.eval(loss, self.model.parameters(), self.optimizer.state)
+        mx.eval(
+            loss,
+            grad_norm,
+            self.model.parameters(),
+            self.optimizer.state,
+        )
 
         self.step += 1
         lr = self.optimizer.learning_rate
@@ -170,6 +203,7 @@ class Trainer:
         metrics = {
             "loss": loss.item(),
             "learning_rate": float(lr),
+            "grad_norm": grad_norm.item(),
         }
 
         for cb in self.callbacks:
@@ -189,12 +223,20 @@ class Trainer:
             micro_batches: List of (input, target) micro-batches.
 
         Returns:
-            Dict with 'loss' and 'learning_rate'.
+            Dict with 'loss', 'learning_rate', and
+            'grad_norm'.
         """
-        loss = self._accumulation_step(micro_batches)
+        loss, grad_norm = self._accumulation_step(
+            micro_batches,
+        )
 
         # Explicit eval boundary
-        mx.eval(loss, self.model.parameters(), self.optimizer.state)
+        mx.eval(
+            loss,
+            grad_norm,
+            self.model.parameters(),
+            self.optimizer.state,
+        )
 
         self.step += 1
         lr = self.optimizer.learning_rate
@@ -204,6 +246,7 @@ class Trainer:
         metrics = {
             "loss": loss.item(),
             "learning_rate": float(lr),
+            "grad_norm": grad_norm.item(),
         }
 
         for cb in self.callbacks:

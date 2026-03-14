@@ -80,7 +80,7 @@ class LoRALinear(nn.Module):
             self.bias = mx.zeros((output_dims,))
 
         # LoRA matrices (trainable)
-        # A: Kaiming uniform init
+        # A: Kaiming normal init
         self.lora_A = mx.random.normal((input_dims, rank)) * math.sqrt(
             2 / input_dims
         )

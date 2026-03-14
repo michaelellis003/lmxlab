@@ -13,6 +13,8 @@ def llama_config(
     max_seq_len: int = 4096,
     rope_theta: float = 10000.0,
     tie_embeddings: bool = False,
+    dropout: float = 0.0,
+    mup_base_width: int | None = None,
 ) -> ModelConfig:
     """Create a LLaMA-style model configuration.
 
@@ -29,6 +31,9 @@ def llama_config(
         max_seq_len: Maximum sequence length.
         rope_theta: RoPE base frequency.
         tie_embeddings: Whether to tie input/output embeddings.
+        dropout: Dropout rate.
+        mup_base_width: Base width for μP. When set, enables
+            μP attention scaling and logit scaling.
 
     Returns:
         ModelConfig for a LLaMA-style model.
@@ -43,15 +48,18 @@ def llama_config(
         n_kv_heads=n_kv_heads,
         d_ff=d_ff,
         bias=False,
+        dropout=dropout,
         rope_theta=rope_theta,
         max_seq_len=max_seq_len,
         pre_norm=True,
+        mup=mup_base_width is not None,
     )
     return ModelConfig(
         block=block,
         vocab_size=vocab_size,
         n_layers=n_layers,
         tie_embeddings=tie_embeddings,
+        mup_base_width=mup_base_width,
     )
 
 

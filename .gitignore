@@ -13,10 +13,8 @@ dist/
 # Virtual environment
 .venv/
 
-# Agent / platform
+# Claude Code (local-only)
 .claude/
-memory/
-AGENT_PLAN.md
 CLAUDE.md
 
 # Secrets
@@ -29,6 +27,9 @@ credentials.json
 
 # Experiment results
 results.jsonl
+
+# Agent team output (temporary)
+.team-output/
 
 # Checkpoints
 checkpoints/
