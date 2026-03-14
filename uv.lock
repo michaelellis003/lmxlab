@@ -1245,6 +1245,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+analysis = [
+    { name = "matplotlib" },
+]
 dev = [
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
@@ -1269,6 +1272,7 @@ tokenizers = [
 requires-dist = [
     { name = "datasets", marker = "extra == 'hf'" },
     { name = "huggingface-hub", marker = "extra == 'hf'" },
+    { name = "matplotlib", marker = "extra == 'analysis'" },
     { name = "mkdocs-material", marker = "extra == 'dev'" },
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'dev'" },
     { name = "mlflow", marker = "extra == 'experiments'" },
@@ -1282,7 +1286,7 @@ requires-dist = [
     { name = "tiktoken", marker = "extra == 'tokenizers'" },
     { name = "transformers", marker = "extra == 'hf'" },
 ]
-provides-extras = ["tokenizers", "hf", "experiments", "dev"]
+provides-extras = ["tokenizers", "hf", "analysis", "experiments", "dev"]
 
 [[package]]
 name = "mako"
