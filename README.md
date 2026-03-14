@@ -1,6 +1,6 @@
 # lmxlab
 
-An educational MLX library for transformer language models on Apple Silicon.
+A research platform for language model experimentation on Apple Silicon.
 
 [![CI](https://github.com/michaelellis003/lmxlab/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelellis003/lmxlab/actions/workflows/ci.yml)
 [![Docs](https://github.com/michaelellis003/lmxlab/actions/workflows/docs.yml/badge.svg)](https://michaelellis003.github.io/lmxlab/)
@@ -9,13 +9,14 @@ An educational MLX library for transformer language models on Apple Silicon.
 
 Most transformer implementations optimize for production at the cost of readability.
 lmxlab takes the opposite approach: every layer is implemented from scratch in
-[MLX](https://ml-explore.github.io/mlx/), with the explicit goal of helping you
-understand how modern language models work.
+[MLX](https://ml-explore.github.io/mlx/), with clarity that lets you quickly
+iterate on ideas and understand what each component does.
 
-The core insight is that GPT, LLaMA, and DeepSeek are not fundamentally different
-architectures. They are different *configurations* of the same building blocks:
-attention, feed-forward networks, normalization, and positional encoding. lmxlab
-makes this concrete by using **config factories** instead of class hierarchies.
+The core insight is that GPT, LLaMA, DeepSeek, Mamba, and dozens of other
+architectures are not fundamentally different models. They are different
+*configurations* of the same building blocks: attention, SSMs, feed-forward
+networks, normalization, and positional encoding. lmxlab makes this concrete
+by using **config factories** instead of class hierarchies.
 
 ```python
 from lmxlab.models.llama import llama_config
@@ -32,14 +33,15 @@ assembled from registry components based on what the config asks for.
 
 ## What's included
 
-- **8 architectures** as config factories: GPT, LLaMA, Gemma, Qwen, Mixtral (MoE), DeepSeek V2 (MLA), Gemma 3 (sliding window), Qwen 3.5 (hybrid DeltaNet)
-- **Compiled training** with `mx.compile`, functional gradients, gradient clipping, cosine schedules
+- **18 architectures** as config factories: GPT, LLaMA, Gemma, Gemma 3 (sliding window), Qwen, Qwen 3.5 (hybrid DeltaNet), Qwen-Next (gated attention), Mixtral (MoE), DeepSeek V2/V3 (MLA + MoE), Nemotron (hybrid Mamba-Transformer MoE), Llama 4 Scout (iRoPE + chunked attention), Mistral Small (sliding window), OLMo 2 (QK-norm), GPT-OSS (QK-norm), Grok (SharedExpertMoE), Kimi K2.5 (DeltaNet + MoE), SmolLM3 (iRoPE)
+- **Building blocks**: MHA, GQA, MLA, GatedGQA, SlidingWindowGQA, ChunkedGQA, Mamba-2 SSD, Mamba-3 (trapezoidal), GatedDeltaNet, MoE, SharedExpertMoE, LatentMoE, QK-norm, SwiGLU, squared ReLU
+- **Compiled training** with `mx.compile`, functional gradients, gradient clipping, cosine schedules, dropout, muP parameterization
 - **Advanced training**: DPO, GRPO, multi-token prediction, curriculum learning, knowledge distillation
 - **LoRA & QLoRA**: parameter-efficient fine-tuning with optional 4-bit quantization
 - **Inference**: autoregressive generation, speculative decoding, best-of-N sampling
 - **HuggingFace integration**: load pretrained weights from the Hub
-- **Experiment framework**: time-budgeted runs, results tracking, sweeps, MLX profiling
-- **31 recipe scripts**: training, fine-tuning, DPO, GRPO, MTP, distillation, curriculum learning, DeltaNet hybrid, best-of-N sampling, evaluation, quantization, callbacks, optimizer comparison, KV cache analysis, experiment sweeps, benchmarking
+- **Experiment framework**: time/FLOP-budgeted runs, MLflow tracking, results logging, hyperparameter sweeps, MLX profiling
+- **35 recipe scripts**: training, fine-tuning, DPO, GRPO, MTP, distillation, curriculum learning, DeltaNet hybrid, MoE, best-of-N sampling, evaluation, quantization, callbacks, optimizer comparison, KV cache analysis, experiment sweeps, benchmarking
 
 ## Quick start
 
@@ -114,10 +116,11 @@ lmxlab count deepseek --detail # Parameter breakdown
 
 ## Design principles
 
-- **Educational first.** Code is written for clarity, not maximum performance.
+- **Clarity for rapid iteration.** Code is written to be read and modified quickly, not for maximum production performance.
 - **MLX-native.** Uses MLX idioms directly: `nn.value_and_grad`, `mx.compile`, unified memory.
 - **Config factories, not subclasses.** Architecture variants are configs, not class hierarchies.
-- **Progressive complexity.** Start with GPT-style, swap in LLaMA-style, then try MLA. Same model class throughout.
+- **Progressive complexity.** Start with GPT-style, swap in LLaMA-style, then try MLA or Mamba. Same model class throughout.
+- **Reproducible experiments.** Time/FLOP budgets, train/val splits, MLflow tracking, and structured results logging.
 
 ## Requirements
 

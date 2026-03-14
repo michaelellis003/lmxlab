@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **10 new architecture config factories**: DeepSeek V3 (MLA + MoE),
+  Nemotron (hybrid Mamba-Transformer MoE), Llama 4 Scout (iRoPE +
+  chunked attention + MoE), Mistral Small (sliding window), OLMo 2
+  (QK-norm), GPT-OSS (QK-norm), Grok (SharedExpertMoE), Kimi K2.5
+  (DeltaNet + MoE), Qwen-Next (gated attention), SmolLM3 (iRoPE)
+- **Mamba-2 SSD**: structured state-space sequence mixer with chunked
+  parallel scan and recurrent inference paths
+- **Mamba-3**: trapezoidal discretization, BCNorm, complex A
+  (data-dependent RoPE on B/C)
+- **QK-norm**: per-head RMSNorm on Q and K projections (OLMo 2 style)
+- **GatedGQA**: sigmoid output gating on attention
+  (arXiv:2505.06708)
+- **ChunkedGQA**: fixed-size local attention with per-chunk RoPE
+  (Llama 4 iRoPE pattern)
+- **LatentMoE**: down-project before routing for many-expert MoE
+  (arXiv:2601.18089)
+- **SharedExpertMoE**: shared expert alongside routed experts
+  (DeepSeek V3 style)
+- **ReluSquaredFFN**: squared ReLU activation (Primer / Nemotron)
+- **muP parameterization**: width-independent hyperparameter transfer
+- **Dropout support**: configurable dropout in attention and FFN
+
 ## [0.1.0] - 2026-03-11
 
 Initial release.

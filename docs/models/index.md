@@ -1,6 +1,6 @@
 # Model Architectures
 
-lmxlab implements eight transformer architectures as **config factories** — functions that return a `ModelConfig`. The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
+lmxlab implements 18 architectures as **config factories** — functions that return a `ModelConfig`. The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
 
 ## Architecture Comparison
 
@@ -9,11 +9,21 @@ lmxlab implements eight transformer architectures as **config factories** — fu
 | **GPT** | MHA | Standard | LayerNorm | Sinusoidal | Yes | = n_heads | Baseline |
 | **LLaMA** | GQA | Gated (SwiGLU) | RMSNorm | RoPE | No | < n_heads | — |
 | **Gemma** | GQA (MQA) | Gated | RMSNorm | RoPE | No | 1 | Tied embeddings |
+| **Gemma 3** | Mixed | Gated | RMSNorm | RoPE | No | < n_heads | Sliding window |
 | **Qwen** | GQA | Gated | RMSNorm | RoPE (θ=1M) | Yes | < n_heads | High RoPE theta |
+| **Qwen 3.5** | Hybrid | Gated | RMSNorm | Conv + RoPE | No | < n_heads | DeltaNet + GQA |
+| **Qwen-Next** | GatedGQA | Gated | RMSNorm | RoPE | No | < n_heads | Sigmoid output gate |
 | **Mixtral** | GQA | Gated (MoE) | RMSNorm | RoPE (θ=1M) | No | < n_heads | 8 experts, top-2 |
 | **DeepSeek V2** | MLA | Gated | RMSNorm | Decoupled RoPE | No | Latent | KV compression |
-| **Gemma 3** | Mixed | Gated | RMSNorm | RoPE | No | < n_heads | Sliding window |
-| **Qwen 3.5** | Hybrid | Gated | RMSNorm | Conv + RoPE | No | < n_heads | DeltaNet + GQA |
+| **DeepSeek V3** | MLA | SharedExpertMoE | RMSNorm | Decoupled RoPE | No | Latent | MLA + MoE |
+| **Nemotron** | Hybrid | ReLU² / MoE | RMSNorm | RoPE | No | < n_heads | Mamba-2 + Attn + MoE |
+| **Llama 4 Scout** | ChunkedGQA | SharedExpertMoE | RMSNorm | iRoPE | No | < n_heads | Chunked attn + NoPE |
+| **Mistral Small** | SlidingWindowGQA | Gated | RMSNorm | RoPE | No | < n_heads | All-local window |
+| **OLMo 2** | GQA | Gated | RMSNorm | RoPE | No | < n_heads | QK-norm |
+| **GPT-OSS** | GQA | Gated | RMSNorm | RoPE | No | < n_heads | QK-norm, tied embs |
+| **Grok** | GQA | SharedExpertMoE | RMSNorm | RoPE | No | < n_heads | 8 experts + shared |
+| **Kimi K2.5** | Hybrid | SharedExpertMoE | RMSNorm | Conv + RoPE | No | < n_heads | DeltaNet + MoE |
+| **SmolLM3** | GQA | Gated | RMSNorm | iRoPE | No | < n_heads | RoPE + NoPE layers |
 
 ## GPT
 
@@ -140,6 +150,126 @@ config = qwen35_config()
 5. **Short causal convolutions**: Replace RoPE for local context in DeltaNet layers
 
 **Key insight:** Pure linear attention loses expressiveness by compressing all history into a fixed-size state. The hybrid 3:1 pattern preserves efficient long-context processing (DeltaNet) while periodic GQA layers provide global attention for tasks that need it.
+
+## Qwen-Next (Gated Attention)
+
+Uses **GatedGQA** — GQA with a learned sigmoid gate on the attention output. The gate modulates how much attention information passes through, improving gradient flow and representational capacity.
+
+```python
+from lmxlab.models.qwen_next import qwen_next_config
+
+config = qwen_next_config()
+# attention="gated_gqa": y = attn_out * sigmoid(W_gate @ x)
+```
+
+**Key insight:** The output gate (G1 elementwise variant from arXiv:2505.06708) adds minimal parameters but measurably improves training dynamics by giving the model a learned bypass around the attention mechanism.
+
+## DeepSeek V3 (MLA + MoE)
+
+Extends DeepSeek V2's MLA attention with SharedExpertMoE FFN layers, combining KV compression with sparse expert routing.
+
+```python
+from lmxlab.models.deepseek import deepseek_v3_config
+
+config = deepseek_v3_config()
+# MLA attention + SharedExpertMoE (256 routed experts + 1 shared)
+# Sigmoid routing with bias correction
+```
+
+## Nemotron (Hybrid Mamba-Transformer MoE)
+
+NVIDIA's hybrid architecture mixing three layer types encoded in a pattern string: **M** (Mamba-2 SSD), **E** (LatentMoE), and **\*** (standard attention + dense FFN with squared ReLU).
+
+```python
+from lmxlab.models.nemotron import nemotron_h_config
+
+config = nemotron_h_config()
+# hybrid_override_pattern: "M*M*M*M*MEMEMEMEMEMEMEMEMEME..."
+# Mamba layers for sequence mixing, MoE for capacity
+```
+
+**Key insight:** Different layer types handle different aspects — Mamba-2 for efficient sequence mixing, attention for precise retrieval, and LatentMoE for routing tokens to specialized experts with reduced dimensionality.
+
+## Llama 4 Scout (iRoPE + Chunked Attention)
+
+Uses the **iRoPE** pattern: most layers use chunked local attention with RoPE positions resetting at chunk boundaries, while every 4th layer uses global GQA without positional encoding (NoPE) for cross-chunk information flow. All layers use SharedExpertMoE FFN.
+
+```python
+from lmxlab.models.llama4 import llama4_scout_config
+
+config = llama4_scout_config()
+# 75% chunked_gqa (8192 chunk size, local RoPE)
+# 25% gqa (no position encoding — NoPE layers)
+# All layers: SharedExpertMoE (16 experts + 1 shared)
+```
+
+## Mistral Small (Sliding Window)
+
+All layers use sliding-window GQA with a fixed window size. Unlike Gemma 3's mixed approach, Mistral Small applies local attention uniformly — no global layers.
+
+```python
+from lmxlab.models.mistral import mistral_small_config
+
+config = mistral_small_config()
+# All layers: sliding_window_gqa with window_size=4096
+```
+
+## OLMo 2 (QK-Norm)
+
+AllenAI's architecture adds **QK-norm** (per-head RMSNorm on Q and K after projection, before RoPE) to the standard LLaMA-like template. This stabilizes training at scale.
+
+```python
+from lmxlab.models.olmo import olmo2_config
+
+config = olmo2_config()
+# Standard GQA + QK-norm (per-head RMSNorm on Q, K)
+```
+
+## GPT-OSS (QK-Norm + Tied Embeddings)
+
+OpenAI's open-source GPT uses a LLaMA-like architecture with QK-norm and tied input/output embeddings.
+
+```python
+from lmxlab.models.gpt_oss import gpt_oss_config
+
+config = gpt_oss_config()
+# GQA + QK-norm, tied embeddings, no bias
+```
+
+## Grok (SharedExpertMoE)
+
+xAI's architecture uses GQA attention with SharedExpertMoE FFN in every layer. All layers are homogeneous (no hybrid pattern).
+
+```python
+from lmxlab.models.grok import grok_config
+
+config = grok_config()
+# GQA + SharedExpertMoE (8 routed + 1 shared)
+```
+
+## Kimi K2.5 (DeltaNet + MoE)
+
+Moonshot AI's hybrid: interleaves GQA and Gated DeltaNet attention layers (every 4th layer is DeltaNet), all with SharedExpertMoE FFN (128 experts).
+
+```python
+from lmxlab.models.kimi import kimi_config
+
+config = kimi_config()
+# 75% gqa + 25% gated_deltanet layers
+# All layers: SharedExpertMoE (128 routed + 1 shared)
+```
+
+## SmolLM3 (iRoPE)
+
+HuggingFace's efficient model uses the iRoPE pattern: most layers use GQA with RoPE, while every 4th layer uses GQA without positional encoding (NoPE) for long-range information flow.
+
+```python
+from lmxlab.models.smollm import smollm3_config
+
+config = smollm3_config()
+# 75% gqa with RoPE + 25% gqa without position encoding
+# Tied embeddings
+```
 
 ## Loading Pretrained Weights
 

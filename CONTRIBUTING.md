@@ -1,7 +1,7 @@
 # Contributing to lmxlab
 
-Thanks for your interest in contributing! lmxlab is an educational project,
-so clarity and simplicity are valued over performance optimization.
+Thanks for your interest in contributing! lmxlab is a research platform,
+so clarity and rapid iteration are valued over production optimization.
 
 ## Setup
 
