@@ -113,6 +113,29 @@ def bamba_config(
     )
 
 
+def bamba_10m() -> ModelConfig:
+    """Bamba ~10M params for research experiments.
+
+    12 layers (MMM*MMM*MMM*), d=128, BPE vocab (50257),
+    tied embeddings. ~9.3M params.
+    """
+    return bamba_config(
+        hybrid_pattern="MMM*MMM*MMM*",
+        vocab_size=50257,
+        d_model=128,
+        n_heads=4,
+        n_kv_heads=2,
+        d_ff=384,
+        mamba_n_heads=8,
+        mamba_head_dim=32,
+        ssm_state_size=16,
+        mamba_expand=2,
+        mamba_n_groups=1,
+        max_seq_len=512,
+        tie_embeddings=True,
+    )
+
+
 def bamba_tiny() -> ModelConfig:
     """Tiny Bamba for testing.
 

@@ -115,6 +115,29 @@ def falcon_h1_config(
     )
 
 
+def falcon_h1_10m() -> ModelConfig:
+    """Falcon H1 ~10M params for research experiments.
+
+    12 layers (MMM*MMM*MMM*), d=128, BPE vocab (50257),
+    tied embeddings. ~9.3M params.
+    """
+    return falcon_h1_config(
+        hybrid_pattern="MMM*MMM*MMM*",
+        vocab_size=50257,
+        d_model=128,
+        n_heads=4,
+        n_kv_heads=2,
+        d_ff=384,
+        mamba_n_heads=8,
+        mamba_head_dim=32,
+        ssm_state_size=16,
+        mamba_expand=2,
+        mamba_n_groups=1,
+        max_seq_len=512,
+        tie_embeddings=True,
+    )
+
+
 def falcon_h1_tiny() -> ModelConfig:
     """Tiny Falcon H1 for testing.
 
