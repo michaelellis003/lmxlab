@@ -213,6 +213,62 @@ class TestHFDataset:
         assert len(tokens) == 5  # only 'hello'
 
 
+class TestTiktokenTokenizer:
+    """Tests for the tiktoken BPE tokenizer."""
+
+    @pytest.fixture(autouse=True)
+    def _skip_without_tiktoken(self):
+        pytest.importorskip("tiktoken")
+
+    def test_roundtrip(self):
+        """Encode then decode returns original text."""
+        from lmxlab.data.tokenizer import TiktokenTokenizer
+
+        tok = TiktokenTokenizer("gpt2")
+        text = "Hello, world!"
+        ids = tok.encode(text)
+        assert tok.decode(ids) == text
+
+    def test_vocab_size(self):
+        """GPT-2 vocab has 50257 tokens."""
+        from lmxlab.data.tokenizer import TiktokenTokenizer
+
+        tok = TiktokenTokenizer("gpt2")
+        assert tok.vocab_size == 50257
+
+    def test_batch_with_hf_dataset(self):
+        """TiktokenTokenizer works with HFDataset mock."""
+        from lmxlab.data.tokenizer import TiktokenTokenizer
+
+        tok = TiktokenTokenizer("gpt2")
+        text = "Once upon a time there was a little girl " * 20
+        from lmxlab.data.dataset import HFDataset
+
+        with pytest.MonkeyPatch.context() as mp:
+            import types
+
+            fake = types.ModuleType("datasets")
+            fake.load_dataset = lambda *a, **kw: [{"text": text}]
+            mp.setitem(__import__("sys").modules, "datasets", fake)
+            ds = HFDataset(
+                "fake/tinystories",
+                tok,
+                seq_len=32,
+                split="train",
+            )
+            batches = list(
+                ds.batch_iterator(
+                    batch_size=2,
+                    max_batches=2,
+                )
+            )
+            assert len(batches) == 2
+            x, y = batches[0]
+            assert x.shape == (2, 32)
+            # All token IDs should be valid
+            assert x.max().item() < tok.vocab_size
+
+
 class TestHFTokenizer:
     def test_protocol_compliance(self):
         """HFTokenizer has required Tokenizer protocol methods."""
