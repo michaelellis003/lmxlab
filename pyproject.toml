@@ -29,7 +29,7 @@ dependencies = [
 [project.optional-dependencies]
 tokenizers = ["tiktoken"]
 hf = ["huggingface_hub", "transformers", "datasets"]
-experiments = ["mlflow-skinny"]
+experiments = ["mlflow"]
 dev = [
     "pytest>=8.0",
     "ruff>=0.7",
