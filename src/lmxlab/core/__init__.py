@@ -19,6 +19,7 @@ from lmxlab.core.lora import (
     merge_lora,
     save_lora_adapters,
 )
+from lmxlab.core.mamba3 import Mamba3
 from lmxlab.core.mla import MLA
 from lmxlab.core.moe import MoEFFN, SharedExpertMoEFFN
 from lmxlab.core.norm import layer_norm, rms_norm
@@ -37,6 +38,7 @@ __all__ = [
     "GatedFFN",
     "LoRALinear",
     "LoRAQuantizedLinear",
+    "Mamba3",
     "MHA",
     "MLA",
     "MoEFFN",
