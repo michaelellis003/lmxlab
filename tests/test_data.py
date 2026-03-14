@@ -216,6 +216,10 @@ class TestHFDataset:
 class TestTiktokenTokenizer:
     """Tests for the tiktoken BPE tokenizer."""
 
+    @pytest.fixture(autouse=True)
+    def _skip_without_tiktoken(self):
+        pytest.importorskip("tiktoken")
+
     def test_roundtrip(self):
         """Encode then decode returns original text."""
         from lmxlab.data.tokenizer import TiktokenTokenizer
