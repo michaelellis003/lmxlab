@@ -2,7 +2,7 @@
 
 Provides MLflowCallback for per-step metric logging and
 MLflowExperimentRunner for experiment-level parameter/summary
-logging. Requires mlflow-skinny (optional dependency).
+logging. Requires mlflow (optional dependency).
 """
 
 from __future__ import annotations
@@ -129,14 +129,11 @@ class MLflowExperimentRunner:
     def start(self) -> None:
         """Start the experiment runner and an MLflow run."""
         self.runner.start()
-        # mlflow-skinny doesn't ship the SQLite backend,
-        # so default to file-based tracking in the output dir.
+        # Filesystem tracking is deprecated (Feb 2026). Use SQLite.
         uri = mlflow.get_tracking_uri()
-        if uri.startswith("sqlite"):
-            file_uri = "file://" + str(
-                Path(self.config.output_dir).resolve() / "mlruns"
-            )
-            mlflow.set_tracking_uri(file_uri)
+        if not uri.startswith("sqlite"):
+            db_path = Path(self.config.output_dir).resolve() / "mlflow.db"
+            mlflow.set_tracking_uri(f"sqlite:///{db_path}")
         mlflow.set_experiment(self.experiment_name)
         mlflow.start_run(
             run_name=self.config.description or self.config.name,
