@@ -2044,16 +2044,18 @@ class TestWeightConversionCrossReference:
         )
 
         wmap = _nemotron_weight_map("M")
+        pfx = "backbone.layers.0.mixer"
+        blk = "blocks.0.attention"
         expected = {
-            "backbone.layers.0.mixer.A_log": "blocks.0.attention.A_log",
-            "backbone.layers.0.mixer.D": "blocks.0.attention.D",
-            "backbone.layers.0.mixer.dt_bias": "blocks.0.attention.dt_bias",
-            "backbone.layers.0.mixer.in_proj.weight": "blocks.0.attention.in_proj.weight",
-            "backbone.layers.0.mixer.out_proj.weight": "blocks.0.attention.out_proj.weight",
-            "backbone.layers.0.mixer.conv1d.weight": "blocks.0.attention.conv_weight",
-            "backbone.layers.0.mixer.conv1d.bias": "blocks.0.attention.conv_bias",
-            "backbone.layers.0.mixer.norm.weight": "blocks.0.attention.norm.weight",
-            "backbone.layers.0.norm.weight": "blocks.0.attn_norm.weight",
+            f"{pfx}.A_log": f"{blk}.A_log",
+            f"{pfx}.D": f"{blk}.D",
+            f"{pfx}.dt_bias": f"{blk}.dt_bias",
+            f"{pfx}.in_proj.weight": f"{blk}.in_proj.weight",
+            f"{pfx}.out_proj.weight": f"{blk}.out_proj.weight",
+            f"{pfx}.conv1d.weight": f"{blk}.conv_weight",
+            f"{pfx}.conv1d.bias": f"{blk}.conv_bias",
+            f"{pfx}.norm.weight": f"{blk}.norm.weight",
+            "backbone.layers.0.norm.weight": ("blocks.0.attn_norm.weight"),
         }
         for hf, lmt in expected.items():
             assert wmap(hf) == lmt, f"{hf} -> {wmap(hf)}, expected {lmt}"
