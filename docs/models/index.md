@@ -9,20 +9,20 @@ lmxlab implements 18 architectures as **config factories** — functions that re
 | **GPT** | MHA | Standard | LayerNorm | Sinusoidal | Yes | = n_heads | Baseline |
 | **LLaMA** | GQA | Gated (SwiGLU) | RMSNorm | RoPE | No | < n_heads | — |
 | **Gemma** | GQA (MQA) | Gated | RMSNorm | RoPE | No | 1 | Tied embeddings |
-| **Gemma 3** | Mixed | Gated | RMSNorm | RoPE | No | < n_heads | Sliding window |
+| **Gemma 3** | SlidingWindowGQA + GQA | Gated | RMSNorm | RoPE | No | < n_heads | Sliding window |
 | **Qwen** | GQA | Gated | RMSNorm | RoPE (θ=1M) | Yes | < n_heads | High RoPE theta |
-| **Qwen 3.5** | Hybrid | Gated | RMSNorm | Conv + RoPE | No | < n_heads | DeltaNet + GQA |
+| **Qwen 3.5** | DeltaNet + GQA | Gated | RMSNorm | Conv + RoPE | No | < n_heads | 3:1 hybrid |
 | **Qwen-Next** | GatedGQA | Gated | RMSNorm | RoPE | No | < n_heads | Sigmoid output gate |
 | **Mixtral** | GQA | Gated (MoE) | RMSNorm | RoPE (θ=1M) | No | < n_heads | 8 experts, top-2 |
 | **DeepSeek V2** | MLA | Gated | RMSNorm | Decoupled RoPE | No | Latent | KV compression |
 | **DeepSeek V3** | MLA | SharedExpertMoE | RMSNorm | Decoupled RoPE | No | Latent | MLA + MoE |
-| **Nemotron** | Hybrid | ReLU² / MoE | RMSNorm | RoPE | No | < n_heads | Mamba-2 + Attn + MoE |
+| **Nemotron** | Mamba-2 + GQA | ReLU² / MoE | RMSNorm | RoPE | No | < n_heads | M/E/* hybrid pattern |
 | **Llama 4 Scout** | ChunkedGQA | SharedExpertMoE | RMSNorm | iRoPE | No | < n_heads | Chunked attn + NoPE |
 | **Mistral Small** | SlidingWindowGQA | Gated | RMSNorm | RoPE | No | < n_heads | All-local window |
 | **OLMo 2** | GQA | Gated | RMSNorm | RoPE | No | < n_heads | QK-norm |
 | **GPT-OSS** | GQA | Gated | RMSNorm | RoPE | No | < n_heads | QK-norm, tied embs |
 | **Grok** | GQA | SharedExpertMoE | RMSNorm | RoPE | No | < n_heads | 8 experts + shared |
-| **Kimi K2.5** | Hybrid | SharedExpertMoE | RMSNorm | Conv + RoPE | No | < n_heads | DeltaNet + MoE |
+| **Kimi K2.5** | DeltaNet + GQA | SharedExpertMoE | RMSNorm | Conv + RoPE | No | < n_heads | 128 experts + shared |
 | **SmolLM3** | GQA | Gated | RMSNorm | iRoPE | No | < n_heads | RoPE + NoPE layers |
 
 ## GPT
@@ -181,9 +181,9 @@ config = deepseek_v3_config()
 NVIDIA's hybrid architecture mixing three layer types encoded in a pattern string: **M** (Mamba-2 SSD), **E** (LatentMoE), and **\*** (standard attention + dense FFN with squared ReLU).
 
 ```python
-from lmxlab.models.nemotron import nemotron_h_config
+from lmxlab.models.nemotron import nemotron3_config
 
-config = nemotron_h_config()
+config = nemotron3_config()
 # hybrid_override_pattern: "M*M*M*M*MEMEMEMEMEMEMEMEMEME..."
 # Mamba layers for sequence mixing, MoE for capacity
 ```
