@@ -1,5 +1,7 @@
 """Advanced sampling strategies: best-of-N, majority vote."""
 
+from collections.abc import Callable
+
 import mlx.core as mx
 import mlx.nn as nn
 
@@ -13,7 +15,7 @@ def best_of_n(
     n: int = 4,
     max_tokens: int = 100,
     temperature: float = 0.8,
-    score_fn: str = "log_prob",
+    score_fn: str | Callable[[mx.array], mx.array] = "log_prob",
 ) -> mx.array:
     """Generate N completions and return the best one.
 
@@ -23,8 +25,10 @@ def best_of_n(
         n: Number of candidate completions.
         max_tokens: Maximum tokens to generate.
         temperature: Sampling temperature.
-        score_fn: Scoring function
-            ('log_prob' or 'length_normalized').
+        score_fn: Scoring function. Either a string
+            ('log_prob' or 'length_normalized') or a callable
+            that takes completions (n, seq_len) and returns
+            scores (n,) or (n, 1).
 
     Returns:
         Best completion token IDs (1, total_len).
@@ -39,13 +43,19 @@ def best_of_n(
     )
     mx.eval(completions)
 
-    # Score each completion
-    scores = _score_sequences(model, completions, prompt.shape[1])
-    mx.eval(scores)
+    if callable(score_fn):
+        scores = score_fn(completions)
+        mx.eval(scores)
+        if scores.ndim > 1:
+            scores = scores.squeeze(-1)
+    else:
+        # Score each completion by log probability
+        scores = _score_sequences(model, completions, prompt.shape[1])
+        mx.eval(scores)
 
-    if score_fn == "length_normalized":
-        gen_len = completions.shape[1] - prompt.shape[1]
-        scores = scores / gen_len
+        if score_fn == "length_normalized":
+            gen_len = completions.shape[1] - prompt.shape[1]
+            scores = scores / gen_len
 
     # Return best
     best_idx = int(mx.argmax(scores).item())
