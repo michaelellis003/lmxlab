@@ -74,7 +74,7 @@ class Sinusoidal(nn.Module):
 
 @position_registry.register("alibi")
 class ALiBi(nn.Module):
-    """Attention with Linear Biases (Press et al. ICLR 2022).
+    """Attention with Linear Biases (Press et al. ICLR 2022, arXiv:2108.12409).
 
     Adds head-specific distance-based biases to the attention
     mask. Each head gets a fixed slope from a geometric

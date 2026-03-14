@@ -5,7 +5,7 @@ the key addition of QK-norm: per-head RMSNorm applied to Q
 and K after projection but before RoPE.
 
 References:
-- OLMo 2 (Groeneveld et al., 2025)
+- OLMo 2 (Groeneveld et al., 2025, arXiv:2501.00656)
 - allenai/OLMo-2-7B config
 """
 

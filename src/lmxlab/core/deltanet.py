@@ -1,7 +1,8 @@
 """Gated DeltaNet: linear attention with delta rule.
 
 Implements the Gated Delta Network from "Gated Delta Networks:
-Improving Mamba2 with Delta Rule" (Yang et al., ICLR 2025).
+Improving Mamba2 with Delta Rule" (Yang et al., ICLR 2025,
+arXiv:2412.06464).
 
 Key ideas:
 - Delta rule: error-correcting state updates instead of blind

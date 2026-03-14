@@ -3,7 +3,8 @@
 Provides pure-analytical FLOP counting (no GPU instrumentation)
 for fair architecture comparisons under compute-matched budgets.
 
-Follows the Megatron-LM / Narayanan et al. (2021) methodology:
+Follows the Megatron-LM / Narayanan et al. (2021,
+arXiv:2104.04473) methodology:
 each multiply-accumulate counts as 2 FLOPs. Intentionally omits
 softmax, layer norms, residual adds, dropout, and activation
 functions — these are O(d) or O(seq) per layer, dominated by

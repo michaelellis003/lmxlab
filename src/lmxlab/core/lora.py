@@ -1,6 +1,6 @@
 """LoRA (Low-Rank Adaptation) for parameter-efficient fine-tuning.
 
-Implements LoRA as described in Hu et al. (2021): instead of
+Implements LoRA as described in Hu et al. (2021, arXiv:2106.09685): instead of
 fine-tuning all weights W, learn a low-rank update W + BA where
 B is (d_out, rank) and A is (d_in, rank), with rank << d_model.
 

@@ -16,7 +16,7 @@ Cache per token = kv_lora_rank + rope_dim vs 2*n_heads*head_dim
 for MHA. With typical values (512 + 64 = 576 vs 2*128*128 = 32768),
 this is a ~57x reduction.
 
-Reference: DeepSeek-V2 (arxiv.org/abs/2405.04434)
+Reference: DeepSeek-V2 (Bi et al., 2024, arXiv:2405.04434)
 """
 
 import mlx.core as mx
