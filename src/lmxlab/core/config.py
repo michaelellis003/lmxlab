@@ -30,6 +30,12 @@ class BlockConfig:
             If False, apply after (post-norm).
         window_size: Sliding window size for local attention.
             None means full (global) attention.
+        mamba_bc_norm: If True, apply RMSNorm to B and C
+            projections in Mamba-3 (analogous to QK-norm).
+        mamba_trapezoidal: If True, use trapezoidal
+            discretization in Mamba-3 (two SSD calls).
+        mamba_complex_a: If True, apply data-dependent RoPE
+            to B and C in Mamba-3 (complex eigenvalues).
         qk_norm: If True, apply per-head RMSNorm to Q and K
             after reshape, before RoPE (OLMo 2 style).
         attention_chunk_size: Chunk size for chunked local
@@ -72,6 +78,10 @@ class BlockConfig:
     mamba_expand: int = 2
     mamba_n_groups: int = 1
     mamba_chunk_size: int = 128
+    # Mamba-3 enhancements
+    mamba_bc_norm: bool = False
+    mamba_trapezoidal: bool = False
+    mamba_complex_a: bool = False
     # LatentMoE parameters
     moe_latent_size: int | None = None
     moe_d_ff: int | None = None

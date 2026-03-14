@@ -2688,3 +2688,275 @@ class TestChunkedAttentionCrossReference:
         out, cache = attn(x, mask=mask)
         mx.eval(out)
         assert out.shape == (2, 8, 64)
+
+
+class TestMamba3CrossReference:
+    """Validate Mamba-3 against Dao & Gu (ICLR 2026 oral).
+
+    Three key additions over Mamba-2:
+    1. Trapezoidal discretization (two SSD calls)
+    2. BCNorm (RMSNorm on B and C)
+    3. Complex A (RoPE on B and C)
+
+    References:
+        - Mamba-3 (Dao & Gu, ICLR 2026)
+        - mamba3-minimal reference implementation
+        - state-spaces/mamba official repo
+    """
+
+    def test_output_shape(self):
+        """Mamba-3 produces correct output shape."""
+        from lmxlab.core.mamba3 import Mamba3
+
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+        )
+        mamba = Mamba3(cfg)
+        mx.eval(mamba.parameters())
+        x = mx.random.normal((2, 8, 64))
+        out, cache = mamba(x)
+        mx.eval(out)
+        assert out.shape == (2, 8, 64)
+
+    def test_trapezoidal_two_ssd_calls(self):
+        """Trapezoidal uses two SSD passes (fwd + bwd).
+
+        The output is the average of forward and backward
+        Euler estimates: y = 0.5 * (y_fwd + y_bwd).
+
+        References:
+            - Mamba-3 trapezoidal discretization
+        """
+        from lmxlab.core.mamba3 import Mamba3
+
+        cfg_trap = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+            mamba_trapezoidal=True,
+        )
+        cfg_std = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+            mamba_trapezoidal=False,
+        )
+        mamba_trap = Mamba3(cfg_trap)
+        mamba_std = Mamba3(cfg_std)
+
+        # Copy weights so only discretization differs
+        import mlx.utils
+
+        weights = dict(mlx.utils.tree_flatten(mamba_std.parameters()))
+        mamba_trap.load_weights(list(weights.items()), strict=False)
+
+        x = mx.random.normal((1, 8, 64))
+        out_trap, _ = mamba_trap(x)
+        out_std, _ = mamba_std(x)
+        mx.eval(out_trap, out_std)
+
+        # Trapezoidal should differ from standard
+        assert not mx.allclose(out_trap, out_std, atol=1e-3)
+
+    def test_bc_norm_applied(self):
+        """BCNorm applies RMSNorm to B and C projections.
+
+        Analogous to QK-norm for attention.
+
+        References:
+            - Mamba-3: BCNorm reduces sensitivity to scale
+        """
+        from lmxlab.core.mamba3 import Mamba3
+
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+            mamba_bc_norm=True,
+        )
+        mamba = Mamba3(cfg)
+
+        # Verify norm layers exist
+        assert hasattr(mamba, "b_norm")
+        assert hasattr(mamba, "c_norm")
+        assert isinstance(mamba.b_norm, nn.RMSNorm)
+        assert isinstance(mamba.c_norm, nn.RMSNorm)
+
+    def test_bc_norm_not_created_when_disabled(self):
+        """No BCNorm layers when mamba_bc_norm=False."""
+        from lmxlab.core.mamba3 import Mamba3
+
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+            mamba_bc_norm=False,
+        )
+        mamba = Mamba3(cfg)
+        assert not hasattr(mamba, "b_norm")
+        assert not hasattr(mamba, "c_norm")
+
+    def test_bc_norm_changes_output(self):
+        """BCNorm changes Mamba-3 output vs no norm."""
+        from lmxlab.core.mamba3 import Mamba3
+
+        mx.random.seed(42)
+        cfg_norm = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+            mamba_bc_norm=True,
+        )
+        cfg_no = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+            mamba_bc_norm=False,
+        )
+        mamba_norm = Mamba3(cfg_norm)
+        mamba_no = Mamba3(cfg_no)
+
+        import mlx.utils
+
+        weights = dict(mlx.utils.tree_flatten(mamba_no.parameters()))
+        mamba_norm.load_weights(list(weights.items()), strict=False)
+
+        x = mx.random.normal((1, 4, 64))
+        out_norm, _ = mamba_norm(x)
+        out_no, _ = mamba_no(x)
+        mx.eval(out_norm, out_no)
+
+        assert not mx.allclose(out_norm, out_no, atol=1e-3)
+
+    def test_complex_a_formula(self):
+        """Complex A applies RoPE to B and C projections.
+
+        Data-dependent RoPE with learned frequencies.
+
+        References:
+            - Mamba-3: complex eigenvalues via RoPE on B/C
+        """
+        from lmxlab.core.mamba3 import Mamba3
+
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+            mamba_complex_a=True,
+        )
+        mamba = Mamba3(cfg)
+
+        # Verify learned frequencies exist
+        assert hasattr(mamba, "bc_freqs")
+        # N // 2 frequencies (half for cos, half for sin)
+        assert mamba.bc_freqs.shape == (8,)  # 16 // 2
+
+    def test_complex_a_rope_identity_at_zero(self):
+        """RoPE with zero frequencies is identity.
+
+        References:
+            - RoPE rotation property
+        """
+        from lmxlab.core.mamba3 import _apply_bc_rope
+
+        B = mx.random.normal((1, 4, 2, 16))
+        C = mx.random.normal((1, 4, 2, 16))
+        freqs = mx.zeros((8,))
+
+        B_rot, C_rot = _apply_bc_rope(B, C, freqs, 4)
+        mx.eval(B_rot, C_rot)
+
+        # With zero frequencies, rotation is identity
+        assert mx.allclose(B, B_rot, atol=1e-5)
+        assert mx.allclose(C, C_rot, atol=1e-5)
+
+    def test_complex_a_nonzero_freqs(self):
+        """Non-zero frequencies change B/C values."""
+        from lmxlab.core.mamba3 import _apply_bc_rope
+
+        B = mx.random.normal((1, 4, 2, 16))
+        C = mx.random.normal((1, 4, 2, 16))
+        freqs = mx.ones((8,)) * 0.5
+
+        B_rot, C_rot = _apply_bc_rope(B, C, freqs, 4)
+        mx.eval(B_rot, C_rot)
+
+        # Position 0 should be unchanged (angle = 0)
+        assert mx.allclose(B[:, 0, :, :], B_rot[:, 0, :, :], atol=1e-5)
+        # Position 1+ should change
+        assert not mx.allclose(B[:, 1, :, :], B_rot[:, 1, :, :], atol=1e-3)
+
+    def test_cache_constant_size(self):
+        """Mamba-3 cache size is independent of seq length."""
+        from lmxlab.core.mamba3 import Mamba3
+
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+        )
+        mamba = Mamba3(cfg)
+        mx.eval(mamba.parameters())
+
+        x4 = mx.random.normal((1, 4, 64))
+        _, cache4 = mamba(x4)
+        mx.eval(*cache4)
+
+        x16 = mx.random.normal((1, 16, 64))
+        _, cache16 = mamba(x16)
+        mx.eval(*cache16)
+
+        assert cache4[0].shape == cache16[0].shape
+
+    def test_all_features_combined(self):
+        """All three features work together."""
+        from lmxlab.core.mamba3 import Mamba3
+
+        cfg = BlockConfig(
+            d_model=64,
+            n_heads=4,
+            mamba_n_heads=4,
+            mamba_head_dim=32,
+            ssm_state_size=16,
+            mamba_expand=2,
+            mamba_trapezoidal=True,
+            mamba_bc_norm=True,
+            mamba_complex_a=True,
+        )
+        mamba = Mamba3(cfg)
+        mx.eval(mamba.parameters())
+
+        x = mx.random.normal((1, 8, 64))
+        out, cache = mamba(x)
+        mx.eval(out)
+        assert out.shape == (1, 8, 64)
+        assert cache[0].shape == (1, 4, 32, 16)
