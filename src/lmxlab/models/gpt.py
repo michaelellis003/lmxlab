@@ -77,6 +77,40 @@ def gpt_small() -> ModelConfig:
     return gpt_config()
 
 
+def gpt_10m() -> ModelConfig:
+    """GPT ~10M params for research experiments.
+
+    Uses BPE vocab (50257) with tied embeddings.
+    d=128, 16 layers, 4 heads. ~9.6M params.
+    """
+    return gpt_config(
+        vocab_size=50257,
+        d_model=128,
+        n_heads=4,
+        n_layers=16,
+        d_ff=512,
+        max_seq_len=512,
+        tie_embeddings=True,
+    )
+
+
+def gpt_30m() -> ModelConfig:
+    """GPT ~30M params for research experiments.
+
+    Uses BPE vocab (50257) with tied embeddings.
+    d=256, 22 layers, 8 heads. ~30.2M params.
+    """
+    return gpt_config(
+        vocab_size=50257,
+        d_model=256,
+        n_heads=8,
+        n_layers=22,
+        d_ff=1024,
+        max_seq_len=512,
+        tie_embeddings=True,
+    )
+
+
 def gpt_medium() -> ModelConfig:
     """GPT-medium (~350M params)."""
     return gpt_config(
