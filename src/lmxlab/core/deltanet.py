@@ -1,7 +1,8 @@
 """Gated DeltaNet: linear attention with delta rule.
 
 Implements the Gated Delta Network from "Gated Delta Networks:
-Improving Mamba2 with Delta Rule" (Yang et al., ICLR 2025).
+Improving Mamba2 with Delta Rule" (Yang et al., ICLR 2025,
+arXiv:2412.06464).
 
 Key ideas:
 - Delta rule: error-correcting state updates instead of blind
@@ -16,9 +17,13 @@ This implementation uses the recurrent form, which is:
 - O(d^2) per token during inference (constant, no KV cache growth)
 - O(n * d^2) for training (sequential, no chunkwise parallelism)
 
-The recurrent form is simpler and sufficient for educational
+The recurrent form is simpler and sufficient for research
 purposes. Production implementations use chunkwise parallelism
 for training efficiency.
+
+Cross-references:
+- sustcsonglin/flash-linear-attention (GatedDeltaNet)
+- yzhangcs/gated-deltanet reference implementation
 """
 
 import mlx.core as mx

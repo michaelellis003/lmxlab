@@ -2,7 +2,7 @@
 
 Implements teacher-student distillation where a smaller student
 model learns from a larger teacher model's soft probability
-distributions (Hinton et al., 2015).
+distributions (Hinton et al., 2015, arXiv:1503.02531).
 
 The key insight: soft targets carry more information than hard
 labels. A teacher assigning 0.7 to "cat" and 0.2 to "kitten"

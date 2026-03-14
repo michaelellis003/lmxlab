@@ -196,7 +196,7 @@ class LatentMoEFFN(FFNBase):
 
     Cross-references:
     - nvidia/Nemotron-H-8B modeling_nemotron_h.py
-    - LatentMoE paper arXiv:2601.18089
+    - LatentMoE (Elango et al., 2025, arXiv:2601.18089)
 
     Args:
         config: Block configuration with moe_latent_size,

@@ -96,7 +96,7 @@ def pass_at_k(
     c: int,
     k: int,
 ) -> float:
-    """Compute pass@k metric (Chen et al., 2021).
+    """Compute pass@k metric (Chen et al., 2021, arXiv:2107.03374).
 
     Estimates the probability that at least one of k samples
     passes a given test, given that c of n total samples pass.

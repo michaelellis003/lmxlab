@@ -1,4 +1,4 @@
-"""lmxlab: Educational MLX library for transformer LMs on Apple Silicon."""
+"""lmxlab: Research platform for LM experimentation on Apple Silicon."""
 
 from lmxlab.core.config import BlockConfig, ModelConfig
 from lmxlab.models.base import LanguageModel

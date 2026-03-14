@@ -72,7 +72,8 @@ def _apply_repetition_penalty(
     divided by the penalty (if positive) or multiplied (if
     negative). A penalty of 1.0 has no effect.
 
-    This follows the approach from Keskar et al. (2019): for each
+    This follows the approach from Keskar et al. (2019,
+    arXiv:1909.05858): for each
     previously generated token, divide its logit by the penalty
     if the logit is positive, or multiply by the penalty if
     negative. This consistently reduces the probability of the

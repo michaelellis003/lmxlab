@@ -2,7 +2,7 @@
 
 Implements the Mamba-2 architecture from "Transformers are SSMs:
 Generalized Models and Efficient Algorithms Through Structured
-State Space Duality" (Dao & Gu, 2024).
+State Space Duality" (Dao & Gu, 2024, arXiv:2405.21060).
 
 Key ideas:
 - Selective SSM with input-dependent B, C, and dt parameters

@@ -9,9 +9,9 @@ architecture with three layer types encoded in a
 - **\\*** = Standard attention + dense FFN (with squared ReLU)
 
 References:
-- NVIDIA Nemotron 3 Technical Report (2025)
+- NVIDIA Nemotron 3 Technical Report (2025, arXiv:2502.00402)
 - nvidia/Nemotron-H-8B-Base-8K (HuggingFace)
-- LatentMoE paper arXiv:2601.18089
+- LatentMoE (Elango et al., 2025, arXiv:2601.18089)
 """
 
 from lmxlab.core.config import BlockConfig, ModelConfig
