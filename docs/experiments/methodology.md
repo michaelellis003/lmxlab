@@ -6,21 +6,53 @@ This page explains how experiments are designed, run, and tracked.
 
 ## Core Principles
 
-### Fixed Time Budget
+### FLOP-Matched Comparisons
 
-Every experiment has a wall-clock time budget (default: 5 minutes).
-This eliminates timing confounds and makes all experiments directly
-comparable — "what's the best loss achievable in N minutes?"
+Architecture comparisons use FLOP-matched compute budgets (DEC-004).
+Each architecture trains until it consumes the same total
+floating-point operations, isolating architectural quality from
+implementation speed.
 
 ```python
-from lmxlab.experiments.runner import ExperimentConfig
+from lmxlab.training.callbacks import FLOPCounter
 
-config = ExperimentConfig(
-    name="llama-lr-sweep",
-    time_budget_s=300.0,  # 5 minutes
-    seed=42,
+# Each architecture gets the same compute budget
+flop_counter = FLOPCounter(
+    flops_per_step=estimate_flops_per_step(model, seq_len, batch_size),
+    flop_budget=1e15,  # 1 PFLOPs
 )
 ```
+
+FLOPs are estimated analytically using Megatron-LM-style formulas
+(6 * N * D for dense transformers, with corrections for SwiGLU
+gated FFNs). See `experiments/flops.py` for details.
+
+!!! note "Time budgets as secondary metric"
+    Wall-clock time budgets (DEC-001) are still available for
+    efficiency benchmarks where speed is the metric of interest,
+    but FLOP-matched is the primary method for architecture
+    comparisons.
+
+### Validation Split
+
+Every experiment uses a train/val split (DEC-008). Validation
+loss is the primary metric — training loss is a secondary
+diagnostic only.
+
+- **Shakespeare char-level:** 90/10 sequential split (~1.0M
+  train tokens, ~111K val tokens), matching nanoGPT convention
+- **TinyStories BPE:** Uses the dataset's built-in train/val
+  splits from HuggingFace
+
+Evaluation uses `shuffle=False` for deterministic results.
+Periodic eval runs every 500 steps plus a final eval at the end
+of training.
+
+!!! warning "Superseded experiments"
+    HYP-001 and HYP-001b had no validation split and reported
+    training loss as the primary metric. This masked severe
+    overfitting. Results from these runs are superseded —
+    see [Results](results.md) for trusted findings.
 
 ### Git-as-Experiment-Infra
 
@@ -48,10 +80,10 @@ score = simplicity_score(
 ### Multi-Seed Runs
 
 Single-seed results are unreliable. Run experiments with multiple
-seeds and report statistics:
+seeds and report mean +/- std:
 
 ```bash
-uv run python recipes/run_experiment.py --arch llama --seeds 3
+uv run python recipes/hyp006_dropout_norm.py  # runs 3 seeds per config
 ```
 
 ## Tracking
@@ -76,19 +108,16 @@ entry records:
 | `config` | Full experiment config dict |
 | `metrics` | All collected metrics |
 
+### MLflow Integration
+
+Experiments can optionally log to MLflow for interactive
+visualization. MLflow uses a local SQLite backend by default:
+
 ```python
-from lmxlab.experiments.tracking import ExperimentLog
+from lmxlab.experiments.mlflow import MLflowExperimentRunner
 
-log = ExperimentLog("experiments/results.jsonl")
-
-# Load all entries
-entries = log.load()
-
-# Get the best result
-best = log.best(metric="val_loss")
-
-# Summary statistics
-summary = log.summary()
+runner = MLflowExperimentRunner(config)
+runner.start()  # logs to sqlite:///mlflow.db
 ```
 
 ### Status: Keep vs Discard
@@ -166,14 +195,14 @@ Ready-to-run experiment scripts:
 | Recipe | Experiment | Description |
 |--------|-----------|-------------|
 | `run_experiment.py` | General | Structured experiment with tracking |
+| `hyp006_dropout_norm.py` | HYP-006 | Dropout x normalization at 30M params |
+| `hybrid_baselines.py` | Hybrid | 5-architecture comparison at 10M params |
 | `sweep_learning_rate.py` | General | Grid/random learning rate sweep |
-| `benchmark_compile.py` | Exp 2 | `mx.compile` speedup measurement |
+| `benchmark_compile.py` | General | `mx.compile` speedup measurement |
 | `profile_models.py` | General | Architecture profiling comparison |
 | `compare_training.py` | General | Architecture training dynamics |
 | `compare_architectures.py` | General | Side-by-side architecture comparison |
-| `ablation_gpt_to_llama.py` | Exp 1 | Feature ablation study |
-| `compare_optimizers.py` | Exp 3 | Optimizer comparison (AdamW/SGD/Adafactor/Lion) |
-| `compare_kv_cache.py` | Exp 4 | MLA vs GQA KV cache profiling |
+| `ablation_gpt_to_llama.py` | HYP-001 | Feature ablation study |
 | `compare_schedules.py` | General | LR schedules and optimizer comparison |
 | `analyze_experiments.py` | General | Statistical analysis tools |
 
@@ -192,14 +221,13 @@ Each pre-registered experiment specifies:
 4. **Analysis plan** — how results will be interpreted
 5. **Falsification criteria** — what would disprove each hypothesis
 
-See the [Developer Log](../devlog/index.md#pre-registered-experiment-plans)
-for the full set of pre-registered experiments, including:
+Completed experiments with trusted results:
 
-- **Experiment 1:** GPT-to-LLaMA feature ablation → `ablation_gpt_to_llama.py`
-- **Experiment 2:** `mx.compile` coverage analysis → `benchmark_compile.py`
-- **Experiment 3:** Optimizer comparison on unified memory → `compare_optimizers.py`
-- **Experiment 4:** KV cache reduction with MLA → `compare_kv_cache.py`
-- **Experiment 5:** What can you train in 5 minutes? → `run_experiment.py`
+- **HYP-001c/d:** GPT-to-LLaMA feature ablation at 3M params
+- **HYP-006:** Dropout x normalization interaction at 30M params
+- **Hybrid baselines:** 5-architecture comparison at 10M params
+
+See [Results](results.md) for findings from these experiments.
 
 ### Why Pre-Registration Matters
 
