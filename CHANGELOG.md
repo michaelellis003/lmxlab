@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-03-15
+
+### Fixed
+
+- Sync `uv.lock` with v0.3.0 version bump (CI-006)
+
+### Changed
+
+- Rewrite "Why lmxlab?" pitch to emphasize MLX advantages over
+  PyTorch MPS for Apple Silicon research (faster training, true
+  unified memory, no device management, functional gradients)
+
 ## [0.3.0] - 2026-03-15
 
 ### Added
@@ -135,7 +147,8 @@ Initial release.
   idioms, model comparison, API reference, recipes index, devlog
 - **PyPI publish workflow** via trusted publishing (OIDC)
 
-[Unreleased]: https://github.com/michaelellis003/lmxlab/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/michaelellis003/lmxlab/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/michaelellis003/lmxlab/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/michaelellis003/lmxlab/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/michaelellis003/lmxlab/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/michaelellis003/lmxlab/releases/tag/v0.1.0
