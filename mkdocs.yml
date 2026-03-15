@@ -59,6 +59,7 @@ nav:
   - Recipes: recipes/index.md
   - Experiments:
     - Methodology: experiments/methodology.md
+    - Results: experiments/results.md
   - Developer Log: devlog/index.md
   - API Reference:
     - Overview: api/index.md
