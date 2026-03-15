@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-15
+
+### Added
+
+- **Standardized metrics pipeline**: `HardwareMonitor`, `ValTracker`,
+  and `standard_callbacks()` factory canonicalize metric collection
+  across all recipes (#125)
+- **6 experiment-specific metric callbacks**: GradientStats, WeightStats,
+  ActivationStats, AttentionEntropy, LossCurvature, EffectiveRank for
+  deep training diagnostics (#125)
+- **MLflow metric grouping**: `_prefix_metrics()` routes metrics to
+  numbered groups (`1_core/`, `2_efficiency/`, `4_experiment/`) for
+  organized MLflow UI (#125)
+- **Hardware detection**: `detect_peak_tflops()` auto-detects Apple
+  Silicon GPU peak TFLOP/s for MFU calculation (#125)
+- **MFU tracking**: `FLOPCounter` now computes model FLOP utilization
+  when hardware peak is provided (#125)
+- **Analysis and interpretability toolkit**: activation capture,
+  attention map extraction, layer ablation, linear probing (#120)
+- **Hybrid architecture analysis recipes**: 5-architecture comparison
+  (GPT, LLaMA, Falcon-H1, Jamba, Bamba) at 10M params (#122)
+- **HYP-006 experiment recipe**: dropout x normalization interaction
+  at 30M params with TinyStories BPE (#121)
+- **TinyStories BPE dataset recipe** for scaled experiments (#119)
+- **Scaled research configs**: 10M and 30M param factories for
+  GPT, LLaMA, and hybrid architectures (#118)
+- **Experiment results documentation**: findings from HYP-001c/d,
+  HYP-006, and hybrid baselines with results tables (#124)
+- **5 educational notebooks**: architecture tour, attention variants,
+  SSM explained, training dynamics, hybrid architectures (#123)
+
+### Changed
+
+- `ThroughputMonitor` and `FLOPCounter` now inject metrics
+  (`tokens_per_sec`, `steps_per_sec`, `tflops_per_sec`) into the
+  metrics dict instead of only printing (#125)
+- `hybrid_baselines.py` and `hyp006_dropout_norm.py` refactored to
+  use `standard_callbacks()` instead of manual callback wiring (#125)
+- Experiment methodology docs updated to reflect FLOP-matched
+  comparisons and validation splits (#124)
+
+### Fixed
+
+- All 24 architecture configs now registered in CLI `list`/`info`
+  commands (#117)
+- MLflow tracking URI falls back to `sqlite:///mlflow.db` when not
+  already configured as SQLite (#117)
+
 ## [0.2.0] - 2026-03-14
 
 ### Added
@@ -87,6 +135,7 @@ Initial release.
   idioms, model comparison, API reference, recipes index, devlog
 - **PyPI publish workflow** via trusted publishing (OIDC)
 
-[Unreleased]: https://github.com/michaelellis003/lmxlab/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/michaelellis003/lmxlab/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/michaelellis003/lmxlab/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/michaelellis003/lmxlab/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/michaelellis003/lmxlab/releases/tag/v0.1.0
