@@ -19,19 +19,28 @@ from pathlib import Path
 from typing import Any
 
 import mlx.core as mx
-import mlx.nn as nn
 
 from lmxlab.data.dataset import HFDataset
 from lmxlab.data.tokenizer import TiktokenTokenizer
 from lmxlab.experiments.flops import estimate_flops_per_step
+from lmxlab.experiments.mlflow import (
+    MLflowCallback,
+    MLflowExperimentRunner,
+)
+from lmxlab.experiments.runner import ExperimentConfig
 from lmxlab.models.bamba import bamba_10m
 from lmxlab.models.base import LanguageModel
 from lmxlab.models.falcon import falcon_h1_10m
 from lmxlab.models.gpt import gpt_10m
 from lmxlab.models.jamba import jamba_10m
 from lmxlab.models.llama import llama_10m
-from lmxlab.training.callbacks import FLOPCounter, MetricsLogger
+from lmxlab.training.callbacks import (
+    FLOPCounter,
+    ValTracker,
+    standard_callbacks,
+)
 from lmxlab.training.config import TrainConfig
+from lmxlab.training.hardware import detect_peak_tflops
 from lmxlab.training.trainer import Trainer
 
 ARCHS = {
@@ -46,25 +55,6 @@ BATCH_SIZE = 8
 SEQ_LEN = 256
 LEARNING_RATE = 3e-4
 EVAL_BATCHES = 20
-
-
-def evaluate(
-    model: LanguageModel,
-    val_batches: list[tuple[mx.array, mx.array]],
-) -> float:
-    """Compute val loss with dropout disabled."""
-    model.eval()
-    total = 0.0
-    n = 0
-    for x, y in val_batches:
-        logits, _ = model(x)
-        logits = logits.reshape(-1, logits.shape[-1])
-        loss = nn.losses.cross_entropy(logits, y.reshape(-1), reduction="mean")
-        mx.eval(loss)
-        total += loss.item()
-        n += 1
-    model.train()
-    return total / max(n, 1)
 
 
 def train_model(
@@ -111,13 +101,24 @@ def train_model(
     print(f"  flop_budget={flop_budget:.2e}")
     print(f"  est_steps={est_steps:.0f}")
 
-    # Callbacks
-    flop_counter = FLOPCounter(
+    # Callbacks (standard stack + MLflow)
+    cbs = standard_callbacks(
+        log_interval=100,
+        tokens_per_step=BATCH_SIZE * SEQ_LEN,
         flops_per_step=flops_per_step,
-        log_interval=500,
         flop_budget=flop_budget,
+        hardware_peak_tflops=detect_peak_tflops(),
+        model=model,
+        val_batches=val_batches,
+        eval_interval=500,
     )
-    logger = MetricsLogger(log_interval=100)
+    flop_counter = next(c for c in cbs if isinstance(c, FLOPCounter))
+    val_tracker = next(c for c in cbs if isinstance(c, ValTracker))
+    mlflow_cb = MLflowCallback(
+        log_interval=100,
+        log_model_params=False,
+    )
+    cbs.append(mlflow_cb)
 
     # Train
     train_config = TrainConfig(
@@ -126,16 +127,27 @@ def train_model(
         batch_size=BATCH_SIZE,
         warmup_steps=100,
         eval_interval=500,
-        compile_step=True,
+        compile_step=False,
     )
     trainer = Trainer(
         model,
         train_config,
-        callbacks=[logger, flop_counter],
+        callbacks=cbs,
     )
 
-    init_val = evaluate(model, val_batches)
-    print(f"  init_val_loss={init_val:.4f}")
+    # Experiment tracking (MLflow + results.jsonl)
+    exp_config = ExperimentConfig(
+        name="hybrid-baselines",
+        description=arch_name,
+        time_budget_s=600.0,
+        seed=42,
+        output_dir="experiments",
+    )
+    runner = MLflowExperimentRunner(
+        exp_config,
+        tags={"arch": arch_name},
+    )
+    runner.start()
 
     start = time.monotonic()
 
@@ -150,8 +162,7 @@ def train_model(
     history = trainer.train(data_iter())
     elapsed = time.monotonic() - start
 
-    # Final eval
-    final_val = evaluate(model, val_batches)
+    # ValTracker handles init/periodic/final eval
     train_loss = history[-1]["loss"] if history else float("inf")
     steps = len(history)
 
@@ -161,13 +172,30 @@ def train_model(
     model.save_weights(str(ckpt_path))
     print(f"  checkpoint saved: {ckpt_path}")
 
+    # Log to MLflow + results.jsonl
+    runner.finish(
+        metrics={
+            "val_loss": val_tracker.best_val_loss,
+            "train_loss": train_loss,
+            "train_val_gap": (train_loss - val_tracker.best_val_loss),
+            "steps": steps,
+            "total_flops": flop_counter.total_flops,
+        },
+        param_count=n_params,
+        config_dict={
+            "arch": arch_name,
+            "lr": LEARNING_RATE,
+            "flop_budget": flop_budget,
+        },
+    )
+
     result = {
         "arch": arch_name,
         "params": n_params,
         "steps": steps,
         "train_loss": train_loss,
-        "val_loss": final_val,
-        "gap": train_loss - final_val,
+        "val_loss": val_tracker.best_val_loss,
+        "gap": train_loss - val_tracker.best_val_loss,
         "wall_time": elapsed,
         "total_flops": flop_counter.total_flops,
         "checkpoint": str(ckpt_path),
@@ -175,8 +203,9 @@ def train_model(
 
     print(f"  Steps:      {steps}")
     print(f"  Train loss: {train_loss:.4f}")
-    print(f"  Val loss:   {final_val:.4f}")
-    print(f"  Gap:        {train_loss - final_val:+.4f}")
+    bv = val_tracker.best_val_loss
+    print(f"  Best val:   {bv:.4f}")
+    print(f"  Gap:        {train_loss - bv:+.4f}")
     print(f"  Wall time:  {elapsed:.1f}s")
 
     return result

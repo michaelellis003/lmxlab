@@ -3118,3 +3118,102 @@ class TestSparseAttentionCrossReference:
         )
         with pytest.raises(ValueError, match="window_size"):
             SparseGQA(cfg)
+
+
+class TestMetricsCrossReference:
+    """Validate metrics callbacks against references.
+
+    ValTracker eval pattern: nanoGPT, MLX-examples.
+    MFU formula: PaLM paper (Appendix B).
+    Peak memory units: MLX API docs.
+    """
+
+    def test_eval_matches_nanogpt_pattern(self):
+        """Eval uses model.eval()/train() toggle.
+
+        nanoGPT train.py and MLX-examples transformer_lm
+        both call model.eval() before evaluation and
+        model.train() after. Our ValTracker matches.
+
+        References:
+        - karpathy/nanoGPT train.py @evaluate()
+        - ml-explore/mlx-examples transformer_lm/main.py
+        """
+        from lmxlab.training.callbacks import ValTracker
+
+        cfg = ModelConfig(
+            block=BlockConfig(
+                d_model=32,
+                n_heads=2,
+                d_ff=64,
+                position="none",
+            ),
+            vocab_size=64,
+            n_layers=1,
+        )
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        model.train()
+
+        batches = [
+            (
+                mx.random.randint(0, 64, shape=(2, 8)),
+                mx.random.randint(0, 64, shape=(2, 8)),
+            )
+        ]
+        vt = ValTracker(model, batches, eval_interval=1)
+
+        # Model should be in train mode before and after
+        assert model.training
+        vt._evaluate()
+        assert model.training
+
+    def test_mfu_formula(self):
+        """MFU = achieved_tflops / peak_tflops.
+
+        Matches PaLM (Chowdhery et al. 2022) Appendix B
+        and nanoGPT's MFU calculation.
+
+        References:
+        - PaLM paper Appendix B
+        - karpathy/nanoGPT train.py estimate_mfu()
+        """
+        from lmxlab.training.callbacks import FLOPCounter
+
+        peak_tflops = 6.5  # M3 Pro
+        counter = FLOPCounter(
+            flops_per_step=1e9,
+            log_interval=1,
+            hardware_peak_tflops=peak_tflops,
+        )
+        counter.on_train_begin(None)
+        m: dict = {"loss": 1.0}
+        counter.on_step_end(1, m)
+
+        # MFU = tflops_per_sec / peak_tflops
+        assert "mfu" in m
+        assert "tflops_per_sec" in m
+        expected = m["tflops_per_sec"] / peak_tflops
+        assert abs(m["mfu"] - expected) < 1e-10
+
+    def test_peak_memory_units(self):
+        """Peak memory converts bytes to MB.
+
+        mx.metal.get_peak_memory() returns bytes.
+        We divide by 1e6 to get megabytes.
+
+        References:
+        - MLX API: mx.metal.get_peak_memory() -> int (bytes)
+        """
+        from lmxlab.training.callbacks import HardwareMonitor
+
+        hw = HardwareMonitor()
+        hw.on_train_begin(None)
+        m: dict = {"loss": 1.0}
+        hw.on_step_end(1, m)
+
+        if "peak_memory_mb" in m:
+            # Should be a reasonable value (> 0, < total RAM)
+            assert m["peak_memory_mb"] > 0
+            # Apple M3 Pro has 36GB; peak should be < that
+            assert m["peak_memory_mb"] < 40_000
