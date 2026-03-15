@@ -7,16 +7,37 @@ A research platform for language model experimentation on Apple Silicon.
 
 ## Why lmxlab?
 
-Most transformer implementations optimize for production at the cost of readability.
-lmxlab takes the opposite approach: every layer is implemented from scratch in
-[MLX](https://ml-explore.github.io/mlx/), with clarity that lets you quickly
-iterate on ideas and understand what each component does.
+If you're doing language model research on a Mac, you've probably hit
+the limits of PyTorch's MPS backend — incomplete operator coverage,
+[silent wrong results on non-contiguous tensors](https://elanapearl.github.io/blog/2025/the-bug-that-taught-me-pytorch/),
+and unnecessary memory copies on hardware that shares memory by design.
 
-The core insight is that GPT, LLaMA, DeepSeek, Mamba, and dozens of other
+lmxlab is built on [MLX](https://ml-explore.github.io/mlx/) instead,
+which was designed from scratch for Apple Silicon. The practical
+differences for research:
+
+- **Faster training.** MLX trains LMs
+  [30-50% faster](https://github.com/LucasSte/MLX-vs-Pytorch) than
+  PyTorch MPS on M-series chips, with the gap growing on newer hardware.
+- **True unified memory.** MLX arrays live in shared memory — no copies
+  between CPU and GPU. PyTorch MPS still duplicates tensors on device
+  transfers. On a 36GB MacBook Pro, this means larger models fit.
+- **No device management.** No `.to(device)`, no `.cuda()`, no
+  `PYTORCH_ENABLE_MPS_FALLBACK=1`. Arrays just work on any processor.
+- **Functional gradients.** `mx.value_and_grad(loss_fn)` replaces the
+  `zero_grad` / `backward` / `step` ceremony and eliminates an entire
+  class of gradient-accumulation bugs.
+
+On top of MLX, lmxlab makes the experiment loop short: swap architectures
+in one line, get standardized metrics automatically, and compare results
+across runs without writing boilerplate.
+
+The key idea is that GPT, LLaMA, DeepSeek, Mamba, and dozens of other
 architectures are not fundamentally different models. They are different
 *configurations* of the same building blocks: attention, SSMs, feed-forward
 networks, normalization, and positional encoding. lmxlab makes this concrete
-by using **config factories** instead of class hierarchies.
+with **config factories** — so you can test a hypothesis across architectures
+without rewriting training code.
 
 ```python
 from lmxlab.models.llama import llama_config
