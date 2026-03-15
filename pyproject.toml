@@ -1,6 +1,6 @@
 [project]
 name = "lmxlab"
-version = "0.3.0"
+version = "0.3.1"
 description = "Research platform for language model experimentation on Apple Silicon"
 license = "MIT"
 readme = "README.md"
