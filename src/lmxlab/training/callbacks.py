@@ -1,7 +1,12 @@
 """Training callbacks."""
 
+from __future__ import annotations
+
 import time
 from typing import Any, Protocol
+
+import mlx.core as mx
+import mlx.nn as nn
 
 from lmxlab.training.config import TrainConfig
 
@@ -98,15 +103,22 @@ class ThroughputMonitor:
         self._step_times.append(dt)
         self._total_steps += 1
 
+        # Inject cumulative token count every step
+        if self.tokens_per_step is not None:
+            total_tokens = self._total_steps * self.tokens_per_step
+            metrics["tokens_processed"] = total_tokens
+
         if step % self.log_interval == 0 and dt > 0:
             # Use recent window for smoother reporting
             window = self._step_times[-self.log_interval :]
             avg_dt = sum(window) / len(window)
             steps_sec = 1.0 / avg_dt if avg_dt > 0 else 0
+            metrics["steps_per_sec"] = steps_sec
 
             msg = f"step {step}: {steps_sec:.1f} steps/s"
             if self.tokens_per_step is not None:
                 tok_sec = self.tokens_per_step * steps_sec
+                metrics["tokens_per_sec"] = tok_sec
                 msg += f", {tok_sec:.0f} tok/s"
             print(msg)
 
@@ -173,10 +185,12 @@ class FLOPCounter:
         flops_per_step: float,
         log_interval: int = 10,
         flop_budget: float | None = None,
+        hardware_peak_tflops: float | None = None,
     ) -> None:
         self.flops_per_step = flops_per_step
         self.log_interval = log_interval
         self.flop_budget = flop_budget
+        self.hardware_peak_tflops = hardware_peak_tflops
         self.total_flops: float = 0.0
         self.should_stop: bool = False
         self._start_time: float = 0.0
@@ -204,6 +218,10 @@ class FLOPCounter:
             elapsed = time.monotonic() - self._start_time
             if elapsed > 0:
                 tflops_sec = self.total_flops / elapsed / 1e12
+                metrics["tflops_per_sec"] = tflops_sec
+                if self.hardware_peak_tflops is not None:
+                    mfu = tflops_sec / self.hardware_peak_tflops
+                    metrics["mfu"] = mfu
                 print(
                     f"step {step}: {tflops_sec:.2f} TFLOP/s "
                     f"({self.total_flops:.2e} total)"
@@ -224,3 +242,167 @@ class FLOPCounter:
             )
         else:
             print(f"FLOPs summary: {pflops:.4f} PFLOPs")
+
+
+class HardwareMonitor:
+    """Tracks hardware metrics during training.
+
+    Injects ``peak_memory_mb`` and ``wall_time_s`` into the
+    metrics dict on every step.
+    """
+
+    def __init__(self) -> None:
+        self._start_time: float = 0.0
+
+    def on_train_begin(self, config: TrainConfig) -> None:
+        """Record training start time."""
+        self._start_time = time.monotonic()
+
+    def on_step_end(self, step: int, metrics: dict[str, Any]) -> None:
+        """Inject wall time and peak memory."""
+        metrics["wall_time_s"] = time.monotonic() - self._start_time
+        try:
+            peak_bytes = mx.metal.get_peak_memory()
+            metrics["peak_memory_mb"] = peak_bytes / 1e6
+        except AttributeError:
+            pass  # Non-Metal backend
+
+    def on_eval_end(self, step: int, metrics: dict[str, Any]) -> None:
+        """No action on eval."""
+
+    def on_train_end(self, history: list[dict[str, Any]]) -> None:
+        """No action on train end."""
+
+
+class ValTracker:
+    """Periodic validation with best-loss tracking.
+
+    Replaces ad-hoc ``_PeriodicEval`` patterns in recipes.
+    Handles model.eval()/train() toggling, initial/periodic/final
+    evaluation, and injects ``val_loss``, ``best_val_loss``,
+    ``init_val_loss``, and ``train_val_gap`` into metrics.
+
+    Args:
+        model: The language model to evaluate.
+        val_batches: Pre-loaded validation batches.
+        eval_interval: Steps between periodic evaluations.
+    """
+
+    def __init__(
+        self,
+        model: nn.Module,
+        val_batches: list[tuple[mx.array, mx.array]],
+        eval_interval: int = 500,
+    ) -> None:
+        self.model = model
+        self.val_batches = val_batches
+        self.eval_interval = eval_interval
+        self.best_val_loss: float = float("inf")
+        self.init_val_loss: float = float("inf")
+
+    def on_train_begin(self, config: TrainConfig) -> None:
+        """Compute initial validation loss."""
+        self.init_val_loss = self._evaluate()
+        self.best_val_loss = self.init_val_loss
+        print(f"init_val_loss={self.init_val_loss:.4f}")
+
+    def on_step_end(self, step: int, metrics: dict[str, Any]) -> None:
+        """Run periodic eval and inject metrics."""
+        metrics["init_val_loss"] = self.init_val_loss
+        if step > 0 and step % self.eval_interval == 0:
+            val_loss = self._evaluate()
+            self.best_val_loss = min(self.best_val_loss, val_loss)
+            metrics["val_loss"] = val_loss
+            metrics["best_val_loss"] = self.best_val_loss
+            train_loss = metrics.get("loss", 0.0)
+            metrics["train_val_gap"] = train_loss - val_loss
+            print(
+                f"  eval step {step}: "
+                f"val={val_loss:.4f} "
+                f"best={self.best_val_loss:.4f}"
+            )
+
+    def on_eval_end(self, step: int, metrics: dict[str, Any]) -> None:
+        """No action on eval."""
+
+    def on_train_end(self, history: list[dict[str, Any]]) -> None:
+        """Run final evaluation."""
+        val_loss = self._evaluate()
+        self.best_val_loss = min(self.best_val_loss, val_loss)
+        print(f"final_val_loss={val_loss:.4f} best={self.best_val_loss:.4f}")
+
+    def _evaluate(self) -> float:
+        """Compute mean CE loss over val batches."""
+        self.model.eval()
+        total = 0.0
+        n = 0
+        for x, y in self.val_batches:
+            logits, _ = self.model(x)
+            logits = logits.reshape(-1, logits.shape[-1])
+            loss = nn.losses.cross_entropy(
+                logits, y.reshape(-1), reduction="mean"
+            )
+            mx.eval(loss)
+            total += loss.item()
+            n += 1
+        self.model.train()
+        return total / max(n, 1)
+
+
+def standard_callbacks(
+    *,
+    log_interval: int = 10,
+    tokens_per_step: int | None = None,
+    flops_per_step: float | None = None,
+    flop_budget: float | None = None,
+    hardware_peak_tflops: float | None = None,
+    model: nn.Module | None = None,
+    val_batches: (list[tuple[mx.array, mx.array]] | None) = None,
+    eval_interval: int = 500,
+) -> list[Any]:
+    """Build the canonical callback stack.
+
+    Order: injectors first (ThroughputMonitor, FLOPCounter,
+    HardwareMonitor, ValTracker), then consumers
+    (MetricsLogger). Recipes can append MLflowCallback after.
+
+    Args:
+        log_interval: Steps between log outputs.
+        tokens_per_step: Tokens per step for throughput.
+        flops_per_step: FLOPs per step for FLOP counting.
+        flop_budget: Optional FLOP budget.
+        hardware_peak_tflops: Peak TFLOP/s for MFU.
+        model: Model for ValTracker (optional).
+        val_batches: Validation batches for ValTracker.
+        eval_interval: Steps between validations.
+
+    Returns:
+        List of callback instances in canonical order.
+    """
+    cbs: list[Any] = []
+    cbs.append(
+        ThroughputMonitor(
+            log_interval=log_interval,
+            tokens_per_step=tokens_per_step,
+        )
+    )
+    if flops_per_step is not None:
+        cbs.append(
+            FLOPCounter(
+                flops_per_step=flops_per_step,
+                log_interval=log_interval,
+                flop_budget=flop_budget,
+                hardware_peak_tflops=hardware_peak_tflops,
+            )
+        )
+    cbs.append(HardwareMonitor())
+    if model is not None and val_batches is not None:
+        cbs.append(
+            ValTracker(
+                model=model,
+                val_batches=val_batches,
+                eval_interval=eval_interval,
+            )
+        )
+    cbs.append(MetricsLogger(log_interval=log_interval))
+    return cbs

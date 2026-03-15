@@ -35,17 +35,25 @@ from pathlib import Path
 from typing import Any
 
 import mlx.core as mx
-import mlx.nn as nn
 
 from lmxlab.data.dataset import HFDataset
 from lmxlab.data.tokenizer import TiktokenTokenizer
 from lmxlab.experiments.flops import estimate_flops_per_step
-from lmxlab.experiments.runner import ExperimentConfig, ExperimentRunner
+from lmxlab.experiments.mlflow import (
+    MLflowCallback,
+    MLflowExperimentRunner,
+)
+from lmxlab.experiments.runner import ExperimentConfig
 from lmxlab.models.base import LanguageModel
 from lmxlab.models.gpt import gpt_30m
 from lmxlab.models.llama import llama_30m
-from lmxlab.training.callbacks import FLOPCounter, MetricsLogger
+from lmxlab.training.callbacks import (
+    FLOPCounter,
+    ValTracker,
+    standard_callbacks,
+)
 from lmxlab.training.config import TrainConfig
+from lmxlab.training.hardware import detect_peak_tflops
 from lmxlab.training.trainer import Trainer
 
 # ── Grid definition ──────────────────────────────────────
@@ -61,61 +69,6 @@ BATCH_SIZE = 8
 SEQ_LEN = 256
 EVAL_INTERVAL = 500
 EVAL_BATCHES = 20
-
-
-# ── Periodic eval callback ───────────────────────────────
-
-
-class _PeriodicEval:
-    """Evaluate with dropout disabled at fixed intervals."""
-
-    def __init__(
-        self,
-        model: LanguageModel,
-        val_batches: list[tuple[mx.array, mx.array]],
-        interval: int,
-    ) -> None:
-        self.model = model
-        self.val_batches = val_batches
-        self.interval = interval
-        self.best_val: float = float("inf")
-
-    def on_train_begin(self, config: TrainConfig) -> None:
-        """No-op."""
-
-    def on_step_end(self, step: int, metrics: dict[str, Any]) -> None:
-        """Run eval every ``interval`` steps."""
-        if step > 0 and step % self.interval == 0:
-            val_loss = self._evaluate()
-            metrics["val_loss"] = val_loss
-            self.best_val = min(self.best_val, val_loss)
-            print(
-                f"  eval step {step}: "
-                f"val={val_loss:.4f} "
-                f"best={self.best_val:.4f}"
-            )
-
-    def on_eval_end(self, step: int, metrics: dict[str, Any]) -> None:
-        """No-op."""
-
-    def on_train_end(self, history: list[dict[str, Any]]) -> None:
-        """No-op."""
-
-    def _evaluate(self) -> float:
-        self.model.eval()
-        total = 0.0
-        n = 0
-        for x, y in self.val_batches:
-            logits, _ = self.model(x)
-            logits = logits.reshape(-1, logits.shape[-1])
-            loss = nn.losses.cross_entropy(
-                logits, y.reshape(-1), reduction="mean"
-            )
-            mx.eval(loss)
-            total += loss.item()
-            n += 1
-        self.model.train()
-        return total / max(n, 1)
 
 
 # ── Core functions ───────────────────────────────────────
@@ -137,25 +90,6 @@ def make_config(arch_name: str, dropout: float):
     config = factory()
     block = replace(config.block, dropout=dropout)
     return replace(config, block=block)
-
-
-def evaluate(
-    model: LanguageModel,
-    val_batches: list[tuple[mx.array, mx.array]],
-) -> float:
-    """Compute val loss with dropout disabled."""
-    model.eval()
-    total = 0.0
-    n = 0
-    for x, y in val_batches:
-        logits, _ = model(x)
-        logits = logits.reshape(-1, logits.shape[-1])
-        loss = nn.losses.cross_entropy(logits, y.reshape(-1), reduction="mean")
-        mx.eval(loss)
-        total += loss.item()
-        n += 1
-    model.train()
-    return total / max(n, 1)
 
 
 def compute_flop_budget(target_steps: int = 2000) -> int:
@@ -225,14 +159,25 @@ def run_single(
         )
     )
 
-    # Callbacks
-    flop_counter = FLOPCounter(
+    # Callbacks (standard stack + MLflow)
+    cbs = standard_callbacks(
+        log_interval=100,
+        tokens_per_step=BATCH_SIZE * SEQ_LEN,
         flops_per_step=flops_per_step,
-        log_interval=EVAL_INTERVAL,
         flop_budget=flop_budget,
+        hardware_peak_tflops=detect_peak_tflops(),
+        model=model,
+        val_batches=val_batches,
+        eval_interval=EVAL_INTERVAL,
     )
-    periodic_eval = _PeriodicEval(model, val_batches, EVAL_INTERVAL)
-    logger = MetricsLogger(log_interval=100)
+    # Extract FLOPCounter and ValTracker for result access
+    flop_counter = next(c for c in cbs if isinstance(c, FLOPCounter))
+    val_tracker = next(c for c in cbs if isinstance(c, ValTracker))
+    mlflow_cb = MLflowCallback(
+        log_interval=100,
+        log_model_params=False,
+    )
+    cbs.append(mlflow_cb)
 
     # Trainer (max_steps high — FLOP budget is the limiter)
     train_config = TrainConfig(
@@ -241,15 +186,15 @@ def run_single(
         batch_size=BATCH_SIZE,
         warmup_steps=100,
         eval_interval=EVAL_INTERVAL,
-        compile_step=True,
+        compile_step=False,
     )
     trainer = Trainer(
         model,
         train_config,
-        callbacks=[logger, flop_counter, periodic_eval],
+        callbacks=cbs,
     )
 
-    # Experiment tracking
+    # Experiment tracking (MLflow + results.jsonl)
     exp_config = ExperimentConfig(
         name="HYP-006",
         description=run_name,
@@ -257,12 +202,14 @@ def run_single(
         seed=seed,
         output_dir="experiments",
     )
-    runner = ExperimentRunner(exp_config)
+    runner = MLflowExperimentRunner(
+        exp_config,
+        tags={
+            "arch": arch_name,
+            "dropout": str(dropout),
+        },
+    )
     runner.start()
-
-    # Initial eval
-    init_val = evaluate(model, val_batches)
-    print(f"  init_val_loss={init_val:.4f}")
 
     # Train (generator stops when FLOP budget reached)
     start = time.monotonic()
@@ -278,19 +225,18 @@ def run_single(
     history = trainer.train(data_iter())
     elapsed = time.monotonic() - start
 
-    # Final eval (clean, no dropout)
-    final_val = evaluate(model, val_batches)
+    # ValTracker handles init/periodic/final eval
     train_loss = history[-1]["loss"] if history else float("inf")
     steps = len(history)
 
     # Log results
     entry = runner.finish(
         metrics={
-            "val_loss": final_val,
-            "best_val_loss": periodic_eval.best_val,
+            "val_loss": val_tracker.best_val_loss,
+            "best_val_loss": val_tracker.best_val_loss,
             "train_loss": train_loss,
-            "train_val_gap": train_loss - final_val,
-            "init_val_loss": init_val,
+            "train_val_gap": (train_loss - val_tracker.best_val_loss),
+            "init_val_loss": val_tracker.init_val_loss,
             "steps": steps,
             "total_flops": flop_counter.total_flops,
         },
@@ -308,9 +254,10 @@ def run_single(
 
     print(f"\n  Steps:      {steps}")
     print(f"  Train loss: {train_loss:.4f}")
-    print(f"  Val loss:   {final_val:.4f}")
-    print(f"  Best val:   {periodic_eval.best_val:.4f}")
-    print(f"  Gap:        {train_loss - final_val:+.4f}")
+    print(f"  Best val:   {val_tracker.best_val_loss:.4f}")
+    print(f"  Init val:   {val_tracker.init_val_loss:.4f}")
+    gap = train_loss - val_tracker.best_val_loss
+    print(f"  Gap:        {gap:+.4f}")
     print(f"  Wall time:  {elapsed:.1f}s")
     print(f"  FLOPs:      {flop_counter.total_flops:.2e}")
     print(f"  Status:     {entry.status}")
@@ -321,10 +268,10 @@ def run_single(
         "norm": model_config.block.norm,
         "dropout": dropout,
         "seed": seed,
-        "val_loss": final_val,
-        "best_val_loss": periodic_eval.best_val,
+        "val_loss": val_tracker.best_val_loss,
+        "best_val_loss": val_tracker.best_val_loss,
         "train_loss": train_loss,
-        "gap": train_loss - final_val,
+        "gap": gap,
         "steps": steps,
         "wall_time": elapsed,
         "total_flops": flop_counter.total_flops,

@@ -29,6 +29,45 @@ _MISSING_MSG = (
     "Install with: uv sync --extra experiments"
 )
 
+# Metric prefix mapping for MLflow UI grouping.
+# Metrics sort alphabetically; numbered prefixes keep groups
+# together: 1_core, 2_efficiency, 3_other.
+_CORE_METRICS = {
+    "loss",
+    "val_loss",
+    "best_val_loss",
+    "init_val_loss",
+    "train_val_gap",
+    "learning_rate",
+}
+_EFFICIENCY_METRICS = {
+    "tokens_per_sec",
+    "tokens_processed",
+    "steps_per_sec",
+    "tflops_per_sec",
+    "mfu",
+    "total_flops",
+    "peak_memory_mb",
+    "wall_time_s",
+}
+
+
+def _prefix_metrics(
+    metrics: dict[str, float],
+) -> dict[str, float]:
+    """Add group prefixes to metric names for MLflow UI."""
+    prefixed: dict[str, float] = {}
+    for k, v in metrics.items():
+        if k in _CORE_METRICS:
+            prefixed[f"1_core/{k}"] = v
+        elif k in _EFFICIENCY_METRICS:
+            prefixed[f"2_efficiency/{k}"] = v
+        elif k.startswith("exp_"):
+            prefixed[f"4_experiment/{k}"] = v
+        else:
+            prefixed[f"3_other/{k}"] = v
+    return prefixed
+
 
 def _require_mlflow() -> None:
     """Raise ImportError if mlflow is not installed."""
@@ -72,7 +111,7 @@ class MLflowCallback:
                 if isinstance(v, (int, float))
             }
             if logged:
-                mlflow.log_metrics(logged, step=step)
+                mlflow.log_metrics(_prefix_metrics(logged), step=step)
 
     def on_eval_end(self, step: int, metrics: dict[str, Any]) -> None:
         """Log all numeric eval metrics."""
@@ -82,7 +121,7 @@ class MLflowCallback:
             if isinstance(v, (int, float))
         }
         if logged:
-            mlflow.log_metrics(logged, step=step)
+            mlflow.log_metrics(_prefix_metrics(logged), step=step)
 
     def on_train_end(self, history: list[dict[str, Any]]) -> None:
         """Log final summary metrics."""
@@ -177,13 +216,13 @@ class MLflowExperimentRunner:
         if param_count:
             mlflow.log_param("model/param_count", param_count)
 
-        # Log final metrics
+        # Log final metrics with group prefixes
         mlflow_metrics: dict[str, float] = {}
         for k, v in metrics.items():
             if isinstance(v, (int, float)):
                 mlflow_metrics[k] = float(v)
         if mlflow_metrics:
-            mlflow.log_metrics(mlflow_metrics)
+            mlflow.log_metrics(_prefix_metrics(mlflow_metrics))
 
         entry = self.runner.finish(
             metrics=metrics,

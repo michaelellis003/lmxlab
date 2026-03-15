@@ -7,8 +7,12 @@ from lmxlab.models.base import LanguageModel
 from lmxlab.models.gpt import gpt_tiny
 from lmxlab.training.callbacks import (
     EarlyStopping,
+    FLOPCounter,
+    HardwareMonitor,
     MetricsLogger,
     ThroughputMonitor,
+    ValTracker,
+    standard_callbacks,
 )
 from lmxlab.training.checkpoints import (
     load_checkpoint,
@@ -330,3 +334,191 @@ class TestCallbacks:
         captured = capsys.readouterr()
         assert "Throughput summary" in captured.out
         assert "5 steps" in captured.out
+
+    def test_throughput_injects_metrics(self):
+        """tokens_per_sec injected into metrics dict."""
+        monitor = ThroughputMonitor(log_interval=1, tokens_per_step=128)
+        monitor.on_train_begin(TrainConfig())
+        metrics: dict = {"loss": 5.0}
+        monitor.on_step_end(1, metrics)
+        assert "tokens_per_sec" in metrics
+        assert "steps_per_sec" in metrics
+        assert metrics["tokens_per_sec"] > 0
+
+    def test_throughput_tokens_processed(self):
+        """Cumulative token count injected every step."""
+        monitor = ThroughputMonitor(log_interval=100, tokens_per_step=64)
+        monitor.on_train_begin(TrainConfig())
+        for i in range(5):
+            m: dict = {"loss": 1.0}
+            monitor.on_step_end(i + 1, m)
+        assert m["tokens_processed"] == 5 * 64
+
+    def test_flop_counter_injects_tflops(self):
+        """tflops_per_sec injected at log_interval."""
+        counter = FLOPCounter(flops_per_step=1e9, log_interval=1)
+        counter.on_train_begin(TrainConfig())
+        metrics: dict = {"loss": 1.0}
+        counter.on_step_end(1, metrics)
+        assert "tflops_per_sec" in metrics
+        assert metrics["tflops_per_sec"] > 0
+
+    def test_flop_counter_mfu(self):
+        """MFU injected when hardware_peak_tflops given."""
+        peak = 6.5
+        counter = FLOPCounter(
+            flops_per_step=1e9,
+            log_interval=1,
+            hardware_peak_tflops=peak,
+        )
+        counter.on_train_begin(TrainConfig())
+        metrics: dict = {"loss": 1.0}
+        counter.on_step_end(1, metrics)
+        assert "mfu" in metrics
+        # MFU = tflops_per_sec / peak_tflops
+        expected = metrics["tflops_per_sec"] / peak
+        assert abs(metrics["mfu"] - expected) < 1e-10
+
+    def test_flop_counter_no_mfu_without_peak(self):
+        """MFU not injected when hardware_peak not given."""
+        counter = FLOPCounter(flops_per_step=1e9, log_interval=1)
+        counter.on_train_begin(TrainConfig())
+        metrics: dict = {"loss": 1.0}
+        counter.on_step_end(1, metrics)
+        assert "mfu" not in metrics
+
+    def test_hardware_monitor(self):
+        """wall_time_s and peak_memory_mb injected."""
+        hw = HardwareMonitor()
+        hw.on_train_begin(TrainConfig())
+        metrics: dict = {"loss": 1.0}
+        hw.on_step_end(1, metrics)
+        assert "wall_time_s" in metrics
+        assert metrics["wall_time_s"] >= 0
+        # peak_memory_mb depends on Metal backend
+        # Just verify key is present when Metal is available
+        if "peak_memory_mb" in metrics:
+            assert metrics["peak_memory_mb"] >= 0
+
+    def test_val_tracker_periodic(self, tiny_model):
+        """ValTracker evaluates at interval, not between."""
+        batches = [
+            (
+                mx.random.randint(0, 256, shape=(2, 16)),
+                mx.random.randint(0, 256, shape=(2, 16)),
+            )
+        ]
+        vt = ValTracker(tiny_model, batches, eval_interval=5)
+        vt.on_train_begin(TrainConfig())
+        # Steps 1-4: no val_loss injected
+        for i in range(1, 5):
+            m: dict = {"loss": 3.0}
+            vt.on_step_end(i, m)
+            assert "val_loss" not in m
+        # Step 5: val_loss injected
+        m5: dict = {"loss": 3.0}
+        vt.on_step_end(5, m5)
+        assert "val_loss" in m5
+        assert "best_val_loss" in m5
+
+    def test_val_tracker_best_val(self, tiny_model):
+        """ValTracker tracks minimum across evals."""
+        batches = [
+            (
+                mx.random.randint(0, 256, shape=(2, 16)),
+                mx.random.randint(0, 256, shape=(2, 16)),
+            )
+        ]
+        vt = ValTracker(tiny_model, batches, eval_interval=1)
+        vt.on_train_begin(TrainConfig())
+        losses = []
+        for i in range(1, 4):
+            m: dict = {"loss": 3.0}
+            vt.on_step_end(i, m)
+            losses.append(m["val_loss"])
+        assert vt.best_val_loss == min(losses)
+
+    def test_val_tracker_init_val(self, tiny_model):
+        """ValTracker computes init_val_loss in on_train_begin."""
+        batches = [
+            (
+                mx.random.randint(0, 256, shape=(2, 16)),
+                mx.random.randint(0, 256, shape=(2, 16)),
+            )
+        ]
+        vt = ValTracker(tiny_model, batches, eval_interval=10)
+        vt.on_train_begin(TrainConfig())
+        assert vt.init_val_loss < float("inf")
+        # Check it's injected into step metrics
+        m: dict = {"loss": 3.0}
+        vt.on_step_end(1, m)
+        assert m["init_val_loss"] == vt.init_val_loss
+
+    def test_val_tracker_train_val_gap(self, tiny_model):
+        """train_val_gap = loss - val_loss at eval steps."""
+        batches = [
+            (
+                mx.random.randint(0, 256, shape=(2, 16)),
+                mx.random.randint(0, 256, shape=(2, 16)),
+            )
+        ]
+        vt = ValTracker(tiny_model, batches, eval_interval=1)
+        vt.on_train_begin(TrainConfig())
+        m: dict = {"loss": 10.0}
+        vt.on_step_end(1, m)
+        expected_gap = 10.0 - m["val_loss"]
+        assert abs(m["train_val_gap"] - expected_gap) < 1e-6
+
+    def test_val_tracker_final_eval(self, tiny_model, capsys):
+        """on_train_end runs final evaluation."""
+        batches = [
+            (
+                mx.random.randint(0, 256, shape=(2, 16)),
+                mx.random.randint(0, 256, shape=(2, 16)),
+            )
+        ]
+        vt = ValTracker(tiny_model, batches, eval_interval=1000)
+        vt.on_train_begin(TrainConfig())
+        capsys.readouterr()  # clear init print
+        vt.on_train_end([{"loss": 1.0}])
+        captured = capsys.readouterr()
+        assert "final_val_loss" in captured.out
+
+    def test_standard_callbacks(self):
+        """standard_callbacks returns correct types in order."""
+        cbs = standard_callbacks(
+            log_interval=10,
+            tokens_per_step=128,
+            flops_per_step=1e9,
+        )
+        types = [type(c).__name__ for c in cbs]
+        assert types == [
+            "ThroughputMonitor",
+            "FLOPCounter",
+            "HardwareMonitor",
+            "MetricsLogger",
+        ]
+
+    def test_standard_callbacks_with_val(self, tiny_model):
+        """standard_callbacks includes ValTracker when given."""
+        batches = [
+            (
+                mx.random.randint(0, 256, shape=(2, 16)),
+                mx.random.randint(0, 256, shape=(2, 16)),
+            )
+        ]
+        cbs = standard_callbacks(
+            log_interval=10,
+            tokens_per_step=128,
+            flops_per_step=1e9,
+            model=tiny_model,
+            val_batches=batches,
+        )
+        types = [type(c).__name__ for c in cbs]
+        assert types == [
+            "ThroughputMonitor",
+            "FLOPCounter",
+            "HardwareMonitor",
+            "ValTracker",
+            "MetricsLogger",
+        ]
