@@ -168,23 +168,12 @@ not "fruit fly genetics."
 | — | Educational notebooks (5) | DONE (2026-03-14) |
 | — | Metric callbacks library | DONE (2026-03-15) |
 | HYP-007 | TTC scaling at 10M | DONE (2026-03-15, H7-a supported) |
+| HYP-008 | SSM/hybrid TTC scaling | DONE (2026-03-15, H8-a supported) |
 | DEC-004 | FLOP-matched comparisons | ACCEPTED |
 | DEC-005 | Chinchilla-optimal training | ACCEPTED |
 | DEC-008 | Val loss as primary metric | ACCEPTED |
 
 ## Queued Ideas
-
-**HYP-008: SSM/hybrid test-time compute scaling**
-- Follow-up to HYP-007. HYP-007 showed TTC works at 10M
-  (pass@64=11.9x pass@1). Does the same hold for SSMs?
-- SSMs lack explicit attention patterns — failure modes on exact
-  modular arithmetic may be fundamentally different.
-- Architectures to test: Mamba-2 (pure SSM), Falcon-H1 / Jamba
-  (hybrid), GatedDeltaNet (linear attention). All already
-  implemented and cross-referenced in the codebase.
-- HYP-007 finding: dropout HURTS diversity. Simplify to
-  dropout=0.0 only: 4 archs x 3 seeds = 12 runs.
-- **Ready to pre-register.**
 
 **HYP-009: Grokking and TTC interaction**
 - HYP-007 models have train loss ~0.002 but pass@1 ~0.5%.

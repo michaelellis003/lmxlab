@@ -712,3 +712,139 @@ finding (locates the floor).
    best-of-64 reaches nearly 8% accuracy from 0.5% base.
 
 B-007 created (0.25 → 0.75). B-008 created (0.50 → 0.20).
+
+---
+
+## HYP-008: SSM/Hybrid Test-Time Compute Scaling
+
+**Experiment:** 8 — Test-time compute scaling across
+architecture families at 10M parameters
+**Status:** tested (H8-a supported)
+**Question:** Does test-time compute scaling (best-of-N with
+execution verification) work equally well for SSM/hybrid
+architectures as for pure attention at 10M params, and how
+do pass@k curves compare across architecture families?
+
+**Quality Gates (Step 0):**
+- Gate 1 (Importance): PASS. Whether TTC generalizes across
+  architecture families is fundamental for inference-time
+  applications. All TTC literature uses pure transformers.
+- Gate 2 (Scale): PASS. Finding TTC behavior at small scale.
+- Gate 3 (Prior coverage): PASS. Nobody has studied TTC on
+  SSMs at ANY scale. Complete gap.
+- Gate 4 (Predictability): PASS. SSM fixed-size state could
+  help (richer state → diverse outputs) or hurt (compressed
+  state → mode collapse). Not predictable.
+- Gate 5 (Methodology): PASS. Same protocol as HYP-007.
+- Gate 6 (Sunk cost): PASS. First round on this question.
+
+**Prior Art (REA, extending HYP-007 sources):**
+- [LIT-038] Snell et al. 2024: TTC at 1.5B, pure transformers.
+- [LIT-039] Wu et al. 2024: Inference scaling law, pure
+  transformers only.
+- [LIT-032] Mamba-3 (ICLR 2026): Mamba-3 solves modular
+  arithmetic — SSMs CAN learn the task.
+- [LIT-037] Jamba (ICLR 2025): Hybrid SSM-attention ablation.
+  Pure Mamba fails at in-context learning.
+- [HYP-007] Own experiment: TTC works at 10M for LLaMA.
+  pass@64=11.9x pass@1. Dropout hurts diversity.
+- **Gap:** No study of TTC scaling on SSM or hybrid
+  architectures at any scale.
+
+| ID | Hypothesis | Prediction | Falsification | Prior |
+|----|-----------|------------|---------------|-------|
+| H8-a | Architecture-independent | All 4 archs have pass@16/pass@1 ratios within 2x of each other. TTC effectiveness depends on model quality (val_loss), not architecture type. | Any arch has p@16/p@1 ratio > 3x different from LLaMA | 0.30 |
+| H8-b | Attention advantage | LLaMA has the steepest pass@k curve (highest p@64/p@1 ratio) because explicit attention access generates more diverse outputs | LLaMA's p@64/p@1 ratio is lower than at least one SSM/hybrid | 0.25 |
+| H8-c | Hybrid advantage | Hybrid models (Falcon-H1, Jamba, Bamba) show steeper pass@k curves than pure attention because SSM+attention provides complementary generation modes | All hybrids have flatter curves than LLaMA | 0.20 |
+| H8-d | SSM disadvantage | SSM-heavy architectures have the flattest pass@k curves — fixed-size state limits output diversity, resulting in p@64/p@1 < 5x | All SSM-heavy archs have p@64/p@1 >= 5x | 0.25 |
+
+**Why these alternatives:**
+- **H8-a (independent, 0.30):** HYP-007 showed TTC scaling is
+  robust. If the effect depends mainly on model quality (val
+  loss) rather than how the model processes sequences, then
+  equal-quality models should show similar TTC curves.
+  Hybrid baselines showed similar val_loss rankings across
+  architectures. Highest prior because it's the simplest
+  explanation.
+- **H8-b (attention advantage, 0.25):** Attention's explicit
+  O(n^2) context access could create richer next-token
+  distributions. Jamba (LIT-037) found pure Mamba fails at
+  in-context learning — suggesting attention provides
+  capabilities SSMs lack. If in-context reasoning matters
+  for output diversity, attention should win.
+- **H8-c (hybrid advantage, 0.20):** Hybrid models combine
+  SSM's efficient state tracking with attention's precise
+  retrieval. This dual pathway could generate outputs using
+  different computational strategies, increasing diversity.
+  Lower prior because the mechanism is speculative.
+- **H8-d (SSM disadvantage, 0.25):** SSMs compress the full
+  context into a fixed-size state. This compression may lose
+  the fine-grained token-level information needed for diverse
+  outputs. At 10M params with limited state size, this
+  compression loss could be severe.
+
+**Design:**
+- 4 architectures: LLaMA-10M (pure attention), Falcon-H1-10M
+  (hybrid), Jamba-10M (hybrid+MoE), Bamba-10M (hybrid)
+- dropout=0.0 (per HYP-007: dropout hurts diversity)
+- 3 seeds: {42, 43, 44} (per DEC-002)
+- FLOP budget: matched to LLaMA-10M × 2000 steps (2.88e14)
+- Dataset: modular arithmetic (a+b) mod 97, same as HYP-007
+- Eval: pass@k with k=1,2,4,8,16,32,64, N=64 samples
+- Temperature: 0.8 (same as HYP-007)
+- Total: 4 × 3 = 12 runs
+- Estimated wall time: ~40-60 min per run, ~8-12 hours total
+
+**Protocol:**
+- FLOP-matched (DEC-004)
+- 3 seeds (DEC-002)
+- Val loss as training metric (DEC-008)
+- pass@k as primary evaluation metric
+
+**Metrics:**
+- Primary: pass@k curves (k=1..64), p@16/p@1 ratio,
+  p@64/p@1 ratio per architecture
+- Secondary: val_loss, train_loss, train-val gap
+- Analysis: Compare TTC scaling exponents across architectures
+
+**Recipe:** `recipes/hyp008_ssm_ttc.py`
+
+**Results (2026-03-15):**
+
+| Arch | Val Loss | pass@1 | pass@16 | pass@64 | p@16/p@1 | p@64/p@1 |
+|------|----------|--------|---------|---------|----------|----------|
+| LLaMA | 2.731 | 0.56% | 3.63% | 8.34% | 6.4x | 14.8x |
+| Falcon-H1 | 2.318 | 0.28% | 1.77% | 4.06% | 6.4x | 14.6x |
+| Bamba | 2.318 | 0.28% | 1.77% | 4.04% | 6.4x | 14.5x |
+| Jamba | 2.310 | 0.25% | 1.42% | 3.29% | 5.8x | 13.4x |
+
+**Adjudication:**
+- **H8-a (independent, 0.30 → SUPPORTED):** p@16/p@1 ratios
+  range 5.8-6.4x (max/min = 1.10x, well within 2x threshold).
+  p@64/p@1 ratios range 13.4-14.8x (max/min = 1.10x). TTC
+  scaling exponents are architecture-independent.
+- **H8-b (attention wins, 0.25 → WEAKLY SUPPORTED on absolute,
+  NOT on exponent):** LLaMA has highest absolute pass@k at
+  every k (~2x higher than hybrids), but this reflects higher
+  base rate (pass@1), not steeper scaling. The TTC exponent
+  (14.8x) is only 1.4% above Falcon-H1 (14.6x).
+- **H8-c (hybrid wins, 0.20 → FALSIFIED):** All hybrids have
+  lower or equal p@64/p@1 ratios than LLaMA (14.6x, 14.5x,
+  13.4x vs 14.8x). No hybrid advantage in TTC scaling.
+- **H8-d (SSM loses, 0.25 → FALSIFIED):** All SSM-heavy archs
+  have p@64/p@1 far above 5x threshold (13.4-14.6x). SSMs
+  show strong TTC scaling, contradicting the prediction.
+
+**Key finding:** TTC scaling is architecture-independent at 10M.
+The p@64/p@1 amplification factor (~13-15x) is a property of
+the model quality and task, not the architecture family. However,
+absolute pass@k depends strongly on base rate — and paradoxically,
+LLaMA (worst val_loss) has the highest pass@k.
+
+**Anomalies flagged:**
+- ANOM-014: Falcon-H1 and Bamba produce identical results
+  (same val_loss to 4 decimal places, same pass@k). Root cause:
+  their 10m factories produce identical architectures.
+- ANOM-015: Higher val_loss → higher pass@k (LLaMA paradox).
+  LLaMA has val_loss 2.731 (worst) but pass@64 8.34% (best).
+  Hybrids have val_loss 2.31-2.32 (better) but pass@64 3.3-4.1%.

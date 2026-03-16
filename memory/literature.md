@@ -1414,3 +1414,23 @@ of model size and tokenization. Suggests even 10M models
 could learn them given enough training.
 
 **Cited in:** HYP-007 interpretation
+
+---
+
+## LIT-048: Post-experiment search — TTC on SSMs (no sources)
+
+**Title:** Post-experiment literature search for TTC on SSMs
+**Venue:** Web search (2026-03-15) — **Grade N/A**
+
+**Searches conducted:**
+- "SSM state space model test-time compute scaling"
+- "Mamba best-of-N sampling diversity"
+- "hybrid transformer SSM inference scaling"
+
+**Finding:** No published work on TTC scaling for SSM or
+hybrid architectures as of 2026-03-15. HYP-008 is the first
+empirical comparison of TTC across architecture families
+including SSMs. The architecture-independence finding has no
+prior literature to confirm or contradict.
+
+**Cited in:** HYP-008 interpretation

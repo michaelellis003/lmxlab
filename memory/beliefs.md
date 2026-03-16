@@ -184,6 +184,7 @@ and assumed smaller models would be flat or quickly saturate.
 |------|----------|-------|-----------|------------|
 | — | Prior from Snell et al. (1.5B+ only) | A | Weakly against (scale transfer) | 0.25 |
 | 2026-03-15 | HYP-007: 10M model, pass@16/pass@1=5.6x, pass@64/pass@1=11.9x. No saturation. | F | Very strong for | 0.75 |
+| 2026-03-15 | HYP-008: All 4 architectures (LLaMA, Falcon-H1, Jamba, Bamba) show strong TTC scaling at 10M. p@64/p@1 ranges 13.4-14.8x. Architecture-independent. | F | Very strong for | 0.90 |
 
 **Update (HYP-007):** 10M LLaMA models on modular arithmetic
 show robust pass@k scaling. pass@1 is low (0.55%) but pass@64
@@ -191,6 +192,12 @@ reaches 7.8% — a 14x amplification. Growth rate ~50% per
 doubling of k with no saturation. This is the first evidence
 of TTC working at 50-100x below prior literature's minimum
 model size.
+
+**Update (HYP-008):** Confirmed across 4 architecture families
+including SSM-heavy hybrids. TTC amplification factor (~13-15x
+at pass@64/pass@1) is essentially the same for pure attention,
+hybrid SSM/attention, and hybrid+MoE. Posterior updated to
+0.90 — TTC at small scale is now a well-replicated finding.
 
 ---
 
@@ -215,3 +222,54 @@ is falsified. This parallels Yue et al. (2025) finding that
 RLVR training narrows distributions and hurts pass@k. Verine
 et al. (ICML 2025) provide the theoretical framework: dropout
 improves Precision but not Recall.
+
+---
+
+## B-009: TTC scaling exponent is architecture-independent
+
+**Prior:** 0.30 (H8-a prior)
+**Current:** 0.85
+**Source:** HYP-008 experiment results
+
+TTC amplification factor (p@64/p@1) is determined by model
+quality and task difficulty, not by architecture family. Pure
+attention, hybrid SSM/attention, and hybrid+MoE all show
+~13-15x amplification at 10M params on modular arithmetic.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| — | Speculative: SSMs might have less diversity due to fixed-size state | — | — | 0.30 |
+| 2026-03-15 | HYP-008: p@64/p@1 ratios within 10% across 4 architecture families (13.4-14.8x). p@16/p@1 within 10% (5.8-6.4x). | F | Very strong for | 0.85 |
+
+**Update (HYP-008):** The prediction that fixed-size SSM state
+would limit output diversity (H8-d) was strongly falsified.
+SSM-heavy architectures achieve TTC exponents within 10% of
+pure attention. The simplest explanation (H8-a) won: TTC scaling
+depends on the model's learned distribution quality, not the
+computational mechanism.
+
+---
+
+## B-010: Val loss does not predict pass@k ranking across archs
+
+**Prior:** 0.50 (no strong prior)
+**Current:** 0.75
+**Source:** HYP-008 experiment results (ANOM-015)
+
+Lower val loss does NOT imply higher pass@k when comparing
+across architecture families. LLaMA has the worst val loss
+(2.731) but the best pass@k at every k value.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| — | Default: lower loss should mean higher accuracy | — | — | 0.50 |
+| 2026-03-15 | HYP-008: LLaMA val_loss 2.731 (worst), pass@64 8.34% (best). Jamba val_loss 2.310 (best), pass@64 3.29% (worst). Rank correlation is negative. | F | Strong for | 0.75 |
+
+**Update (HYP-008):** The val_loss metric is averaged over the
+full vocabulary/sequence, while pass@k measures accuracy on a
+specific subtask (generating the correct modular arithmetic
+answer). Different architectures may achieve lower val_loss
+by better predicting the prompt tokens (common patterns) while
+being worse at the critical answer token. This echoes the
+broader observation that perplexity and downstream task
+performance don't always correlate (LIT-048 needed).

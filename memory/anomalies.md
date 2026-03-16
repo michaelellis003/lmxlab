@@ -410,3 +410,82 @@ from "open" to "explained (artifact)" — they were real within
 the 3M char-level regime but do not generalize. The dropout ×
 normalization research direction (Idea A in roadmap) is weaker
 than believed.
+
+---
+
+## ANOM-014: Falcon-H1-10M and Bamba-10M are identical
+
+**Status:** explained
+**Experiment:** HYP-008
+**Date:** 2026-03-15
+
+**Observation:** Falcon-H1 and Bamba produce identical results
+across all 3 seeds — same val_loss to 4+ decimal places, same
+pass@k at every k value. Seed 42: both have val_loss=2.404,
+pass@64=4.39%. Seed 43: both have val_loss=2.233, pass@64=4.08%.
+
+**Root cause:** The `falcon_h1_10m()` and `bamba_10m()` factory
+functions produce architecturally identical ModelConfigs. Both
+use the same hybrid pattern (MMM*MMM*MMM*), d_model=128,
+n_heads=4, n_kv_heads=2, d_ff=384, and identical Mamba-2
+parameters. The underlying `falcon_h1_config` and `bamba_config`
+functions are functionally equivalent — they differ only in
+default parameter values for full-scale models, which are
+overridden by the explicit 10m factory parameters.
+
+**Impact:** HYP-008 effectively tested 3 architectures, not 4.
+Falcon-H1 and Bamba results should be treated as the same
+architecture with duplicate data. The experiment still provides
+valid comparisons: LLaMA (pure attention) vs hybrid (Falcon-H1/
+Bamba) vs hybrid+MoE (Jamba).
+
+**Fix needed:** Either differentiate the 10m factories (e.g.,
+different hybrid patterns or SSM parameters) or remove one
+as redundant at this scale.
+
+---
+
+## ANOM-015: Higher val_loss correlates with higher pass@k
+
+**Status:** open
+**Experiment:** HYP-008
+**Date:** 2026-03-15
+
+**Observation:** LLaMA has the highest (worst) val_loss of all
+4 architectures but the highest pass@k at every k value:
+
+| Arch | Val Loss (rank) | pass@1 (rank) | pass@64 (rank) |
+|------|----------------|---------------|----------------|
+| LLaMA | 2.731 (4th) | 0.56% (1st) | 8.34% (1st) |
+| Falcon-H1 | 2.318 (2nd) | 0.28% (2nd) | 4.06% (2nd) |
+| Bamba | 2.318 (2nd) | 0.28% (3rd) | 4.04% (3rd) |
+| Jamba | 2.310 (1st) | 0.25% (4th) | 3.29% (4th) |
+
+The ranking is perfectly inverted: best val_loss = worst pass@k.
+
+**Expected:** Lower val_loss should indicate better next-token
+prediction, which should translate to higher pass@k on the
+same task.
+
+**Possible explanations:**
+1. **Val loss averages over all tokens.** Modular arithmetic
+   prompts have format "X + Y = Z". Val_loss averages over
+   prompt tokens (X, +, Y, =) and the answer token (Z).
+   Hybrids may predict prompt tokens better (lower average
+   loss) while LLaMA predicts the answer token better.
+2. **SSM state compression loses precision.** SSMs compress
+   context into fixed-size state. This works well for pattern
+   prediction (most tokens) but may lose the precise numerical
+   information needed for the final answer token.
+3. **Attention enables exact retrieval.** The modular arithmetic
+   task requires attending to specific operand tokens. Pure
+   attention can do this directly; SSMs must recover operands
+   from compressed state.
+4. **Different loss landscape geometry.** LLaMA may have a
+   flatter, noisier loss landscape that averages worse but
+   has more diverse minima — producing higher pass@k.
+
+**Follow-up:** Compute per-token loss breakdown (prompt tokens
+vs answer token) to distinguish explanation 1 from 2-4. This
+would require modifying the eval to report answer-token loss
+separately.
