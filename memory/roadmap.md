@@ -136,23 +136,36 @@ not "fruit fly genetics."
 
 ## Current Priority Order
 
-1. **Decide what's genuinely interesting to YOU.** (Schulman,
-   Nielsen: best research comes from personal curiosity, not
-   gap analysis.)
+**TTC research line is mature.** Four experiments (HYP-007
+through HYP-010) converge on a clear story:
+- TTC amplification ~12-15x on modular arithmetic (mod 97)
+- Architecture-independent (4 families tested)
+- Size-independent (10M-30M tested)
+- Reveals latent generalization 39K steps before grokking
+- The amplification factor is a task property, not model property
+
+**Next directions (in priority order):**
+
+1. **Write up TTC findings.** The series has a publishable
+   story: "Test-time compute scaling below 1B: architecture-,
+   size-, and training-phase-independent amplification on
+   verifiable tasks." 4 experiments, clean methodology, novel
+   findings. Blog post or short paper.
 
 2. **If pursuing understanding:** Idea B (mechanistic hybrid
-   analysis) is now the strongest thread. "What do SSM layers
-   learn vs attention layers?" Small scale is an advantage.
-   HYP-006 and hybrid-baselines provide trained models to analyze.
+   analysis) is the strongest research thread. "What do SSM
+   layers learn vs attention layers?" Small scale is an
+   advantage. ANOM-015 (val_loss vs pass@k inversion) is a
+   concrete starting point.
 
 3. **If pursuing community impact:** Idea C (educational
-   content) has highest practical value. 5 notebooks delivered,
-   24-architecture codebase is pedagogically rich.
+   content) has highest practical value. TTC results could
+   be a 6th notebook: "Test-Time Compute at Small Scale."
 
-4. **If pursuing research:** Idea A (dropout × normalization)
-   is demoted — artifact of multi-epoch char-level regime.
-   Could still be a niche finding for the data-repetition
-   community, but not a general principle.
+4. **If pursuing more TTC:** Test on a different task (e.g.,
+   TinyStories generation, not modular arithmetic) to check
+   whether the ~12-15x constant is truly task-specific or
+   generalizes across verifiable tasks.
 
 ---
 
