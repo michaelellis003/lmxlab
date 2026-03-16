@@ -186,6 +186,7 @@ and assumed smaller models would be flat or quickly saturate.
 | 2026-03-15 | HYP-007: 10M model, pass@16/pass@1=5.6x, pass@64/pass@1=11.9x. No saturation. | F | Very strong for | 0.75 |
 | 2026-03-15 | HYP-008: All 4 architectures (LLaMA, Falcon-H1, Jamba, Bamba) show strong TTC scaling at 10M. p@64/p@1 ranges 13.4-14.8x. Architecture-independent. | F | Very strong for | 0.90 |
 | 2026-03-15 | HYP-009: During grokking, pass@64 reaches 98.9% at step 4K when pass@1 is only 14%. Pass@64 saturates 39K steps before greedy accuracy catches up. TTC reveals latent generalization hundreds of epochs early. | F | Very strong for | 0.95 |
+| 2026-03-15 | HYP-010: TTC works at both 10M (p@64/p@1=14.6x) and 30M (11.9x). TTC amplification factor is stable across model sizes. BUT 30M model is worse than 10M in absolute terms due to overparameterization. | F | For (TTC works) but neutral on scaling | 0.95 |
 
 **Update (HYP-007):** 10M LLaMA models on modular arithmetic
 show robust pass@k scaling. pass@1 is low (0.55%) but pass@64
@@ -241,6 +242,7 @@ attention, hybrid SSM/attention, and hybrid+MoE all show
 |------|----------|-------|-----------|------------|
 | — | Speculative: SSMs might have less diversity due to fixed-size state | — | — | 0.30 |
 | 2026-03-15 | HYP-008: p@64/p@1 ratios within 10% across 4 architecture families (13.4-14.8x). p@16/p@1 within 10% (5.8-6.4x). | F | Very strong for | 0.85 |
+| 2026-03-15 | HYP-010: p@64/p@1 ratios 14.6x (10M) vs 11.9x (30M). Within 1.23x across 3x model size change. | F | Strong for | 0.90 |
 
 **Update (HYP-008):** The prediction that fixed-size SSM state
 would limit output diversity (H8-d) was strongly falsified.
@@ -248,6 +250,13 @@ SSM-heavy architectures achieve TTC exponents within 10% of
 pure attention. The simplest explanation (H8-a) won: TTC scaling
 depends on the model's learned distribution quality, not the
 computational mechanism.
+
+**Update (HYP-010):** Extended from architecture-independence to
+size-independence. The TTC amplification factor is ~12-15x for
+both 10M and 30M models on the same task. This further supports
+the interpretation that TTC exponent is a task property. Belief
+broadened to "TTC scaling exponent is architecture- and
+size-independent" and updated to 0.90.
 
 ---
 

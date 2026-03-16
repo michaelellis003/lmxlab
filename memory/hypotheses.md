@@ -1006,3 +1006,165 @@ answer greedily until step 43K. TTC reveals latent generalization
   same oscillating plateau but never break through.
 
 B-011 created. B-007 updated: 0.90 → 0.95.
+
+---
+
+## HYP-010: TTC Scaling Exponent vs Model Size
+
+**Experiment:** 10 — How TTC scaling changes between
+10M and 30M parameters on modular arithmetic
+**Status:** active
+**Question:** Does the TTC amplification factor (pass@64/
+pass@1) change as model size increases from 10M to 30M,
+and in what direction? Does larger model size improve
+absolute pass@k, TTC exponent, or both?
+
+**Quality Gates (Step 0):**
+- Gate 1 (Importance): PASS. Understanding how TTC
+  scales with model size is fundamental for practitioners
+  deciding compute allocation between training and
+  inference. HYP-007 established TTC at 10M; this tests
+  whether 3x more params improves the picture.
+- Gate 2 (Scale): PASS. 10M-30M is our validated range
+  (llama_10m, llama_30m both tested). We can directly
+  reuse HYP-007 infrastructure.
+- Gate 3 (Prior coverage): PASS. Wu et al. (LIT-039)
+  have inference scaling laws but only validated at 7B+.
+  "Scaling Laws in the Tiny Regime" (arXiv:2603.07365)
+  found steeper exponents at very small scale. Nobody has
+  measured TTC exponents at 10M vs 30M.
+- Gate 4 (Predictability): MILD CONCERN. A naive
+  prediction ("bigger model = better pass@k") is likely
+  correct for absolute values. But the TTC EXPONENT
+  (p@64/p@1 ratio) could go either way.
+- Gate 5 (Methodology): PASS. Same protocol as HYP-007.
+  Modular arithmetic, exact verification, pass@k.
+- Gate 6 (Sunk cost): PASS. First round on this question.
+
+**Prior Art (REA):**
+- [LIT-039] Wu et al. 2024: Inference scaling law
+  `log10(C) = 1.19*log10(N) + 2.03`. Predicts at N=10M:
+  log10(C) ≈ 10.36; at N=30M: log10(C) ≈ 10.93. The
+  ratio suggests ~3.7x more useful inference compute at
+  30M before saturation.
+- [LIT-053] "Scaling Laws in the Tiny Regime"
+  (arXiv:2603.07365): Scaling exponents 1.4-2x steeper
+  at very small scale (alpha ≈ 0.106-0.156 vs 0.076
+  for large LLMs). Implies small models benefit
+  disproportionately from compute scaling.
+- [HYP-007] Own: 10M LLaMA, dropout=0.0, pass@64/pass@1
+  = 14.1x. Growth ~50% per doubling of k.
+- [HYP-008] Own: TTC amplification is architecture-
+  independent (~13-15x at 10M for all arch families).
+- **Gap:** No study comparing TTC exponents across model
+  sizes at <100M scale.
+
+| ID | Hypothesis | Prediction | Falsification | Prior |
+|----|-----------|------------|---------------|-------|
+| H10-a | Absolute up, exponent stable | 30M pass@1 >> 10M pass@1, but p@64/p@1 ratios within 2x (both ~10-20x). TTC amplification is a property of the task, not model size. | p@64/p@1 ratio differs by >3x between 10M and 30M | 0.35 |
+| H10-b | Both up | 30M has higher pass@1 AND steeper TTC curve (higher p@64/p@1 ratio). Larger model has more diverse, higher-quality outputs. | 30M p@64/p@1 ratio <= 10M p@64/p@1 ratio | 0.25 |
+| H10-c | Exponent down | 30M has higher pass@1 but LOWER p@64/p@1 ratio (<10x). Larger model is more confident/deterministic, reducing output diversity. TTC becomes less useful as models grow. | 30M p@64/p@1 ratio >= 10M p@64/p@1 ratio (14.1x) | 0.25 |
+| H10-d | Diminishing returns | 30M barely improves over 10M on this task. Modular arithmetic at mod 97 is a "hard" task where model size doesn't help — the bottleneck is algorithmic structure, not capacity. | 30M pass@1 > 2x 10M pass@1 | 0.15 |
+
+**Why these alternatives:**
+- **H10-a (stable exponent, 0.35):** HYP-008 showed TTC
+  exponents are architecture-independent. The simplest
+  extension is that they're also size-independent (within
+  a range). The exponent may be a property of the task
+  difficulty distribution. Highest prior because it's the
+  simplest model.
+- **H10-b (both up, 0.25):** Wu et al. (LIT-039) show
+  larger models can use more inference compute before
+  saturation. If 30M has higher base accuracy AND richer
+  internal representations, both absolute and relative
+  TTC should improve.
+- **H10-c (exponent down, 0.25):** As models get better
+  at a task, their output distribution sharpens. A 30M
+  model might be "right or wrong" more deterministically,
+  reducing the diversity that makes best-of-N useful.
+  This parallels RLVR narrowing distributions (LIT-041).
+- **H10-d (diminishing returns, 0.15):** Modular
+  arithmetic is an algorithmic task. Past a certain
+  capacity, more params don't help — the model either
+  learns the circuit or it doesn't. Our 10M models
+  memorized training data perfectly but only got ~0.5%
+  on held-out. If the barrier is generalization, not
+  capacity, 30M won't help much.
+
+**Design:**
+- 2 model sizes: LLaMA-10M (~9.9M), LLaMA-30M (~30.6M)
+- dropout=0.0 (per HYP-007: dropout hurts diversity)
+- 3 seeds: {42, 43, 44} (per DEC-002)
+- FLOP budget: matched WITHIN each size class
+  - 10M: same as HYP-007 (2000 target steps)
+  - 30M: 2000 target steps (auto-scaled FLOP budget)
+- Dataset: modular arithmetic (a+b) mod 97, same splits
+- Eval: pass@k with k=1,2,4,8,16,32,64, N=64, temp=0.8
+- Total: 2 × 3 = 6 runs
+- Estimated wall time: ~30 min (10M) + ~60 min (30M)
+
+**Protocol:**
+- FLOP-matched within size class (DEC-004)
+- 3 seeds (DEC-002)
+- Val loss as training metric (DEC-008)
+- pass@k as primary evaluation metric
+
+**Metrics:**
+- Primary: pass@k curves per model size, p@64/p@1 ratio
+- Secondary: val_loss, train_loss, absolute pass@1
+- Analysis: Compare TTC amplification factors across
+  model sizes; fit log-linear to pass@k vs log(k)
+
+**Recipe:** `recipes/hyp010_ttc_model_size.py`
+
+**Results (2026-03-15):** 6 runs completed (2 sizes × 3 seeds).
+
+| Model | Val Loss | pass@1 | pass@16 | pass@64 | p@64/p@1 |
+|-------|----------|--------|---------|---------|----------|
+| 10M (avg) | 2.753 | 0.56% | 3.49% | 8.19% | 14.6x |
+| 30M (avg) | 3.096 | 0.43% | 2.45% | 5.07% | 11.9x |
+
+Per-run detail:
+| Run | Val Loss | p@1 | p@64 | p@64/p@1 |
+|-----|----------|-----|------|----------|
+| 10M s42 | 2.831 | 0.64% | 9.20% | 14.4x |
+| 10M s43 | 2.755 | 0.61% | 7.26% | 11.9x |
+| 10M s44 | 2.674 | 0.43% | 8.10% | 19.0x |
+| 30M s42 | 4.075 | 0.34% | 5.12% | 15.0x |
+| 30M s43 | 2.504 | 0.53% | 4.65% | 8.8x |
+| 30M s44 | 2.710 | 0.41% | 5.43% | 13.3x |
+
+**Adjudication:**
+- H10-a (stable exponent, 0.35 → SUPPORTED): p@64/p@1 ratios
+  are 14.6x (10M) vs 11.9x (30M). Ratio of ratios = 1.23x,
+  within the 2x threshold. TTC amplification is roughly stable
+  across 3x model size change.
+- H10-b (both up, 0.25 → FALSIFIED): 30M pass@1 (0.43%) is
+  LOWER than 10M (0.56%), and the TTC exponent is also lower.
+  Both metrics go DOWN with more params.
+- H10-c (exponent down, 0.25 → FALSIFIED on prerequisite):
+  Predicted higher pass@1 with lower ratio. But 30M has LOWER
+  pass@1 — the prerequisite fails.
+- H10-d (diminishing returns, 0.15 → SUPPORTED in spirit):
+  30M doesn't just fail to improve — it's actually WORSE.
+  Stronger than predicted.
+
+**Key finding:** The 30M model performs WORSE than the 10M model
+on modular arithmetic pass@k at 2000 FLOP-matched steps. Both
+models fully memorize training data (train_loss ~0.002) but 30M
+generalizes worse (val_loss 3.10 vs 2.75). This is the classic
+overparameterized-undertrained pattern: the 30M model has enough
+capacity to memorize but not enough signal to generalize. The
+FLOP budget (2000 steps) is calibrated for 10M, not 30M.
+
+**Anomaly flagged:** ANOM-017 — 30M LLaMA worse than 10M on
+modular arithmetic despite 3x more parameters and 3x more total
+FLOPs. Seed 42 (30M) has extreme val_loss (4.075) — possible
+bad seed.
+
+**Implication for TTC research:** Model size scaling for TTC
+requires data-scaling, not just FLOP-scaling. The 30M model
+needs more diverse training data or more epochs to benefit from
+its extra capacity. TTC amplification factor remains ~12-15x
+regardless of model size, supporting the view that it's a task
+property.

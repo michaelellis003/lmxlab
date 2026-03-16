@@ -1506,3 +1506,63 @@ even while val accuracy is flat. Our pass@64 metric acts as a
 naturally-occurring progress measure, but one that is directly
 actionable (it measures a usable capability, not just an
 internal representation property).
+
+---
+
+## LIT-053: Scaling Laws in the Tiny Regime (2026)
+
+**Title:** Scaling Laws in the Tiny Regime
+**Venue:** arXiv preprint — **Grade C**
+**arXiv:** https://arxiv.org/abs/2603.07365
+
+**Key findings:**
+1. Scaling exponents at very small model sizes (1M-100M)
+   are 1.4-2x steeper than for large LLMs (alpha ≈ 0.106-
+   0.156 vs 0.076).
+2. Small models benefit disproportionately from each unit
+   of additional compute or parameters.
+3. Standard scaling law extrapolation from large models
+   underestimates small-model performance.
+
+**Relevance to HYP-010:** If steeper scaling exponents
+apply to inference compute as well as training compute,
+we might expect TTC exponents to also be steeper at small
+scale. This would predict higher p@64/p@1 ratios than
+Wu et al.'s law (fit at 7B+) would extrapolate.
+
+**Cited in:** HYP-010 pre-registration
+
+---
+
+## LIT-054: Post-experiment search — TTC vs model size
+
+**Context:** HYP-010 post-experiment literature check
+**Date:** 2026-03-15
+
+**Search terms:** "test-time compute model size scaling",
+"overparameterized models modular arithmetic generalization",
+"larger model performs worse limited data"
+
+**Key papers found:**
+1. **"Deep Networks Always Grok" (arXiv:2402.15555):**
+   Reports "model-wise grokking" where a sufficiently large
+   model may skip feature-learning and jump to memorization.
+   Directly relevant: our 30M model memorizes (train_loss
+   ~0.002) but doesn't learn generalizable features.
+2. **"Making Hard Problems Easier" (arXiv:2410.03569):**
+   On modular arithmetic, data distribution matters more than
+   architecture — uniform distribution gives 1.3% accuracy
+   while inverse-sqrt gives 99.8% on same architecture.
+   Suggests our data bottleneck explanation is correct.
+3. **Chinchilla scaling violation:** FLOP-matching across
+   model sizes without scaling data violates the N∝D
+   relationship. 30M model at 2000 steps is severely
+   undertrained relative to its parameter count.
+
+**Finding:** The "30M worse than 10M" result is consistent
+with known phenomena: overparameterized models on limited
+data memorize without generalizing. Not novel — but confirms
+that our FLOP-matching methodology needs data-scaling when
+comparing across model sizes.
+
+**Cited in:** HYP-010 interpretation

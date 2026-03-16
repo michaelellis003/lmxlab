@@ -533,3 +533,50 @@ the full grokking trajectory is from 1 seed.
 **Follow-up:** (a) Run seeds 43/44 to 100K steps to check if
 they eventually grok. (b) Test wd=0.3 as a middle ground. (c)
 Try more seeds at wd=0.1 to estimate the grokking probability.
+
+---
+
+## ANOM-017: 30M LLaMA worse than 10M on modular arithmetic
+
+**Status:** open
+**Experiment:** HYP-010 (TTC vs model size)
+**Date:** 2026-03-15
+
+**Observation:** At 2000 FLOP-matched steps, the 30M LLaMA
+model has LOWER pass@k than the 10M model at every k value:
+- 10M: pass@1=0.56%, pass@64=8.19%, val_loss=2.753
+- 30M: pass@1=0.43%, pass@64=5.07%, val_loss=3.096
+
+Both models fully memorize training data (train_loss ~0.002)
+but the 30M model generalizes worse. Seed 42 (30M) is an
+extreme outlier with val_loss=4.075.
+
+The 30M model got 3x more total FLOPs (8.67e14 vs 2.88e14)
+but performed worse on held-out data.
+
+**Expected:** Larger model = better generalization, at least
+on pass@1. Or at worst, comparable performance.
+
+**Possible explanations:**
+1. **Overparameterized for the data.** Modular arithmetic
+   with mod 97 has only ~7,500 training pairs. A 30M param
+   model has ~4,000 params per training example — massive
+   overparameterization that promotes memorization over
+   generalization.
+2. **Insufficient training steps.** 2000 steps may not be
+   enough for a 30M model to learn generalizable features.
+   The model memorizes (train_loss → 0) but doesn't develop
+   the structured representations needed for generalization.
+3. **Data bottleneck, not compute bottleneck.** FLOP-
+   matching across model sizes assumes the bottleneck is
+   compute. But with only ~7,500 unique training examples,
+   the bottleneck is data diversity. More params cannot
+   compensate for insufficient data variety.
+4. **Width-to-data ratio.** llama_30m has d_model=256 vs
+   128. Wider representations may need proportionally more
+   data to learn the modular arithmetic structure.
+
+**Follow-up:** (a) Train 30M for 10K steps to check if more
+training helps. (b) Test on TinyStories where data is not a
+bottleneck. (c) Compare at higher modulus (p=997) for more
+training examples.

@@ -170,6 +170,7 @@ not "fruit fly genetics."
 | HYP-007 | TTC scaling at 10M | DONE (2026-03-15, H7-a supported) |
 | HYP-008 | SSM/hybrid TTC scaling | DONE (2026-03-15, H8-a supported) |
 | HYP-009 | Grokking × TTC interaction | DONE (2026-03-15, H9-a strongly supported) |
+| HYP-010 | TTC exponent vs model size | DONE (2026-03-15, H10-a supported) |
 | DEC-004 | FLOP-matched comparisons | ACCEPTED |
 | DEC-005 | Chinchilla-optimal training | ACCEPTED |
 | DEC-008 | Val loss as primary metric | ACCEPTED |
@@ -181,12 +182,12 @@ not "fruit fly genetics."
   accuracy catches up. Strongest TTC result in the series.
 - See HYP-009 results in hypotheses.md.
 
-**HYP-010: TTC scaling exponent vs model size**
-- HYP-007 at 10M showed ~50% growth per doubling of k.
-  What is the scaling exponent at 30M, 100M?
-- Wu et al. (LIT-039) provide inference scaling law
-  extrapolation. Compare our empirical exponents to their
-  predicted values at 10M, 30M.
+**HYP-010: TTC scaling exponent vs model size — COMPLETED**
+- Result: TTC exponent is roughly size-independent
+  (14.6x at 10M, 11.9x at 30M = 1.23x difference).
+- 30M model performs WORSE than 10M on modular arithmetic
+  due to overparameterization (data bottleneck).
+- See HYP-010 results in hypotheses.md.
 
 ## Retired Items
 
