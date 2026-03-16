@@ -1361,3 +1361,95 @@ mass) determines the amplification factor.
 **ANOM-015 status:** EXPLAINED. Update anomalies.md.
 
 B-010 updated: 0.75 → 0.90 (now mechanistically explained).
+
+---
+
+## HYP-012: TTC Amplification Across Tasks
+
+**Experiment:** 12 — Is the ~12-15x TTC amplification factor
+(pass@64/pass@1) specific to modular addition, or does it
+generalize across modular arithmetic operations?
+**Status:** pre-registered
+**Question:** Does modular multiplication (a harder computation)
+produce a similar, higher, or lower TTC amplification factor
+compared to modular addition at 10M params?
+
+**Quality Gates (Step 0):**
+- Gate 1 (Importance): PASS. Balachandran et al. (2504.00294)
+  showed TTC benefits are task-dependent. Our ~12-15x number
+  is meaningless without cross-task validation.
+- Gate 2 (Scale): PASS. Same 10M scale as HYP-007/008.
+- Gate 3 (Prior coverage): PASS. No prior TTC cross-task study
+  at <1B params. Literature (Balachandran, Agarwal) tests at
+  7B+ on math/code/reasoning. Modular add vs mul comparison
+  is novel.
+- Gate 4 (Predictability): PASS. Could go either way: harder
+  task → more headroom for sampling OR harder task → model
+  can't solve it at all.
+- Gate 5 (Methodology): PASS. Same infrastructure as HYP-007,
+  identical evaluation. Only variable is the operation.
+- Gate 6 (Sunk cost): PASS. First round on this question.
+
+**Prior Art (REA):**
+- [HYP-007] Own: Addition p@64/p@1 = 14.1x at 10M.
+- [HYP-008] Own: Amplification is architecture-independent
+  (~13-15x across 4 families).
+- [HYP-010] Own: Amplification is size-independent (~12-15x
+  at 10M and 30M).
+- Balachandran et al. 2504.00294: TTC benefits vary across
+  8 task types and diminish with complexity.
+- Agarwal et al. 2512.02008: No single TTC strategy
+  universally dominates.
+- **Gap:** Nobody has tested whether TTC amplification factor
+  changes across tasks of varying difficulty at the same
+  model scale with the same verifier type.
+
+| ID | Hypothesis | Prediction | Falsification | Prior |
+|----|-----------|------------|---------------|-------|
+| H12-a | Task-independent | Multiplication amp ~10-20x, within 2x of addition's ~14x. | mul amp outside [7x, 28x] range | 0.30 |
+| H12-b | Harder → higher amp | Multiplication is harder (lower p@1), so more room for TTC. Amp > 20x. | mul amp <= 20x | 0.20 |
+| H12-c | Harder → lower amp | Multiplication is too hard for diverse correct sampling. Amp < 5x. | mul amp >= 5x | 0.25 |
+| H12-d | Null: too hard | Multiplication p@1 ≈ 0 at 10M. No meaningful amplification measurable. | mul p@1 > 0.1% | 0.25 |
+
+**Why these alternatives:**
+- **H12-a (task-independent, 0.30):** Our HYP-008/010 showed
+  architecture- and size-independence. If the factor is truly
+  a property of the sampling geometry, it should be similar
+  across tasks of similar structure. But literature (Balachandran)
+  says task matters, so lower prior than if we had no literature.
+- **H12-b (harder → higher amp, 0.20):** If multiplication
+  makes greedy decoding harder but sampling can still find
+  correct answers, the ratio could be larger. Analogous to
+  "easy questions don't benefit from TTC" (Snell et al.).
+- **H12-c (harder → lower amp, 0.25):** If multiplication
+  requires more precise computation, the model may not learn
+  diverse correct paths. SSM loss at answer token was already
+  high for addition — multiplication may push it even higher,
+  concentrating probability on fewer (wrong) answers.
+- **H12-d (null, 0.25):** Multiplication mod 97 requires
+  tracking products up to 96*96=9216, much harder than sums
+  up to 192. A 10M model may simply not learn it in 2000
+  steps. Higher null prior than usual because the difficulty
+  jump is substantial.
+
+**Design:**
+- 2 operations: add (control), mul (treatment)
+- 1 architecture: LLaMA-10M (best TTC performer)
+- dropout=0.0 (HYP-007 finding)
+- LR=3e-4, FLOP-matched to 2000 steps
+- 3 seeds: {42, 43, 44}
+- Total: 6 runs
+- k values: [1, 2, 4, 8, 16, 32, 64]
+- Temperature: 0.8
+- Dataset: modular arithmetic mod 97, 80/20 train/test split
+
+**Protocol:**
+- FLOP-matched (DEC-004), 3 seeds (DEC-002)
+- Val loss as training metric (DEC-008)
+
+**Metrics:**
+- Primary: p@64/p@1 ratio per operation
+- Secondary: full pass@k curves, val_loss, train_loss
+- Diagnostic: train-val gap (overfitting indicator)
+
+**Recipe:** `recipes/hyp012_ttc_cross_task.py`
