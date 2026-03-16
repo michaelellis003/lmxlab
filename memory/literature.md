@@ -1679,3 +1679,98 @@ requiring precise recall of specific earlier tokens. The
 modular arithmetic answer token is exactly such a position.
 
 **Cited in:** HYP-011 pre-registration
+
+---
+
+## LIT-060: Balachandran et al. 2025
+
+**Title:** Inference-Time Scaling for Complex Tasks
+**arXiv:** 2504.00294
+**Grade:** A (peer review status unknown, comprehensive eval)
+
+**Context:** HYP-012 pre-experiment lit search
+
+**Key finding:** TTC benefits vary across 8 task types
+(math, STEM, calendar, NP-hard, navigation, spatial). Gains
+diminish with problem complexity. No single amplification
+factor generalizes.
+
+**Relevance:** Directly motivates HYP-012 — our ~12-15x on
+modular addition may not transfer to multiplication.
+
+**Cited in:** HYP-012 pre-registration
+
+---
+
+## LIT-061: Agarwal, Sengupta, Chakraborty 2025
+
+**Title:** The Art of Scaling Test-Time Compute
+**arXiv:** 2512.02008
+**Grade:** B (8 LLMs, 7B-235B, 4 reasoning datasets)
+
+**Context:** HYP-012 pre-experiment lit search
+
+**Key finding:** No single TTC strategy universally dominates.
+Optimal strategy depends on model type and task.
+
+**Relevance:** Supports cross-task investigation of TTC.
+
+**Cited in:** HYP-012 pre-registration
+
+---
+
+## LIT-062: Alnemari, Qureshi, Begrazadah 2026
+
+**Title:** Scaling Laws in the Tiny Regime
+**arXiv:** 2603.07365
+**Grade:** B (90 models, 22K-19.8M params, CIFAR-100)
+
+**Context:** HYP-012 pre-experiment lit search
+
+**Key finding:** Scaling exponents are 1.4-2x steeper at tiny
+scale (alpha=0.156 for ScaleCNN vs ~0.076 for large LLMs).
+Error structure fundamentally changes across scales.
+
+**Relevance:** May explain why our TTC amplification at 10M is
+relatively high — steeper scaling at tiny scale.
+
+**Cited in:** HYP-012 pre-registration
+
+---
+
+## LIT-063: Kazdan et al. 2025
+
+**Title:** Efficient Prediction of Pass@k
+**arXiv:** 2510.05197
+**Grade:** B (methodological contribution)
+
+**Context:** HYP-012 pre-experiment lit search
+
+**Key finding:** Log-log regression predictions of pass@k are
+unreliable (can predict impossible rates >1). Beta-binomial
+modeling with dynamic sampling is more reliable.
+
+**Relevance:** Methodological caution for our pass@k curves.
+Naive extrapolation beyond measured k is statistically unsound.
+
+**Cited in:** HYP-012 pre-registration
+
+---
+
+## LIT-064: Yue et al. 2025
+
+**Title:** Does RL Really Incentivize Reasoning?
+**arXiv:** 2504.13837 (NeurIPS 2025 Oral)
+**Grade:** A (top venue, oral)
+
+**Context:** HYP-012 pre-experiment lit search
+
+**Key finding:** RL-trained models beat base at pass@1 but base
+models achieve higher pass@k at large k. RL narrows the output
+distribution rather than expanding reasoning capacity.
+
+**Relevance:** Supports our finding (B-008) that regularization
+hurts diversity and pass@k. The reasoning ceiling is set by
+the base model's coverage at large k.
+
+**Cited in:** HYP-012 pre-registration

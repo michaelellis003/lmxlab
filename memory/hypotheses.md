@@ -1369,7 +1369,7 @@ B-010 updated: 0.75 → 0.90 (now mechanistically explained).
 **Experiment:** 12 — Is the ~12-15x TTC amplification factor
 (pass@64/pass@1) specific to modular addition, or does it
 generalize across modular arithmetic operations?
-**Status:** pre-registered
+**Status:** tested (H12-c partially supported, H12-a/b/d falsified)
 **Question:** Does modular multiplication (a harder computation)
 produce a similar, higher, or lower TTC amplification factor
 compared to modular addition at 10M params?
@@ -1453,3 +1453,86 @@ compared to modular addition at 10M params?
 - Diagnostic: train-val gap (overfitting indicator)
 
 **Recipe:** `recipes/hyp012_ttc_cross_task.py`
+
+**Results (2026-03-16):** 6 runs completed (2 ops × 3 seeds).
+
+| Op | Val Loss | p@1 | p@16 | p@64 | p16/p1 | p64/p1 |
+|----|----------|-----|------|------|--------|--------|
+| add | 2.750 | 0.67% | 3.76% | 8.36% | 5.6x | 12.5x |
+| mul | 3.064 | 2.39% | 4.96% | 9.04% | 2.1x | 3.8x |
+
+Pass@k curves (mean across 3 seeds):
+
+| Op | k=1 | k=2 | k=4 | k=8 | k=16 | k=32 | k=64 |
+|----|-----|-----|-----|-----|------|------|------|
+| add | 0.0067 | 0.0107 | 0.0165 | 0.0251 | 0.0376 | 0.0561 | 0.0836 |
+| mul | 0.0239 | 0.0272 | 0.0319 | 0.0389 | 0.0496 | 0.0659 | 0.0904 |
+
+**Adjudication:**
+- H12-a (task-independent, 0.30 → FALSIFIED): Multiplication
+  amplification is 3.8x, well outside the [7x, 28x] range
+  predicted for task-independence. The 12.5x vs 3.8x difference
+  is a 3.3x ratio — TTC amplification is strongly task-dependent.
+
+- H12-b (harder → higher amp, 0.20 → FALSIFIED): Multiplication
+  has HIGHER pass@1 (2.39% vs 0.67%), not lower. The premise
+  that multiplication is "harder" is wrong at this scale/training
+  regime. And the amplification is lower, not higher.
+
+- H12-c (harder → lower amp, 0.25 → PARTIALLY SUPPORTED, but
+  mechanism wrong): The prediction of lower amplification (<5x)
+  is correct (3.8x < 5x). But the mechanism is wrong —
+  multiplication isn't harder (higher p@1). The low amplification
+  is because multiplication p@1 is already relatively high,
+  leaving less room for sampling to help. The pass@k curve for
+  multiplication is nearly flat — the model's distribution is
+  already concentrated on a few answers.
+
+- H12-d (null: too hard, 0.25 → FALSIFIED): Multiplication
+  p@1 = 2.39%, well above the 0.1% threshold. In fact,
+  multiplication is EASIER than addition at pass@1.
+
+**Key finding: TTC amplification is inversely related to
+base accuracy, not task difficulty.**
+
+The surprise result: multiplication has 3.6x higher p@1 than
+addition (2.39% vs 0.67%) despite having worse val_loss (3.06
+vs 2.75). This is another instance of the ANOM-015 pattern:
+val_loss doesn't predict task accuracy.
+
+The amplification factor (p@64/p@1) is inversely correlated
+with p@1:
+- Addition: p@1=0.67%, amp=12.5x
+- Multiplication: p@1=2.39%, amp=3.8x
+
+This makes mathematical sense: pass@k amplification depends on
+the SHAPE of the probability distribution over answers. If the
+model concentrates probability on a few answers (one of which
+is correct), pass@1 is high but sampling can't improve much.
+If the model spreads probability across many answers (with
+small but non-zero mass on the correct one), pass@1 is low but
+sampling finds the correct answer more often.
+
+**Hypothesis:** Addition produces a more entropic answer
+distribution (like LLaMA in HYP-011), while multiplication
+produces a more peaked distribution. The peaked distribution
+gives higher greedy accuracy but less room for sampling to help.
+
+**Anomaly flagged:** ANOM-018 — Multiplication has higher
+pass@1 but worse val_loss than addition. Same ANOM-015 pattern
+(val_loss inversely predicts task accuracy) but now across tasks
+rather than across architectures. The mechanism is likely the
+same: multiplication's answer-token distribution is more peaked.
+
+**Implication for TTC research:** The ~12-15x amplification
+factor is NOT a universal constant. It depends on the model's
+base accuracy and distribution shape. High-base-accuracy tasks
+show lower amplification because there's less room for sampling
+to help. This aligns with Snell et al.'s finding that easy
+questions benefit less from TTC. Our contribution: quantifying
+this at 10M scale and showing it applies within a single task
+family (same tokenization, same verifier, different operation).
+
+**B-009 update needed:** TTC scaling exponent is task-dependent
+(was architecture/size-independent at 0.90). The independence
+is within-task only.

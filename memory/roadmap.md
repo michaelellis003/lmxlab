@@ -185,6 +185,7 @@ through HYP-010) converge on a clear story:
 | HYP-009 | Grokking × TTC interaction | DONE (2026-03-15, H9-a strongly supported) |
 | HYP-010 | TTC exponent vs model size | DONE (2026-03-15, H10-a supported) |
 | HYP-011 | Per-token loss decomposition | DONE (2026-03-16, ANOM-015 explained) |
+| HYP-012 | TTC cross-task amplification | DONE (2026-03-16, amp is task-dependent) |
 | DEC-004 | FLOP-matched comparisons | ACCEPTED |
 | DEC-005 | Chinchilla-optimal training | ACCEPTED |
 | DEC-008 | Val loss as primary metric | ACCEPTED |

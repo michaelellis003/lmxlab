@@ -258,6 +258,24 @@ the interpretation that TTC exponent is a task property. Belief
 broadened to "TTC scaling exponent is architecture- and
 size-independent" and updated to 0.90.
 
+| 2026-03-16 | HYP-012: p@64/p@1 = 12.5x (addition) vs 3.8x (multiplication). 3.3x ratio across tasks. TTC amplification is strongly task-dependent. | F | Very strong against task-independence | 0.60 |
+
+**Update (HYP-012):** CRITICAL UPDATE. Amplification factor is
+NOT task-independent. Within a single task (modular add mod 97),
+it's architecture- and size-independent (~12-15x). But across
+tasks (add vs mul, same model, same verifier), it varies 3.3x.
+Belief revised: "TTC exponent is architecture- and size-
+independent WITHIN a task, but task-dependent ACROSS tasks."
+This is consistent with Balachandran et al. (2504.00294).
+
+The mechanism: amplification depends inversely on base accuracy
+(p@1). Multiplication has 3.6x higher p@1 (2.39% vs 0.67%),
+leaving less room for sampling to improve. The distribution
+shape (peaked vs spread) determines the amplification potential.
+
+Current posterior: 0.60 (reduced from 0.90 — the belief was
+too broad; now correctly scoped to within-task only).
+
 ---
 
 ## B-010: Val loss does not predict pass@k ranking across archs
@@ -275,6 +293,13 @@ across architecture families. LLaMA has the worst val loss
 | — | Default: lower loss should mean higher accuracy | — | — | 0.50 |
 | 2026-03-15 | HYP-008: LLaMA val_loss 2.731 (worst), pass@64 8.34% (best). Jamba val_loss 2.310 (best), pass@64 3.29% (worst). Rank correlation is negative. | F | Strong for | 0.75 |
 | 2026-03-15 | HYP-011: Per-token decomposition. Hybrids 29-31% worse at answer token but only 7% worse at prompt tokens. LLaMA answer entropy 2.12 vs hybrid ~1.17 nats. Mechanistic explanation confirmed: val_loss averages dilute the answer-token signal. | F | Very strong for | 0.90 |
+| 2026-03-16 | HYP-012: Cross-task. Multiplication val_loss 3.06 (worse) but p@1 2.39% (3.6x better than addition's 0.67%). Same ANOM-015 pattern now across tasks, not just architectures. | F | Very strong for | 0.95 |
+
+**Update (HYP-012):** The val_loss vs task accuracy disconnect
+now replicated across tasks (not just architectures). Multiplication
+has worse val_loss but higher pass@1. Posterior → 0.95.
+Belief broadened: "Val loss does not predict pass@k ranking
+across architectures OR across tasks."
 
 **Update (HYP-008):** The val_loss metric is averaged over the
 full vocabulary/sequence, while pass@k measures accuracy on a

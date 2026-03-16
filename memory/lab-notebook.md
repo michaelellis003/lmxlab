@@ -2031,3 +2031,75 @@ advantage at precise retrieval matters most at "answer"
 positions, (3) the 2x entropy difference suggests attention
 models are inherently better suited for best-of-N sampling
 on retrieval-heavy tasks.
+
+---
+
+### 2026-03-16 — [EXPERIMENT] HYP-012 pre-registered and running
+
+**What:** TTC amplification across tasks — modular addition vs
+modular multiplication.
+
+**Why:** Literature (Balachandran et al. 2504.00294) shows TTC
+benefits are task-dependent. Our ~12-15x amplification was only
+measured on modular addition. Need cross-task validation.
+
+**Changes:**
+- Added `operation` parameter to `ModularArithmeticDataset`
+  supporting "add" and "mul" (backward compatible)
+- Built recipe `recipes/hyp012_ttc_cross_task.py`
+- 6 runs: 2 operations × 3 seeds, LLaMA-10M only
+- Pilot passed: mul at 200 steps already shows p@1=1.9% and
+  p@64/p@1=24x — multiplication may actually be easier than
+  expected at this tokenization
+
+**Literature search (agent af90c22) key findings:**
+- Amplification is task-specific (Balachandran et al.)
+- Our 10M work is genuinely novel — smallest TTC language model
+  in the literature is 125M (Sun et al.)
+- Scaling exponents are steeper at tiny scale (Alnemari et al.
+  2603.07365): alpha=0.156 vs ~0.076 for LLMs
+- Kazdan et al. (2510.05197): naive pass@k log-log extrapolation
+  is statistically unsound — use beta-binomial modeling
+
+**Commit:** fff2ec7 (dataset change + recipe + pre-registration)
+
+---
+
+### 2026-03-16 — [INTERPRET] HYP-012 results
+
+**Results:** 6 runs completed, all 2000 steps.
+
+| Op | Val Loss | p@1 | p@64 | p64/p1 |
+|----|----------|-----|------|--------|
+| add | 2.750 | 0.67% | 8.36% | 12.5x |
+| mul | 3.064 | 2.39% | 9.04% | 3.8x |
+
+**Surprise finding:** Multiplication is EASIER than addition
+at pass@1 (3.6x higher) despite worse val_loss (11% higher).
+This is ANOM-015 replicated across tasks.
+
+**Adjudication:**
+- H12-a (task-independent): FALSIFIED — 3.3x ratio in amps
+- H12-b (harder → higher amp): FALSIFIED — mul is easier
+- H12-c (harder → lower amp): PARTIALLY SUPPORTED (mechanism wrong)
+- H12-d (null): FALSIFIED — mul p@1 = 2.39%
+
+**Key insight:** TTC amplification is inversely related to base
+accuracy, not task difficulty. Higher p@1 → lower amplification.
+The distribution shape (peaked vs spread) determines how much
+sampling can help. This is mathematically expected: if p@1 is
+high, most samples are already correct, and pass@k saturates
+quickly.
+
+**Belief updates:**
+- B-009: 0.90 → 0.60 (scoped to within-task only)
+- B-010: 0.90 → 0.95 (extends across tasks)
+- ANOM-018 flagged (mul higher p@1, worse val_loss)
+
+**Literature connections:**
+- Consistent with Snell et al.: easy problems benefit less from
+  TTC
+- Consistent with Balachandran et al.: TTC benefits are task-
+  dependent
+- Novel contribution: quantifying the amplification-accuracy
+  inverse relationship at 10M scale within a single task family

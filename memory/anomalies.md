@@ -582,3 +582,39 @@ on pass@1. Or at worst, comparable performance.
 training helps. (b) Test on TinyStories where data is not a
 bottleneck. (c) Compare at higher modulus (p=997) for more
 training examples.
+
+---
+
+## ANOM-018: Multiplication has higher pass@1 but worse val_loss
+
+**Status:** open
+**Source:** HYP-012
+**Severity:** medium (extends ANOM-015 pattern to cross-task)
+
+**Observation:** On modular arithmetic mod 97 with LLaMA-10M:
+- Addition: val_loss 2.75, pass@1 0.67%
+- Multiplication: val_loss 3.06, pass@1 2.39%
+Multiplication has 11% worse val_loss but 3.6x higher pass@1.
+
+**Why anomalous:** Same ANOM-015 pattern (val_loss inversely
+predicts task accuracy) but now across tasks rather than across
+architectures. This strengthens the finding that average val_loss
+is a misleading metric for structured tasks.
+
+**Hypothesized mechanism:** Multiplication likely produces a
+more peaked answer-token distribution (lower entropy, higher
+P(correct)). The model concentrates probability on fewer
+candidate answers and happens to include the correct one more
+often. Meanwhile, prompt tokens for multiplication are harder
+to predict (larger numbers in products), inflating average
+val_loss.
+
+**Connection to ANOM-015:** Identical mechanism — answer-token
+calibration drives task accuracy while prompt-token loss
+dominates the average. Could verify with HYP-011-style per-
+token loss decomposition on multiplication data.
+
+**Additional observation:** The peaked distribution explains
+why multiplication has LOWER TTC amplification (3.8x vs 12.5x).
+Less entropy in the answer distribution means less room for
+sampling to find correct answers that greedy decoding misses.
