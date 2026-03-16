@@ -2083,3 +2083,94 @@ arithmetic — its selective parameterization can represent
 negative eigenvalues for modular counting.
 
 **Cited in:** HYP-014 interpretation
+
+## LIT-080: Prakash & Martin 2026 (Anti-Grokking Detection)
+
+**Title:** Late-Stage Generalization Collapse in Grokking:
+Detecting anti-grokking with WeightWatcher
+**Authors:** Prakash, Martin
+**Venue:** arXiv:2602.02859 — **Grade A**
+
+**Key finding:** Anti-grokking manifests reliably after 10^7
+steps. "Correlation Traps" (anomalously large eigenvalues)
+are the detection mechanism. HTSR alpha < 2.0 provides early
+warning before anti-grokking onset.
+
+**Relevance:** Extends LIT-078. Jamba's un-grokking (ANOM-019)
+is exactly this phenomenon. Could monitor HTSR alpha during
+HYP-015 to detect Correlation Trap formation.
+
+**Cited in:** HYP-015 pre-registration
+
+## LIT-081: Guo et al. 2025 (Expert Specialization Collapse)
+
+**Title:** Advancing Expert Specialization for Better MoE
+**Authors:** Guo, Lu, Nan, et al.
+**Venue:** arXiv:2505.22323 — **Grade A**
+
+**Key finding:** Auxiliary load-balancing losses undermine
+expert specialization during extended training. Experts
+converge to similar representations over time. Proposes
+orthogonality and variance losses to maintain diversity.
+
+**Relevance:** Expert representation convergence during
+extended training could directly explain un-grokking: model
+loses specialized circuits needed for generalization.
+
+**Cited in:** HYP-015 pre-registration
+
+## LIT-082: Prieto et al. 2025 (Grokking & Softmax Collapse)
+
+**Title:** Grokking at the Edge of Numerical Stability
+**Authors:** Prieto, Barsbey, Mediano, Birdal
+**Venue:** ICLR 2025, arXiv:2501.04697 — **Grade A**
+
+**Key finding:** Without regularization, grokking pushes
+models toward Softmax Collapse (SC). Gradients align with
+"naive loss minimization" (scaling logits without changing
+predictions), delaying generalization. Proposes StableMax.
+
+**Relevance:** MoE routers also use Softmax — creating dual
+instability: attention SC + router SC. Non-MoE models only
+face the first. Router logit magnitude monitoring could
+detect this in HYP-015.
+
+**Note:** Related to LIT-076 but MoE-router connection new.
+
+**Cited in:** HYP-015 pre-registration
+
+## LIT-087: Li et al. 2025 (MoE Continual Learning Theory)
+
+**Title:** Theory on Mixture-of-Experts in Continual Learning
+**Authors:** Li, Lin, Duan, Liang, Shroff
+**Venue:** ICLR 2025 — **Grade B**
+
+**Key finding:** Gating network must be frozen after
+sufficient training for convergence. Continued router updates
+after expert specialization can UNDO learned representations.
+More experts require more rounds before convergence.
+
+**Relevance:** Theoretical prediction: continued router
+training destroys grokking circuit. Freezing router after
+grokking onset should prevent un-grokking — testable in
+HYP-015 follow-up.
+
+**Cited in:** HYP-015 pre-registration
+
+## LIT-089: Xu et al. 2025 (Grouter — Decoupled Routing)
+
+**Title:** Grouter: Decoupling Routing from Representation
+for Accelerated MoE Training
+**Authors:** Xu, Hu, Liu, Sun, Yuan
+**Venue:** arXiv:2603.06626 — **Grade B**
+
+**Key finding:** Tight coupling between routing and
+representation learning creates harmful interference. Router
+updates shift token assignments, forcing experts to "chase
+a moving target." Proposes preemptive (frozen) routing.
+
+**Relevance:** "Chasing a moving target" during grokking's
+dramatic representation shift could cause un-grokking.
+Aligns with LIT-087 theoretical prediction.
+
+**Cited in:** HYP-015 pre-registration

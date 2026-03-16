@@ -399,6 +399,13 @@ Grokking order: Bamba (20K) > Falcon-H1 (26K) > Jamba (36K)
   attribute to SSM layers vs other design differences.
 - Grokking instability in Jamba/Bamba complicates the picture.
 
+**HYP-015 update:** MoE-Jamba groks 3/3 seeds vs 1/3 for
+noMoE-Jamba. MoE capacity HELPS grokking. But this is
+confounded by MoE having 590K more params. The SSM
+acceleration claim (B-013) is unchanged because it compares
+across architectures (with SSM vs pure attention), not
+across MoE variants. Posterior stays at 0.70.
+
 ---
 
 ## B-014: TTC signal at early training predicts grokking order
@@ -424,3 +431,56 @@ accuracy differentiates them.
 - Could be confounded: architectures that learn faster in
   general will both grok sooner and have higher early pass@64
 - Needs multi-seed replication to confirm
+
+---
+
+## B-015: Grokking onset is massively seed-dependent
+
+**Prior:** N/A (new belief from HYP-015)
+**Current:** 0.85
+**Source:** HYP-015, corroborated by HYP-009
+
+Grokking onset step varies 10x across seeds for identical
+architecture and hyperparameters. In HYP-015: MoE-Jamba
+grokked at steps 4K, 22K, and 40K across 3 seeds. noMoE-
+Jamba: 1/3 grokked (at 4K), 2/3 never grokked in 50K steps.
+In HYP-009: only 1/3 seeds grokked LLaMA at wd=0.1.
+
+This means single-seed grokking experiments are unreliable
+for comparing architectures or hyperparameters. Always use
+multi-seed runs for grokking studies.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-16 | HYP-015: MoE grok steps {4K, 22K, 40K}. noMoE: {4K, never, never}. | F | Very strong for | 0.85 |
+| 2026-03-15 | HYP-009: 1/3 LLaMA seeds grokked at wd=0.1 | C | Supporting | — |
+
+**Why 0.85:** Very consistent across experiments. The 10x
+range and 1/3 vs 3/3 grokking rates are dramatic. Would go
+higher with more seeds (e.g., 10+ seeds).
+
+---
+
+## B-016: MoE capacity helps grokking (more params → easier grokking)
+
+**Prior:** N/A (new belief from HYP-015)
+**Current:** 0.60
+**Source:** HYP-015 experiment results
+
+MoE-Jamba (7.6M params) grokked 3/3 seeds; noMoE-Jamba
+(7.0M params) grokked 1/3 seeds. The MoE variant provides
+4 expert FFNs vs 1 dense FFN, giving more capacity for the
+generalization circuit to form.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-16 | HYP-015: MoE 3/3 grokked vs noMoE 1/3 grokked. | F | Strong for | 0.60 |
+
+**Why only 0.60:**
+- Only 3 seeds. Could be coincidence (noMoE seeds 43/44 may
+  simply need longer training — they reached 0.88 max).
+- Confounded by param count difference (590K, 8.4%).
+- MoE routing diversity (not just capacity) could be the
+  mechanism. Cannot distinguish capacity vs routing effects.
+- Need: (a) param-matched comparison (scale dense FFN to
+  7.6M), (b) more seeds, (c) longer training for noMoE.

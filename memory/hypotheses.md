@@ -1950,3 +1950,86 @@ variant inherently has more parameters. The 8.4% param
 difference (7.6M vs 7.0M) is modest.
 
 **Recipe:** `recipes/hyp015_moe_grokking_stability.py`
+
+**Results (2026-03-16):**
+
+| Condition | Seed | Grokked | Grok Step | Stable | Ungrokked | Time |
+|-----------|------|---------|-----------|--------|-----------|------|
+| MoE | 42 | Yes | 4K | Yes | No | 1458s |
+| MoE | 43 | Yes | 22K | No | Yes | 1449s |
+| MoE | 44 | Yes | 40K | Yes | No | 1463s |
+| noMoE | 42 | Yes | 4K | Yes | No | 1144s |
+| noMoE | 43 | No | — | No | No | 1145s |
+| noMoE | 44 | No | — | No | No | 1145s |
+
+**MoE summary:** 3/3 grokked (steps 4K, 22K, 40K), 2/3 stable,
+1/3 un-grokked. Enormous seed variance (grok step 4K-40K).
+
+**noMoE summary:** 1/3 grokked (step 4K), 1/3 stable, 0/3
+un-grokked. Seeds 43/44 plateaued at val_acc 0.65-0.88 and
+never reached >0.95 within 50K steps.
+
+**Key observations:**
+
+1. **MoE helps grokking, not hurts it.** MoE: 3/3 grokked,
+   noMoE: 1/3 grokked. MoE's extra capacity (4 experts)
+   provides more pathways for the generalization circuit to
+   form, even if routing dynamics introduce instability.
+
+2. **Grokking is highly seed-dependent for both conditions.**
+   MoE grok steps: 4K, 22K, 40K (10x range). NoMoE: one at
+   4K, two never. This matches HYP-014 where single-seed
+   results were misleading.
+
+3. **The same seed (42) produces identical grokking dynamics
+   for both conditions.** Both grok at step 4K, both stable.
+   The difference is in seeds 43 and 44, where MoE eventually
+   groks but noMoE does not.
+
+4. **Un-grokking is rare even for MoE (1/3 seeds).** MoE s43
+   un-grokked (0.691 at step 32K after grokking at 22K), but
+   re-grokked at 34K and 48K — oscillating pattern. MoE s42
+   had one dip (0.829 at 34K) but this doesn't meet the
+   <0.70 un-grokking threshold.
+
+5. **noMoE shows oscillation WITHOUT grokking.** Seeds 43/44
+   oscillate between 0.60-0.88 for 50K steps without ever
+   reaching the 0.95 threshold. This is the "pre-grok
+   oscillating plateau" from HYP-009, not un-grokking.
+
+**Hypothesis adjudication:**
+
+| ID | Prediction | Observed | Verdict |
+|----|-----------|----------|---------|
+| H15-a | noMoE groks stably in >=2/3 seeds | noMoE: 1/3 grokked (stable), 2/3 never grokked. Technically stable (no un-grokking) but only because most seeds didn't grok. | **PARTIALLY SUPPORTED on stability, FALSIFIED on premise** — MoE doesn't destabilize grokking; it ENABLES it. |
+| H15-b | noMoE also unstable in >=2/3 seeds | noMoE: 0/3 un-grokked. 2/3 never grokked (can't un-grok what never grokked). | **FALSIFIED** — noMoE doesn't show instability because it mostly doesn't grok. |
+| H15-c | Both unstable, different dynamics | MoE: 1/3 unstable. noMoE: 0/3 unstable. | **FALSIFIED** — one condition mostly stable, other never groks. |
+| H15-d | Mixed across seeds for BOTH | MoE: mixed (grok 3/3, stable 2/3). noMoE: mixed (grok 1/3, stable 1/3). | **SUPPORTED** — massive seed dependence for both conditions. |
+
+**Result: None of the pre-registered hypotheses fully captured
+what happened.** The experiment asked "does MoE cause
+instability?" but the answer is: "MoE causes grokking itself;
+without MoE, Jamba rarely groks at all."
+
+**Reframing:** The original question was based on ANOM-019
+(Jamba un-grokking in HYP-014). That was a single-seed result.
+Multi-seed reveals:
+- Un-grokking in MoE-Jamba is rare (1/3 seeds)
+- The real MoE effect is enabling grokking (3/3 vs 1/3)
+- Grokking onset is massively seed-dependent (4K-40K for MoE)
+
+**Confound:** MoE has 590K more params (7.6M vs 7.0M). More
+params = more capacity for generalization circuit. The grokking
+advantage could be capacity, not routing specifically.
+
+**Posterior update:**
+- H15-a: 0.40 → 0.15. MoE doesn't destabilize; it enables.
+- H15-b: 0.25 → 0.10. SSM+attn is not the instability source.
+- H15-c: 0.15 → 0.05. No interaction pattern detected.
+- H15-d: 0.20 → 0.70. Seed dependence is the dominant factor.
+
+**Anomaly:** ANOM-019 (Jamba un-grokking) should be narrowed
+from "MoE causes instability" to "grokking on modular
+arithmetic is seed-dependent at this scale, with occasional
+un-grokking in 1/3 MoE seeds." The causal attribution to MoE
+was premature.

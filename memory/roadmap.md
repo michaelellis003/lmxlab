@@ -152,12 +152,12 @@ through HYP-010) converge on a clear story:
    verifiable tasks." 7 experiments, clean methodology, novel
    findings. Blog post or short paper.
 
-2. **Grokking instability in hybrid architectures.**
-   ANOM-019/020: Jamba and Bamba show un-grokking (loss of
-   generalization after initial grokking). Novel phenomenon.
-   Investigate: is it MoE routing (Jamba) or SSM state
-   dynamics (both)? Falcon-H1 doesn't un-grok despite also
-   being a hybrid — what makes it stable?
+2. **Grokking seed dependence — ANSWERED by HYP-015.**
+   ANOM-019/020 were seed-specific, not MoE-caused. MoE
+   actually helps grokking (3/3 vs 1/3). Grokking onset
+   varies 10x across seeds. New question: what determines
+   whether a seed groks? Could investigate with 10+ seeds
+   and weight-space analysis.
 
 3. **If pursuing community impact:** Idea C (educational
    content) has highest practical value. TTC + grokking
@@ -189,6 +189,7 @@ through HYP-010) converge on a clear story:
 | HYP-012 | TTC cross-task amplification | DONE (2026-03-16, amp is task-dependent) |
 | HYP-013 | Entropy predicts TTC amp | DONE (2026-03-16, P(correct) is primary predictor) |
 | HYP-014 | Grokking across architectures | DONE (2026-03-16, SSM hybrids grok 1.2-2.2x faster) |
+| HYP-015 | MoE grokking stability | DONE (2026-03-16, MoE helps grokking, seed-dependent) |
 | DEC-004 | FLOP-matched comparisons | ACCEPTED |
 | DEC-005 | Chinchilla-optimal training | ACCEPTED |
 | DEC-008 | Val loss as primary metric | ACCEPTED |

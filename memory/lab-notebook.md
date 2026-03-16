@@ -2301,3 +2301,38 @@ Infrastructure validates.
 - H15-d (seed-dependent, 0.20): mixed across seeds
 
 **Recipe:** `recipes/hyp015_moe_grokking_stability.py`
+
+---
+
+### 2026-03-16 — [INTERPRET] HYP-015 results
+
+**6 runs completed** in ~130 min total.
+
+| Condition | Seed | Grokked | Step | Stable | Ungrok |
+|-----------|------|---------|------|--------|--------|
+| MoE | 42 | Yes | 4K | Yes | No |
+| MoE | 43 | Yes | 22K | No | Yes |
+| MoE | 44 | Yes | 40K | Yes | No |
+| noMoE | 42 | Yes | 4K | Yes | No |
+| noMoE | 43 | No | — | — | — |
+| noMoE | 44 | No | — | — | — |
+
+**Surprise result:** MoE HELPS grokking (3/3 vs 1/3). The
+original hypothesis was backward — MoE capacity enables the
+generalization circuit, not destabilizes it. Un-grokking in
+HYP-014 was seed-specific (1/3 MoE seeds).
+
+**H15-d (seed-dependent) is the winner.** Grokking onset
+varies 10x across seeds (4K-40K). This is the dominant effect,
+not MoE vs noMoE.
+
+**Belief updates:** B-015 (seed dependence, 0.85), B-016
+(MoE helps grokking, 0.60). ANOM-019 narrowed, ANOM-020
+broadened.
+
+**Literature:** 15 papers found, 3 Grade A (LIT-080 through
+LIT-082). No prior MoE × grokking work — our finding is
+novel but opposite to our prediction.
+
+**Key methodology lesson:** Never draw causal conclusions
+from single-seed grokking experiments.

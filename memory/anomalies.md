@@ -630,86 +630,61 @@ r(P(correct), amp)=-0.981 across all 6 runs.
 
 ## ANOM-019: Jamba grokking instability (un-grokking)
 
-**Status:** open
-**Experiment:** HYP-014 (grokking across architectures)
+**Status:** partially explained (HYP-015)
+**Experiment:** HYP-014, HYP-015
 **Date:** 2026-03-16
 
-**Observation:** Jamba grokked modular addition at step 36K
-(val_acc=96.7%) but immediately un-grokked — val_acc dropped
-to 65.7% at step 38K, 64.5% at step 44K, and never recovered
-above 83.4% through step 50K. This is not noise: the drop is
-40+ percentage points and sustained for 14K+ steps.
+**Original observation (HYP-014):** Jamba grokked modular
+addition at step 36K (val_acc=96.7%) but un-grokked — val_acc
+dropped to 65.7% at step 38K. Single seed.
 
-By contrast, LLaMA and Falcon-H1 maintained 100% val_acc
-after grokking, never dropping below 99%.
+**HYP-015 update (multi-seed ablation):**
+MoE (3 seeds): 3/3 grokked, 1/3 un-grokked. Grok steps
+wildly variable: 4K, 22K, 40K.
+noMoE (3 seeds): 1/3 grokked, 0/3 un-grokked.
 
-**Expected:** Once a model groks (develops generalizing
-circuits), it should maintain that capability. Weight decay
-should reinforce generalizing solutions.
+**Revised interpretation:** The un-grokking observed in
+HYP-014 was **seed-specific** (1/3 MoE seeds show it). MoE
+is NOT the primary cause of instability — in fact, MoE
+ENABLES grokking (3/3 vs 1/3). The original causal
+attribution to MoE routing was premature.
 
-**Possible explanations:**
-1. **MoE routing instability.** Jamba uses 4 experts with
-   top-2 routing. The grokking circuit may depend on specific
-   expert assignments. As routing shifts, the circuit breaks.
-   The other architectures don't have MoE.
-2. **SSM state interference.** Jamba's Mamba layer may
-   develop SSM states that periodically interfere with the
-   grokking circuit. The interleaving of SSM and attention
-   creates complex dynamics.
-3. **Overparameterization.** Jamba has 7.6M params (10% more
-   than the others at 7.0M). The extra capacity from MoE may
-   allow the model to find alternative solutions that compete
-   with the grokking circuit.
-4. **Catastrophic forgetting analog.** The model may be
-   cycling between different solutions. Similar to loss of
-   plasticity in continual learning.
+**Remaining mystery:** Why does grokking onset vary 10x
+across seeds (4K-40K) for the same architecture? This level
+of seed sensitivity is unusual and may relate to the
+stochastic formation of the Fourier circuit (Nanda et al.).
 
-**Impact:** Challenges the assumption that grokking is a
-one-way transition. If hybrid architectures can un-grok, the
-practical implications for training are significant — early
-stopping at the grokking point may be necessary.
-
-**Follow-up:** (a) Run Jamba to 100K+ steps to see if it
-re-stabilizes. (b) Test with higher weight decay. (c) Monitor
-expert routing entropy across grokking transition. (d) Compare
-with a non-MoE variant of Jamba (just SSM+attention, no MoE).
+**Follow-up completed:** (d) done via HYP-015. MoE helps
+grokking, doesn't cause instability. Remaining: (a) longer
+training, (b) higher weight decay, (c) routing monitoring.
 
 ---
 
 ## ANOM-020: Bamba grokking oscillation then stabilization
 
-**Status:** open
-**Experiment:** HYP-014 (grokking across architectures)
+**Status:** open (broader than initially thought)
+**Experiment:** HYP-014, HYP-015
 **Date:** 2026-03-16
 
-**Observation:** Bamba grokked at step 20K (val_acc=96.9%)
-but oscillated: dropped to 72.4% at step 22K, re-grokked to
-100% at step 26K, dropped to 76.2% at step 28K, then
-gradually stabilized (85.2% at step 30K, 95.0% at step 32K,
-95.4% at step 34K). The instability resolved after ~14K
-additional steps.
+**Original observation (HYP-014, single-seed):** Bamba
+grokked at step 20K but oscillated before stabilizing after
+~14K additional steps.
 
-By contrast, LLaMA and Falcon-H1 maintained stable 100%
-immediately after grokking.
+**HYP-015 context:** The oscillating pre-grok plateau is
+actually common across ALL architectures tested. noMoE seeds
+43/44 oscillated between 0.60-0.88 for 50K steps without
+ever grokking. MoE seeds 43/44 oscillated similarly before
+eventually grokking (at 22K and 40K). Bamba's oscillation in
+HYP-014 may be the same phenomenon — the model is in the
+oscillating plateau phase and happened to briefly cross the
+0.95 threshold.
 
-**Key difference from ANOM-019 (Jamba):** Bamba eventually
-stabilizes. Jamba does not (through 50K steps). Both show
-post-grok oscillation, but Bamba's resolves.
+**Revised interpretation:** Pre-grok oscillation is a
+universal feature of grokking at this scale, not specific to
+Bamba or any architecture. The phenomenon is analogous to
+HYP-009's "oscillating plateau" where pass@64 ≈ 100% but
+val_acc oscillates. The question is not "why does Bamba
+oscillate?" but "why do some seeds eventually break through
+and others don't?"
 
-**Possible explanations:**
-1. **Alternating pattern dynamics.** Bamba uses "M*" hybrid
-   pattern (1 Mamba + 1 attention layer). The alternating
-   structure may create competing SSM and attention solutions
-   that need additional training to harmonize.
-2. **Weight decay competition.** The generalizing circuit
-   established at step 20K may initially be fragile. Weight
-   decay promotes simpler solutions, and the model may cycle
-   through solution quality before settling on a stable one.
-3. **SSM state convergence.** The Mamba-2 state may need
-   additional training to develop stable representations for
-   the modular arithmetic pattern, even after the attention
-   layer has grokked.
-
-**Follow-up:** (a) Compare with Falcon-H1 (also "M*" pattern
-but no oscillation — why?). (b) Track attention weights and
-SSM state norms across the oscillation period.
+**Follow-up:** (a) still relevant, (b) still relevant.
