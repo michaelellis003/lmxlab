@@ -2176,3 +2176,24 @@ have mapped the TTC landscape at small scale:
 - P(correct)/entropy predicts amplification (HYP-013)
 
 The story is complete for a write-up.
+
+---
+
+### 2026-03-16 — [HYPOTHESIS] HYP-014 pre-registered
+
+**What:** Do different architecture families grok modular
+arithmetic at different rates? New research direction moving
+from TTC to mechanistic understanding of hybrid architectures.
+
+**Design:** 4 architectures (LLaMA, Falcon-H1, Jamba, Bamba)
+× 1 seed = 4 runs. Grokking-scale models (~7M params, d=128,
+2 layers). 50K max steps, per-example training, wd=0.1.
+
+**Pilot results:**
+- LLaMA 5K steps: val_acc=4.3%, pass@64=78.1%
+- Falcon-H1 2K steps: val_acc=39.2%, pass@64=99.7%
+- Falcon-H1 is learning MUCH faster — promising signal
+
+**Key question:** Is the grokking onset step architecture-
+dependent? Does TTC (pass@64) reveal the difference earlier
+than greedy accuracy?

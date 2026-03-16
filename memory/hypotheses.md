@@ -1685,3 +1685,98 @@ how peaked the answer-token distribution is. A peaked
 distribution (high P(correct), low entropy) means greedy
 decoding already captures most of the model's capability,
 leaving little room for sampling to help.
+
+---
+
+## HYP-014: Grokking Dynamics Across Architectures
+
+**Experiment:** 14 — Do SSM/hybrid architectures grok modular
+arithmetic at different rates than pure attention?
+**Status:** pre-registered
+**Question:** Transformer grokking on modular arithmetic is
+well-studied mechanistically (Nanda et al. Fourier circuits).
+SSM/hybrid grokking is essentially unstudied. Mamba-3
+(ICLR 2026) showed SSMs need complex-valued dynamics for
+cyclic group structure. Do architectures with SSM layers
+(Falcon-H1, Jamba, Bamba) grok faster/slower than pure
+attention (LLaMA)?
+
+**Quality Gates (Step 0):**
+- Gate 1 (Importance): PASS. Understanding architecture-
+  specific grokking dynamics could inform architecture design
+  for algorithmic reasoning tasks.
+- Gate 2 (Scale): PASS. Mechanistic interpretability requires
+  small models. Foundational grokking papers all used small
+  models. This IS fruit fly genetics.
+- Gate 3 (Prior coverage): PASS. Transformer grokking is
+  well-studied but SSM/hybrid grokking is essentially
+  unstudied. Mamba-3 only just enabled it.
+- Gate 4 (Predictability): PASS. Genuinely uncertain: SSM
+  rotational dynamics might help (cyclic group bias) or
+  hurt (rigid state dynamics).
+- Gate 5 (Methodology): PASS. Reuses HYP-009 grokking setup
+  + HYP-008 multi-architecture grid. Clean infrastructure.
+- Gate 6 (Sunk cost): PASS. First round on this question.
+
+**Prior Art (REA):**
+- [HYP-009] Own: LLaMA-grok groks at ~43K steps (1/3 seeds).
+  pass@64 saturates at ~5K steps (39K steps before grokking).
+- [HYP-008] Own: Architecture-independent TTC amplification
+  at 10M. But that was standard training, not grokking.
+- Nanda et al. 2023: Transformers learn Fourier circuits for
+  modular addition. Mechanistic story well-understood.
+- Power et al. 2022: Grokking on modular arithmetic with
+  weight decay. Architecture was always MLP or transformer.
+- Mamba-3 (ICLR 2026): Complex-valued SSMs can solve modular
+  arithmetic. Real-valued (Mamba-2) cannot represent rotations.
+  Our hybrids use Mamba-2 BUT have attention layers too.
+- arXiv:2603.05228: Geometric inductive bias of grokking.
+  L2 norm throughout residual stream reduces grokking onset
+  20x on modular addition.
+- **Gap:** No study compares grokking onset across transformer,
+  SSM, and hybrid architectures on the same task.
+
+| ID | Hypothesis | Prediction | Falsification | Prior |
+|----|-----------|------------|---------------|-------|
+| H14-a | SSM advantage | Hybrids grok >=2x faster than LLaMA (grok step ratio <= 0.5). SSM rotational dynamics provide cyclic group bias. | Hybrids grok slower or at same rate as LLaMA | 0.20 |
+| H14-b | Attention advantage | LLaMA groks >=2x faster than hybrids. Attention implements Fourier circuit directly. | LLaMA groks slower or at same rate | 0.25 |
+| H14-c | Architecture-independent | All architectures grok within 1.5x of each other. Grokking speed depends on optimizer/wd, not architecture. | Any pair differs by >2x | 0.30 |
+| H14-d | Hybrid advantage | Hybrids grok fastest AND show the earliest TTC signal (pass@64 saturates first). SSM+attention complementary. | Hybrids not fastest on both metrics | 0.25 |
+
+**Why these priors:**
+- H14-c has highest prior (0.30): HYP-008 showed TTC
+  amplification is architecture-independent at 2K steps.
+  Grokking dynamics might also be architecture-independent
+  if driven primarily by weight decay + optimization.
+- H14-b slight edge (0.25): Nanda et al. showed transformers
+  implement clean Fourier circuits. Attention's compositional
+  structure may be key.
+- H14-d (0.25): Pilot showed Falcon-H1 learns faster than
+  LLaMA at 2K steps — suggestive but not conclusive.
+- H14-a (0.20): Lower prior because our hybrids use Mamba-2
+  (real-valued), not Mamba-3 (complex-valued). Mamba-2 may
+  lack the rotational dynamics needed.
+
+**Design:**
+- 4 architectures × 1 seed (42) = 4 runs
+- Grokking-scale models: d=128, 2 layers, BPE vocab, ~7M
+  params, tied embeddings
+- Per-example training on modular addition mod 97
+- 50K max steps, eval every 2K steps
+- wd=0.1, lr=1e-3, constant LR, batch_size=64
+- Grokking detection: val_accuracy > 0.95
+- Early stopping: 3 post-grok checkpoints
+
+**Protocol:**
+- Not FLOP-matched (models have similar but not identical
+  param counts: 6.9-7.6M). Step-matched instead.
+- 1 seed only (seed 42, which grokked in HYP-009)
+- Val accuracy as grokking metric (DEC-008)
+
+**Metrics:**
+- Primary: grokking onset step per architecture
+- Secondary: pass@64 saturation step, pass@64/pass@1 ratio
+  trajectory, val_accuracy trajectory
+- Diagnostic: train_loss curves, steps/sec
+
+**Recipe:** `recipes/hyp014_grokking_architectures.py`
