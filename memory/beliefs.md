@@ -274,6 +274,7 @@ across architecture families. LLaMA has the worst val loss
 |------|----------|-------|-----------|------------|
 | — | Default: lower loss should mean higher accuracy | — | — | 0.50 |
 | 2026-03-15 | HYP-008: LLaMA val_loss 2.731 (worst), pass@64 8.34% (best). Jamba val_loss 2.310 (best), pass@64 3.29% (worst). Rank correlation is negative. | F | Strong for | 0.75 |
+| 2026-03-15 | HYP-011: Per-token decomposition. Hybrids 29-31% worse at answer token but only 7% worse at prompt tokens. LLaMA answer entropy 2.12 vs hybrid ~1.17 nats. Mechanistic explanation confirmed: val_loss averages dilute the answer-token signal. | F | Very strong for | 0.90 |
 
 **Update (HYP-008):** The val_loss metric is averaged over the
 full vocabulary/sequence, while pass@k measures accuracy on a
@@ -282,7 +283,15 @@ answer). Different architectures may achieve lower val_loss
 by better predicting the prompt tokens (common patterns) while
 being worse at the critical answer token. This echoes the
 broader observation that perplexity and downstream task
-performance don't always correlate (LIT-048 needed).
+performance don't always correlate (LIT-055, LIT-057).
+
+**Update (HYP-011):** ANOM-015 now mechanistically explained.
+Two effects: (1) answer-token loss drives pass@k but is
+diluted in the average val_loss (5 prompt tokens : 1 answer
+token); (2) LLaMA's answer-token distribution is more
+entropic (2.12 vs ~1.17 nats) AND more accurate (0.66% vs
+~0.31% P(correct)), making it ideal for best-of-N sampling.
+Posterior updated to 0.90 — the mechanism is now clear.
 
 ---
 

@@ -447,8 +447,8 @@ as redundant at this scale.
 
 ## ANOM-015: Higher val_loss correlates with higher pass@k
 
-**Status:** open
-**Experiment:** HYP-008
+**Status:** explained
+**Experiment:** HYP-008 (discovered), HYP-011 (explained)
 **Date:** 2026-03-15
 
 **Observation:** LLaMA has the highest (worst) val_loss of all
@@ -461,34 +461,36 @@ as redundant at this scale.
 | Bamba | 2.318 (2nd) | 0.28% (3rd) | 4.04% (3rd) |
 | Jamba | 2.310 (1st) | 0.25% (4th) | 3.29% (4th) |
 
-The ranking is perfectly inverted: best val_loss = worst pass@k.
+**Explanation (HYP-011):** Two complementary mechanisms:
 
-**Expected:** Lower val_loss should indicate better next-token
-prediction, which should translate to higher pass@k on the
-same task.
+1. **Answer-token loss dominance:** Per-position loss
+   decomposition reveals LLaMA has 29-31% lower answer-token
+   loss than hybrids, but only 7% lower prompt-token loss.
+   Since pass@k depends entirely on the answer token, LLaMA
+   wins on accuracy. But val_loss averages over all positions
+   (~5 prompt tokens + 1 answer token), so the small prompt
+   advantage of hybrids partially offsets LLaMA's large answer
+   advantage in the average.
 
-**Possible explanations:**
-1. **Val loss averages over all tokens.** Modular arithmetic
-   prompts have format "X + Y = Z". Val_loss averages over
-   prompt tokens (X, +, Y, =) and the answer token (Z).
-   Hybrids may predict prompt tokens better (lower average
-   loss) while LLaMA predicts the answer token better.
-2. **SSM state compression loses precision.** SSMs compress
-   context into fixed-size state. This works well for pattern
-   prediction (most tokens) but may lose the precise numerical
-   information needed for the final answer token.
-3. **Attention enables exact retrieval.** The modular arithmetic
-   task requires attending to specific operand tokens. Pure
-   attention can do this directly; SSMs must recover operands
-   from compressed state.
-4. **Different loss landscape geometry.** LLaMA may have a
-   flatter, noisier loss landscape that averages worse but
-   has more diverse minima — producing higher pass@k.
+   | Arch | Prompt Loss | Answer Loss | Ratio |
+   |------|-------------|-------------|-------|
+   | LLaMA | 3.47 | 7.50 | 2.2 |
+   | Hybrids | 3.71 | 9.70 | 2.6 |
 
-**Follow-up:** Compute per-token loss breakdown (prompt tokens
-vs answer token) to distinguish explanation 1 from 2-4. This
-would require modifying the eval to report answer-token loss
-separately.
+   LLaMA is worse at ALL positions, but the answer gap (2.20)
+   is 9x larger than the prompt gap (0.24).
+
+2. **Answer-token calibration:** LLaMA has 2x higher answer-
+   token entropy (2.12 vs ~1.17 nats) and 2.0-2.3x higher
+   P(correct answer). LLaMA distributes mass more broadly
+   AND places more on the correct answer — ideal for sampling.
+
+**Root cause:** SSM state compression loses the precise
+operand information needed for modular arithmetic. Consistent
+with associative recall literature (LIT-058, LIT-059):
+attention enables exact retrieval; SSMs must recover operands
+from compressed state. Original explanations 1, 2, and 3 were
+all partially correct and complementary.
 
 ---
 

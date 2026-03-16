@@ -1566,3 +1566,116 @@ that our FLOP-matching methodology needs data-scaling when
 comparing across model sizes.
 
 **Cited in:** HYP-010 interpretation
+
+---
+
+## LIT-055: Fu et al. 2025 (LongPPL)
+
+**Grade:** A (ICLR 2025)
+**Citation:** Fu et al. "What is Wrong with Perplexity for
+Long-context Language Modeling?" arXiv:2410.23771
+**Date found:** 2026-03-15
+**Context:** HYP-011 pre-experiment lit search (ANOM-015)
+
+**Key finding:** PPL on answer tokens only correlates r=-0.96
+with downstream task accuracy. PPL on non-answer tokens shows
+little/no correlation. Standard PPL "overlooks key tokens by
+averaging across all tokens." Proposes LongPPL (contrastive
+key-token identification) and LongCE loss (re-weighting).
+
+**Relevance to ANOM-015:** Directly predicts our finding —
+overall val_loss averages over prompt and answer tokens. If
+hybrids predict prompt tokens better (lower average loss) but
+LLaMA predicts answer tokens better, LongPPL framework
+explains the inversion.
+
+**Cited in:** HYP-011 pre-registration
+
+---
+
+## LIT-056: Lin et al. 2024 (Rho-1)
+
+**Grade:** A (NeurIPS 2024 Oral)
+**Citation:** Lin et al. "Rho-1: Not All Tokens Are What
+You Need" arXiv:2404.07965
+**Date found:** 2026-03-15
+**Context:** HYP-011 pre-experiment lit search
+
+**Key finding:** Token-level training dynamics reveal distinct
+loss patterns for "easy" vs "hard" tokens. Selective Language
+Modeling (SLM) trains only on tokens with higher "excess loss"
+(vs a reference model). Achieves 30% absolute improvement on
+math with only 3% of pretraining tokens.
+
+**Relevance:** The per-token loss decomposition methodology
+is well-established at large scale; we're applying it at 10M
+to explain a cross-architecture inversion.
+
+**Cited in:** HYP-011 pre-registration
+
+---
+
+## LIT-057: Lourie et al. 2025 (Scaling Laws Unreliable)
+
+**Grade:** B (NYU, preprint)
+**Citation:** Lourie, Hu, Cho. "Scaling Laws Are Unreliable
+for Downstream Tasks: A Reality Check" arXiv:2507.00885
+**Date found:** 2026-03-15
+**Context:** HYP-011 pre-experiment lit search
+
+**Key finding:** Predictable scaling from pretraining loss to
+downstream task performance occurs only 39% of the time.
+Minor experimental changes can flip scaling trends entirely.
+Five failure modes: inverse, nonmonotonic, noisy, trendless,
+and breakthrough scaling.
+
+**Relevance:** Provides large-scale context for ANOM-015 —
+the perplexity/downstream disconnect is common, not unusual.
+
+**Cited in:** HYP-011 pre-registration
+
+---
+
+## LIT-058: Arora et al. 2025 (Mechanistic SSM eval)
+
+**Grade:** B (Stanford, preprint)
+**Citation:** Arora et al. "Mechanistic evaluation of
+Transformers and state space models" arXiv:2505.15105
+**Date found:** 2026-03-15
+**Context:** HYP-011 pre-experiment lit search
+
+**Key finding:** On Associative Recall (AR), only Transformers
+and Based fully succeed. Mamba/DeltaNet come close; H3/Hyena
+fail. Transformers store key-value associations in-context via
+induction heads. SSMs compute associations only at the last
+state. Mamba's success partly due to short convolution, not
+SSM component itself.
+
+**Relevance:** Provides mechanistic basis for H11-a: modular
+arithmetic requires precise retrieval of operand tokens from
+context. Attention does this directly; SSMs must recover
+operands from compressed state — predicting higher answer-
+token loss for SSM/hybrid architectures.
+
+**Cited in:** HYP-011 pre-registration
+
+---
+
+## LIT-059: NVIDIA 2024 (Mamba-based LMs empirical study)
+
+**Grade:** B (NVIDIA, preprint)
+**Citation:** NVIDIA. "An Empirical Study of Mamba-based
+Language Models" arXiv:2406.07887
+**Date found:** 2026-03-15
+**Context:** HYP-011 pre-experiment lit search
+
+**Key finding:** 8B pure Mamba matches/exceeds Transformers
+on many tasks but lags on copying, in-context learning, and
+long-context reasoning. Hybrid (43% Mamba-2 + 7% attention +
+50% MLP) exceeds Transformer on all 12 standard tasks.
+
+**Relevance:** Predicts SSMs show elevated loss at positions
+requiring precise recall of specific earlier tokens. The
+modular arithmetic answer token is exactly such a position.
+
+**Cited in:** HYP-011 pre-registration

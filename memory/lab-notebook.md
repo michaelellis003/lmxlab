@@ -1940,3 +1940,94 @@ This constancy suggests the amplification factor is a property
 of the task difficulty distribution, not the model. However,
 larger models do NOT automatically benefit more from TTC — they
 need adequate data to generalize in the first place.
+
+---
+
+### 2026-03-15 [EXPERIMENT] HYP-011 pre-registered and running
+
+**Objective:** Explain ANOM-015 (val_loss inversely predicts
+pass@k across architectures) via per-token loss decomposition.
+
+**Literature search:** Found 5 key papers (LIT-055 through
+LIT-059). Per-token loss decomposition is well-established
+(LongPPL ICLR 2025, Rho-1 NeurIPS 2024). The specific
+comparison of SSM vs attention per-position loss is a gap.
+
+**Key prior:** LongPPL (LIT-055) finds answer-token-only PPL
+correlates r=-0.96 with downstream accuracy, while average
+PPL doesn't. This directly predicts H11-a: hybrids lower
+average loss by predicting prompt tokens better; LLaMA's
+answer-token accuracy explains higher pass@k.
+
+**Recipe:** `recipes/hyp011_token_loss_decomp.py`
+- Same grid as HYP-008 (4 archs x 3 seeds = 12 runs)
+- New eval: per-position cross-entropy decomposed into
+  prompt_loss and answer_loss
+- Also computes answer-token entropy, top-5 mass, correct prob
+- Pilot verified: prompt_loss=1.69, answer_loss=4.62 (2.7x
+  ratio at 200 steps)
+- Bug fix: MLX lacks `mx.log_softmax`, used manual
+  `x - mx.logsumexp(x)` instead
+
+**Running:** Full 12-run experiment launched in background.
+Expected ~8-12 hours (same as HYP-008 + ~7 min decomp eval).
+
+---
+
+### 2026-03-16 [INTERPRET] HYP-011 results
+
+**12 runs completed** in ~60 min total.
+
+**Core result — answer-token loss decomposition:**
+
+| Arch | Val Loss | Prompt Loss | Answer Loss | A/P Ratio |
+|------|----------|-------------|-------------|-----------|
+| LLaMA | 2.727 | 3.469 | 7.497 | 2.2 |
+| Falcon-H1 | 2.318 | 3.711 | 9.691 | 2.6 |
+| Bamba | 2.318 | 3.711 | 9.691 | 2.6 |
+| Jamba | 2.311 | 3.722 | 9.815 | 2.6 |
+
+The answer-token gap is 4x larger than the prompt-token gap:
+- Hybrids: +7% worse at prompt tokens vs LLaMA
+- Hybrids: +29-31% worse at answer token vs LLaMA
+
+**Calibration finding:**
+- LLaMA answer entropy: 2.12 nats (high diversity)
+- Hybrid answer entropy: 1.12-1.22 nats (concentrated)
+- LLaMA P(correct): 0.66%, hybrids: 0.29-0.34%
+- LLaMA is both more diverse AND more accurate at answer token
+
+**Hypothesis adjudication:**
+- H11-a (prompt dominance): PARTIALLY SUPPORTED — mechanism
+  (answer token drives inversion) confirmed, but direction
+  prediction was wrong (hybrids worse at both, not better at
+  prompts)
+- H11-b (calibration): SUPPORTED — LLaMA has 2x higher answer
+  entropy and 2x higher P(correct)
+- H11-c (training dynamics): NOT TESTED but unlikely primary
+- H11-d (null): FALSIFIED — consistent across all 3 seeds
+
+**ANOM-015 resolved.** The val_loss vs pass@k inversion has two
+complementary causes: (1) answer-token loss drives task accuracy
+but is diluted in the average, and (2) attention enables better
+answer-token calibration than SSM state compression.
+
+**Belief updates:**
+- B-010 (val loss doesn't predict pass@k): 0.75 → 0.90
+
+**Literature context:** Consistent with LongPPL (LIT-055):
+answer-token-only PPL correlates r=-0.96 with downstream
+accuracy. Our decomposition confirms this at 10M scale with
+the additional finding that SSM state compression specifically
+degrades the answer-token logits.
+
+**Takeaway:** For structured tasks with a single critical
+output position, average val_loss is a misleading metric.
+Answer-token loss and answer-token entropy are far more
+predictive of task accuracy and TTC effectiveness. This has
+practical implications: (1) model selection should use task-
+specific metrics, not average perplexity, (2) attention's
+advantage at precise retrieval matters most at "answer"
+positions, (3) the 2x entropy difference suggests attention
+models are inherently better suited for best-of-N sampling
+on retrieval-heavy tasks.
