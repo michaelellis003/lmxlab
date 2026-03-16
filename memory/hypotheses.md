@@ -1859,3 +1859,94 @@ attention (LLaMA)?
 - H14-c: 0.30 → 0.05. 2.2x difference clearly falsifies the
   architecture-independence hypothesis.
 - H14-d: 0.25 → 0.80. Strong support from both metrics.
+
+---
+
+### HYP-015: Does MoE cause grokking instability?
+
+**Status:** pre-registered (2026-03-16)
+
+**Background:**
+In HYP-014, Jamba (SSM+attention+MoE) showed grokking
+instability: it grokked at step 36K then un-grokked
+(val_acc dropped from 96.7% to 65.7%) by step 38K. Bamba
+(SSM+attention, no MoE) oscillated but stabilized. Falcon-H1
+(SSM+attention, no MoE) was completely stable. This raises the
+question: is MoE the cause of the instability, or is it the
+SSM+attention interaction itself?
+
+This experiment ablates MoE by comparing Jamba-with-MoE vs
+Jamba-without-MoE (dense FFN on all layers). If MoE causes
+instability, the noMoE variant should grok stably. If it's
+the SSM+attention interaction, both should show instability.
+
+**Quality Gates (Step 0):**
+- Gate 1 (Importance): PASS. Anti-grokking / generalization
+  collapse is a newly recognized phenomenon (LIT-078,
+  Prakash & Martin 2025 ICML). MoE routing as a cause has
+  not been investigated.
+- Gate 2 (Scale): PASS. Grokking is inherently a small-model
+  phenomenon. This IS fruit fly genetics.
+- Gate 3 (Prior coverage): PASS. No prior work on MoE ×
+  grokking instability. LIT-078 studies anti-grokking in
+  standard architectures but not MoE.
+- Gate 4 (Predictability): PASS. Genuinely uncertain. MoE
+  routing instability is plausible (load imbalance, expert
+  collapse) but so is SSM state interference.
+- Gate 5 (Methodology): PASS. Clean ablation: same Jamba
+  architecture, only MoE vs dense FFN differs. 3 seeds per
+  condition for statistical reliability.
+- Gate 6 (Sunk cost): PASS. First round on this question.
+
+**Prior Art (REA):**
+- [HYP-014] Own: Jamba un-grokked (ANOM-019), Bamba oscillated
+  (ANOM-020), Falcon-H1 was stable. All single-seed.
+- LIT-078 (Prakash & Martin 2025): Anti-grokking defined as
+  generalization collapse after initial grokking. Attributed
+  to representation drift under continued training.
+- LIT-075 (Yildirim 2026): Geometric inductive bias affects
+  grokking speed up to 20x. Architecture topology matters.
+- LIT-079 (Grazzi et al. 2025): SSM state tracking requires
+  negative eigenvalues. May affect stability under extended
+  training.
+- **Gap:** No prior work on MoE as a cause of grokking
+  instability / anti-grokking.
+
+| ID | Hypothesis | Prediction | Falsification | Prior |
+|----|-----------|------------|---------------|-------|
+| H15-a | MoE destabilizes | Jamba-noMoE groks stably (no un-grokking within 50K steps) in >=2/3 seeds. MoE routing creates unstable dynamics. | Jamba-noMoE also shows un-grokking in >=2/3 seeds | 0.40 |
+| H15-b | SSM+attn destabilizes | Jamba-noMoE also shows instability (un-grokking or oscillation) in >=2/3 seeds. The SSM+attention mixing causes it; MoE is incidental. | Jamba-noMoE is stable in >=2/3 seeds | 0.25 |
+| H15-c | Interaction effect | Both conditions show instability but with different dynamics (e.g., MoE un-groks faster/deeper). All three (SSM+attn+MoE) interact. | One condition is fully stable | 0.15 |
+| H15-d | Seed-dependent | Mixed results: instability occurs in some seeds but not others for BOTH conditions. HYP-014's result was seed-specific. | Consistent pattern across all 3 seeds for at least one condition | 0.20 |
+
+**Why these priors:**
+- H15-a highest (0.40): MoE routing is known to be unstable
+  (expert collapse, load imbalance). Bamba and Falcon-H1
+  (both without MoE) were more stable in HYP-014.
+- H15-b (0.25): The pilot at 10K showed non-monotonic val_acc
+  for noMoE (0.817 at 8K, 0.719 at 10K), suggesting some
+  inherent instability in the architecture.
+- H15-d (0.20): Single-seed in HYP-014 means seed variance
+  is plausible.
+- H15-c lowest (0.15): Interaction effects are harder to
+  detect and less likely a priori.
+
+**Design:**
+- 2 conditions × 3 seeds (42, 43, 44) = 6 runs
+- jamba_moe: n_layers=2, attn_every=2, n_experts=4,
+  top_k_experts=2, moe_every=2. MoE FFN on attention layer.
+  7.6M params.
+- jamba_nomoe: Same but dense FFN on attention layer.
+  7.0M params.
+- 50K steps, no early stopping (observe full instability)
+- eval every 2K steps, batch_size=64, wd=0.1, lr=1e-3
+- Grokking: val_accuracy > 0.95
+- Stability: 3 consecutive post-grok checkpoints > 0.90
+- Un-grokking: val_accuracy < 0.70 after grokking
+
+**Note:** Models differ by ~590K params (MoE has 4 expert FFNs
+vs 1 dense FFN). This is a confound but unavoidable — the MoE
+variant inherently has more parameters. The 8.4% param
+difference (7.6M vs 7.0M) is modest.
+
+**Recipe:** `recipes/hyp015_moe_grokking_stability.py`

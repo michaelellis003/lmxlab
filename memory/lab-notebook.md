@@ -2268,3 +2268,36 @@ training, wd=0.1, lr=1e-3, constant LR.
    architecture-level regularization effect?
 2. Stability: WHY do Jamba/Bamba un-grok while LLaMA/Falcon-H1
    don't? MoE vs non-MoE? Alternating vs dedicated patterns?
+
+---
+
+### 2026-03-16 — [HYPOTHESIS] HYP-015 pre-registered
+
+**What:** Does MoE cause grokking instability? Ablates MoE in
+Jamba to test whether MoE routing is responsible for the un-
+grokking observed in HYP-014 (ANOM-019).
+
+**Design:** 2 conditions × 3 seeds = 6 runs:
+- jamba_moe: Jamba with MoE FFN (4 experts, top-2). 7.6M params.
+- jamba_nomoe: Jamba with dense FFN only. 7.0M params.
+
+Same grokking setup: 50K steps, wd=0.1, lr=1e-3, constant LR,
+per-example training on mod 97, eval every 2K steps.
+
+**Bug found during build:** `moe_every=999` does NOT disable
+MoE when there is only 1 attention layer, because
+`attn_count=0` and `0 % N == 0` for any N. Fixed by manually
+constructing the noMoE config with `ffn="gated"` blocks.
+
+**Pilot (jamba_nomoe, seed 42, 10K steps):** val_acc peaked at
+0.817 (step 8K), non-monotonic trajectory. No grokking at 10K.
+Infrastructure validates.
+
+**Competing hypotheses:**
+- H15-a (MoE destabilizes, 0.40): noMoE groks stably
+- H15-b (SSM+attn destabilizes, 0.25): noMoE also unstable
+- H15-c (interaction effect, 0.15): both unstable, different
+  dynamics
+- H15-d (seed-dependent, 0.20): mixed across seeds
+
+**Recipe:** `recipes/hyp015_moe_grokking_stability.py`
