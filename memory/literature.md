@@ -2174,3 +2174,51 @@ dramatic representation shift could cause un-grokking.
 Aligns with LIT-087 theoretical prediction.
 
 **Cited in:** HYP-015 pre-registration
+
+---
+
+## LIT-090: Tikeng Notsawo et al. 2024 (Predicting Grokking)
+
+**Title:** Predicting Grokking Long Before it Happens: A look
+into the loss landscape of models which grok
+**Authors:** Tikeng Notsawo Pascal Junior, Zhou, Pezeshki,
+Rish, Dumas
+**Venue:** ICLR 2024 ME-FoMo Workshop — **Grade A**
+
+**Key finding:** Fourier analysis of early learning curve
+oscillations can predict whether a model will eventually grok.
+Specific frequency-domain signatures in early epochs serve as
+predictors without training to completion.
+
+**Relevance:** Directly about early grokking prediction. Uses
+standard metrics (loss curves), not TTC. Our HYP-016 finding
+that aggregate metrics (loss, accuracy, p@64) have zero
+within-architecture predictive power (all rho < 0.12) is
+complementary — their method may also fail within a single
+architecture with different seeds.
+
+**Cited in:** HYP-016 interpretation
+
+---
+
+## LIT-091: Clauw et al. 2024 (Grokking Phase Transition)
+
+**Title:** Information-Theoretic Progress Measures reveal
+Grokking is an Emergent Phase Transition
+**Authors:** Clauw, Stramaglia, Marinazzo
+**Venue:** ICML 2024 — **Grade A**
+
+**Key finding:** Grokking is an emergent phase transition
+detected by O-Information decomposed into synergy and
+redundancy. Early synergy peaks predict eventual grokking.
+Tested on 5 seeds of a 2-layer FC network on mod 97 (same
+task as our experiments).
+
+**Relevance:** Most similar prior work to HYP-016. They test
+5 seeds but use information-theoretic measures (synergy),
+not TTC/pass@k. Their synergy metric may capture weight-space
+structure invisible to aggregate loss. However, only 5 seeds
+on a simple FC network — unclear if it transfers to
+transformers/hybrids.
+
+**Cited in:** HYP-016 interpretation

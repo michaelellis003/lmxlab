@@ -2362,3 +2362,42 @@ p@64 may saturate too early to differentiate seeds.
 **Design:** 10 seeds (42-51) × MoE-Jamba × 50K steps.
 
 **Recipe:** `recipes/hyp016_early_grokking_prediction.py`
+
+---
+
+### 2026-03-16 — [INTERPRET] HYP-016 results
+
+**10 runs completed** in ~4 hours.
+
+| Seed | p@64@2K | Grokked | Step | Key |
+|------|---------|---------|------|-----|
+| 42 | 0.756 | Yes | 18K | |
+| 43 | 0.995 | Yes | 12K | |
+| 44 | 0.981 | No | >50K | only non-grokker |
+| 45 | 0.996 | Yes | 48K | |
+| 46 | 0.567 | Yes | 22K | |
+| 47 | 1.000 | Yes | 12K | |
+| 48 | 0.814 | Yes | 4K | fastest |
+| 49 | 0.909 | Yes | 48K | |
+| 50 | 0.445 | Yes | 12K | lowest p@64 |
+| 51 | 0.482 | Yes | 36K | |
+
+**H16-c (no early signal) SUPPORTED.** All Spearman
+correlations near zero: p@64 rho=0.111, loss rho=-0.062,
+val_acc rho=-0.006. No metric at step 2K predicts grokking.
+
+**Major belief revision:** B-014 downgraded from 0.65 to 0.30.
+Cross-architecture TTC prediction was confounded by
+architectural inductive bias. B-015 upgraded to 0.95 with
+10-seed confirmation. B-016 upgraded to 0.70.
+
+**Literature:** Tikeng Notsawo et al. (ICLR 2024) used Fourier
+analysis of learning curves; Clauw et al. (ICML) used synergy
+measures. Neither uses TTC/pass@k. Our finding that p@64 has
+zero within-architecture predictive power is novel.
+
+**Key insight:** TTC signal (pass@64) measures what the
+architecture CAN learn (cross-architecture), not what a
+particular initialization WILL learn (within-architecture).
+Grokking onset depends on weight initialization details
+invisible to aggregate metrics.

@@ -411,40 +411,43 @@ across MoE variants. Posterior stays at 0.70.
 ## B-014: TTC signal at early training predicts grokking order
 
 **Prior:** N/A (new belief from HYP-014)
-**Current:** 0.65
-**Source:** HYP-014 experiment results
+**Current:** 0.30
+**Source:** HYP-014 experiment results, revised by HYP-016
 
 pass@64 at step 2000 perfectly predicts the eventual grokking
 ordering across 4 architectures: Bamba(99.6%) > Jamba(96.3%)
-> Falcon-H1(78.5%) > LLaMA(46.2%). The TTC metric reveals
-which architectures will grok faster long before greedy
-accuracy differentiates them.
+> Falcon-H1(78.5%) > LLaMA(46.2%). However, HYP-016 showed
+this correlation is ZERO within a single architecture (rho=0.11,
+n=10, p=0.76). The cross-architecture correlation was driven
+by architectural inductive bias, not a general TTC mechanism.
 
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
 | 2026-03-16 | HYP-014: perfect rank correlation between p@64 at step 2K and grokking onset step. Combined with HYP-009 (pass@64 as grokking indicator). | C | Moderate for | 0.65 |
+| 2026-03-16 | HYP-016: rho=0.111 (p=0.76) across 10 seeds within MoE-Jamba. Zero predictive power for within-architecture grokking. Cross-architecture correlation was confounded. | F | Strong against | 0.30 |
 
-**Why 0.65:**
-- Only 4 data points (one architecture each, one seed)
-- Perfect rank correlation from 4 points is suggestive but
-  not statistically significant
-- Could be confounded: architectures that learn faster in
-  general will both grok sooner and have higher early pass@64
-- Needs multi-seed replication to confirm
+**Why 0.30:**
+- Cross-architecture prediction (rho=1.0) was real but
+  confounded — architectural inductive bias drives both
+  early TTC and grokking speed
+- Within-architecture prediction (rho=0.11) is essentially
+  zero — TTC at step 2K does not predict grokking onset
+- Belief narrowed: TTC predicts architecture quality, not
+  training run quality
 
 ---
 
 ## B-015: Grokking onset is massively seed-dependent
 
 **Prior:** N/A (new belief from HYP-015)
-**Current:** 0.85
-**Source:** HYP-015, corroborated by HYP-009
+**Current:** 0.95
+**Source:** HYP-015, HYP-016, corroborated by HYP-009
 
-Grokking onset step varies 10x across seeds for identical
-architecture and hyperparameters. In HYP-015: MoE-Jamba
-grokked at steps 4K, 22K, and 40K across 3 seeds. noMoE-
-Jamba: 1/3 grokked (at 4K), 2/3 never grokked in 50K steps.
-In HYP-009: only 1/3 seeds grokked LLaMA at wd=0.1.
+Grokking onset step varies 12x across seeds for identical
+architecture and hyperparameters. In HYP-016: MoE-Jamba
+grokked at steps 4K, 12K, 12K, 12K, 18K, 22K, 36K, 48K,
+48K across 9 seeds (1 never grokked in 50K). No early metric
+(loss, accuracy, pass@64) predicts onset timing (all rho < 0.12).
 
 This means single-seed grokking experiments are unreliable
 for comparing architectures or hyperparameters. Always use
@@ -453,11 +456,13 @@ multi-seed runs for grokking studies.
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
 | 2026-03-16 | HYP-015: MoE grok steps {4K, 22K, 40K}. noMoE: {4K, never, never}. | F | Very strong for | 0.85 |
+| 2026-03-16 | HYP-016: 10 seeds, grok steps 4K-48K (12x range), no early metric predicts onset (all rho < 0.12). | F | Definitive | 0.95 |
 | 2026-03-15 | HYP-009: 1/3 LLaMA seeds grokked at wd=0.1 | C | Supporting | — |
 
-**Why 0.85:** Very consistent across experiments. The 10x
-range and 1/3 vs 3/3 grokking rates are dramatic. Would go
-higher with more seeds (e.g., 10+ seeds).
+**Why 0.95:** Confirmed with 10 seeds. The 12x range and
+zero correlation with all early metrics is definitive. Only
+held from 1.0 because we've only tested one architecture
+(MoE-Jamba) at 10-seed scale.
 
 ---
 
@@ -476,11 +481,12 @@ generalization circuit to form.
 |------|----------|-------|-----------|------------|
 | 2026-03-16 | HYP-015: MoE 3/3 grokked vs noMoE 1/3 grokked. | F | Strong for | 0.60 |
 
-**Why only 0.60:**
-- Only 3 seeds. Could be coincidence (noMoE seeds 43/44 may
-  simply need longer training — they reached 0.88 max).
-- Confounded by param count difference (590K, 8.4%).
+| 2026-03-16 | HYP-016: MoE-Jamba groks 9/10 seeds at 50K steps. | F | Corroborating | 0.70 |
+
+**Why 0.70 (up from 0.60):**
+- HYP-015: 3/3 MoE vs 1/3 noMoE. HYP-016: 9/10 MoE.
+  Consistent grokking rate across 13 total MoE-Jamba seeds.
+- Still confounded by param count difference (590K, 8.4%).
 - MoE routing diversity (not just capacity) could be the
   mechanism. Cannot distinguish capacity vs routing effects.
-- Need: (a) param-matched comparison (scale dense FFN to
-  7.6M), (b) more seeds, (c) longer training for noMoE.
+- Need: param-matched comparison to isolate MoE vs capacity.

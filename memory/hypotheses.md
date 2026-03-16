@@ -2038,7 +2038,7 @@ was premature.
 
 ### HYP-016: Can early training signals predict grokking onset?
 
-**Status:** pre-registered (2026-03-16)
+**Status:** tested (2026-03-16)
 
 **Background:**
 B-014 showed pass@64 at step 2K perfectly predicts grokking
@@ -2121,3 +2121,81 @@ The near-saturated p@64 is a concern for H16-a — if all seeds
 have p@64 ≈ 1.0 at step 2K, the metric can't differentiate.
 
 **Recipe:** `recipes/hyp016_early_grokking_prediction.py`
+
+**Results (2026-03-16):**
+
+| Seed | p@64@2K | val_acc@2K | loss@2K | Grokked | Step |
+|------|---------|-----------|---------|---------|------|
+| 42 | 0.756 | 0.040 | 1.698 | Yes | 18K |
+| 43 | 0.995 | 0.382 | 1.217 | Yes | 12K |
+| 44 | 0.981 | 0.242 | 1.292 | No | >50K |
+| 45 | 0.996 | 0.370 | 1.218 | Yes | 48K |
+| 46 | 0.567 | 0.015 | 1.792 | Yes | 22K |
+| 47 | 1.000 | 0.374 | 1.223 | Yes | 12K |
+| 48 | 0.814 | 0.060 | 1.610 | Yes | 4K |
+| 49 | 0.909 | 0.098 | 1.452 | Yes | 48K |
+| 50 | 0.445 | 0.007 | 1.834 | Yes | 12K |
+| 51 | 0.482 | 0.006 | 1.843 | Yes | 36K |
+
+**Summary:** 9/10 seeds grokked. Grok steps: 4K, 12K, 12K, 12K,
+18K, 22K, 36K, 48K, 48K, >50K. Median grok step = 20K.
+
+**Spearman correlations (early metric at step 2K vs grok_step):**
+- pass@64: rho = 0.111, p = 0.761 (not significant)
+- val_loss: rho = -0.062, p = 0.866 (not significant)
+- val_acc: rho = -0.006, p = 0.987 (not significant)
+
+**Grokker/non-grokker separation (9 vs 1):**
+- p@64 at 2K: grokkers = 0.774, non-grokker = 0.981
+- loss at 2K: grokkers = 1.543, non-grokker = 1.292
+- Only 1 non-grokker — insufficient for ROC analysis.
+
+**Hypothesis adjudication:**
+
+| ID | Prediction | Observed | Verdict |
+|----|-----------|----------|---------|
+| H16-a | pass@64 |rho| >= 0.6 | rho = 0.111 | **FALSIFIED** — p@64 has essentially zero correlation with grok_step. |
+| H16-b | val_loss |rho| > |rho_p64| and >= 0.4 | rho = -0.062 | **FALSIFIED** — loss is equally unpredictive. |
+| H16-c | Both |rho| < 0.4 | p@64: 0.111, loss: 0.062, vacc: 0.006 | **SUPPORTED** — no early metric at step 2K predicts grokking onset within a single architecture. |
+
+**Key findings:**
+
+1. **B-014's cross-architecture prediction was confounded.**
+   pass@64 at step 2K predicts grokking ORDER across
+   architectures (rho=1.0, n=4) but has ZERO predictive power
+   within a single architecture (rho=0.11, n=10). The cross-
+   architecture correlation was driven by architectural
+   inductive bias, not by a general early-signal mechanism.
+
+2. **Grokking onset is essentially random within an
+   architecture.** No metric at step 2K (pass@64, val_loss,
+   val_acc) correlates with grok_step. The 12x range
+   (4K-48K) in grokking onset is driven by weight
+   initialization details invisible to aggregate metrics.
+
+3. **MoE-Jamba groks 9/10 seeds.** This strengthens B-016
+   (MoE helps grokking): HYP-015 showed 3/3, now 9/10.
+   The one non-grokker (seed 44, val_acc peaked at 0.897)
+   likely needs >50K steps.
+
+4. **p@64 at step 2K shows high variance (0.44-1.00) but
+   no signal.** Seed 50 had the LOWEST p@64 (0.445) yet
+   grokked at step 12K (among the fastest). Seed 44 had
+   high p@64 (0.981) but never grokked. The variance is
+   real but uncorrelated with grokking timing.
+
+5. **Early val_acc bimodal: near-zero or ~0.37.** Seeds
+   split into "already learning" (val_acc 0.24-0.38) and
+   "not yet" (val_acc 0.01-0.10). This bimodality doesn't
+   predict grokking either.
+
+**Posterior update:**
+- H16-a: 0.30 → 0.05. Decisively falsified.
+- H16-b: 0.35 → 0.05. Decisively falsified.
+- H16-c: 0.35 → 0.90. All correlations near zero.
+
+**Implication for B-014:** The cross-architecture TTC
+prediction (rho=1.0) reflects architectural inductive bias
+(how quickly each architecture picks up modular arithmetic
+patterns), not a general property of TTC as a grokking
+indicator. B-014 should be downgraded.

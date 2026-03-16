@@ -190,6 +190,7 @@ through HYP-010) converge on a clear story:
 | HYP-013 | Entropy predicts TTC amp | DONE (2026-03-16, P(correct) is primary predictor) |
 | HYP-014 | Grokking across architectures | DONE (2026-03-16, SSM hybrids grok 1.2-2.2x faster) |
 | HYP-015 | MoE grokking stability | DONE (2026-03-16, MoE helps grokking, seed-dependent) |
+| HYP-016 | Early grokking prediction | DONE (2026-03-16, no early signal predicts onset) |
 | DEC-004 | FLOP-matched comparisons | ACCEPTED |
 | DEC-005 | Chinchilla-optimal training | ACCEPTED |
 | DEC-008 | Val loss as primary metric | ACCEPTED |
