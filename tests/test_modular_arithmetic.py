@@ -2,6 +2,10 @@
 
 import re
 
+import pytest
+
+pytest.importorskip("tiktoken")
+
 import mlx.core as mx
 
 from lmxlab.data.modular_arithmetic import ModularArithmeticDataset
