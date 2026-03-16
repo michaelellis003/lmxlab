@@ -1536,3 +1536,93 @@ family (same tokenization, same verifier, different operation).
 **B-009 update needed:** TTC scaling exponent is task-dependent
 (was architecture/size-independent at 0.90). The independence
 is within-task only.
+
+---
+
+## HYP-013: Entropy Predicts TTC Amplification
+
+**Experiment:** 13 — Does answer-token entropy predict TTC
+amplification factor across tasks?
+**Status:** pre-registered
+**Question:** HYP-012 showed amplification varies 3.3x across
+tasks (12.5x add vs 3.8x mul). HYP-011 showed LLaMA has higher
+answer-token entropy (2.12 nats) and higher pass@k than hybrids.
+Does entropy causally drive amplification?
+
+**Quality Gates (Step 0):**
+- Gate 1 (Importance): PASS. If entropy predicts amplification,
+  practitioners can estimate TTC benefit from a single forward
+  pass — no expensive pass@k sweep needed.
+- Gate 2 (Scale): PASS. Can compute exact distributions at 10M.
+- Gate 3 (Prior coverage): PASS. Calibration literature exists
+  but nobody has connected answer-token entropy to pass@k
+  amplification factor specifically.
+- Gate 4 (Predictability): MILD CONCERN. The direction (higher
+  entropy → higher amplification) is intuitive. But the strength
+  and functional form (linear? log? threshold?) are not.
+- Gate 5 (Methodology): PASS. Combines HYP-011 (per-token loss)
+  and HYP-012 (cross-task) infrastructure. Clean reuse.
+- Gate 6 (Sunk cost): PASS. First round on this question.
+
+**Prior Art (REA):**
+- [HYP-011] Own: LLaMA entropy 2.12 nats vs hybrid ~1.17 nats.
+  Higher entropy correlates with higher pass@k across archs.
+- [HYP-012] Own: Addition amp=12.5x, mul amp=3.8x. Different
+  tasks → different amplification.
+- [ANOM-018] Own: Multiplication has higher p@1 but lower amp.
+  Peaked distribution → less sampling benefit.
+- Yue et al. (LIT-064): RL narrows distributions (lower entropy)
+  and hurts pass@k. Consistent with entropy → diversity → amp.
+- **Gap:** No quantitative model linking answer-token entropy
+  to pass@k amplification factor.
+
+| ID | Hypothesis | Prediction | Falsification | Prior |
+|----|-----------|------------|---------------|-------|
+| H13-a | Entropy predicts | r(entropy, amp) > +0.8 across all 6 runs. Higher entropy → higher amp. | r(entropy, amp) <= 0.8 | 0.35 |
+| H13-b | P(correct) predicts | r(P(correct), amp) < -0.8. High P(correct) → high p@1 → low amp. Entropy is secondary. | r(P(correct), amp) >= -0.8 or r(entropy) > r(P(correct)) | 0.30 |
+| H13-c | Both contribute | Both |r(entropy, amp)| > 0.5 and |r(P(correct), amp)| > 0.5. Neither alone is sufficient. | One of the two has |r| < 0.5 | 0.20 |
+| H13-d | Null: noise | Seed variance dominates. Correlations are weak (|r| < 0.5) because within-operation variance swamps between-operation signal. | Any |r| > 0.5 | 0.15 |
+
+**Why these alternatives:**
+- **H13-a (entropy predicts, 0.35):** Highest prior. Entropy
+  measures the "spread" of the distribution, which directly
+  determines how many distinct answers get sampled. More spread
+  → more diverse samples → more chances to hit the correct one.
+  But: entropy includes mass on non-answer tokens, so it's an
+  imperfect proxy. Also, with only 6 data points (2 operations
+  × 3 seeds), the correlation estimate will be noisy.
+- **H13-b (P(correct) predicts, 0.30):** P(correct) at the
+  answer token directly maps to pass@1. If pass@1 is high,
+  most samples are correct, so pass@64 can't be much higher —
+  the ratio p@64/p@1 shrinks. This is a mathematical tautology
+  for the extreme cases but the question is whether it explains
+  the intermediate cases too.
+- **H13-c (both, 0.20):** Entropy and P(correct) may capture
+  different aspects. A model could have low entropy but high
+  P(correct) (peaked on correct answer) or high entropy but
+  low P(correct) (spread across wrong answers). The combination
+  matters.
+- **H13-d (null, 0.15):** With only 3 seeds per operation,
+  within-operation variance may be large relative to the
+  between-operation difference. The correlation could be
+  artifactual (driven by the 2-group structure).
+
+**Design:**
+- Same as HYP-012: 2 operations × 3 seeds = 6 runs
+- LLaMA-10M, dropout=0.0, FLOP-matched to 2000 steps
+- Per-token loss decomposition (from HYP-011)
+- pass@k evaluation (from HYP-012)
+- Primary analysis: Pearson r between answer_entropy and
+  p@64/p@1 across all 6 runs
+
+**Protocol:**
+- FLOP-matched (DEC-004), 3 seeds (DEC-002)
+- Val loss as training metric (DEC-008)
+
+**Metrics:**
+- Primary: r(answer_entropy, amplification)
+- Secondary: r(answer_correct_prob, amplification),
+  r(pass@1, amplification)
+- Diagnostic: val_loss, per-position loss profiles
+
+**Recipe:** `recipes/hyp013_entropy_predicts_ttc.py`

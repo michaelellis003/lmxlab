@@ -2103,3 +2103,22 @@ quickly.
   dependent
 - Novel contribution: quantifying the amplification-accuracy
   inverse relationship at 10M scale within a single task family
+
+---
+
+### 2026-03-16 — [EXPERIMENT] HYP-013 pre-registered and running
+
+**What:** Does answer-token entropy predict TTC amplification
+factor? Combines HYP-011 (per-token decomposition) with HYP-012
+(cross-task) to test whether entropy causally drives the 3.3x
+amplification difference between add (12.5x) and mul (3.8x).
+
+**Design:** 6 runs (2 ops × 3 seeds), LLaMA-10M, both pass@k
+and per-token loss decomposition per run.
+
+**Pilot results (200 steps):**
+- Multiplication: entropy=4.665, amp=24.2x (early training)
+- Infrastructure works — per-token eval takes ~48s per run
+
+**Key question:** Is r(entropy, amp) > 0.8? Or is P(correct)
+a better predictor?
