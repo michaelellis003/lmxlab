@@ -343,3 +343,30 @@ seeds grokked (seeds 43/44 stuck in oscillating plateau), (b)
 only tested on modular arithmetic, (c) only one model size.
 The finding is dramatic but needs replication on other tasks
 and with more seeds before reaching 0.90+.
+
+---
+
+## B-012: P(correct) at answer token predicts TTC amplification
+
+**Prior:** N/A (new belief from HYP-013)
+**Current:** 0.85
+**Source:** HYP-013 experiment results
+
+The probability assigned to the correct answer token in a single
+forward pass predicts TTC amplification factor with r=-0.98.
+Higher P(correct) → higher pass@1 → lower amplification ratio.
+Answer-token entropy is also predictive (r=+0.88) but weaker.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-16 | HYP-013: r(P(correct), amp)=-0.981, r(entropy, amp)=+0.879 across 6 runs (2 ops × 3 seeds). Mul seed 43 outlier confirms within-operation variance tracks too. | F | Very strong for | 0.85 |
+
+**Why 0.85 and not higher:**
+- Only 6 data points across 2 operations — high r values are
+  easy to get with small n and 2-group structure
+- Only tested on modular arithmetic with one architecture
+- The near-tautological nature (pass@1 ≈ P(correct), amp =
+  p@64/p@1) means the relationship may be definitional rather
+  than predictive in a useful sense
+- Need to test whether P(correct) predicts amplification
+  across architectures (not just tasks) before 0.90+

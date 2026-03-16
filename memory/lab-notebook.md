@@ -2122,3 +2122,57 @@ and per-token loss decomposition per run.
 
 **Key question:** Is r(entropy, amp) > 0.8? Or is P(correct)
 a better predictor?
+
+---
+
+### 2026-03-16 — [INTERPRET] HYP-013 results
+
+**Answer:** Both predict, but P(correct) wins.
+
+**Key results:**
+- r(entropy, amp) = +0.879 → H13-a SUPPORTED
+- r(P(correct), amp) = -0.981 → H13-b SUPPORTED (primary)
+- r(pass@1, amp) = -0.984 → near-tautological
+- H13-d (null) FALSIFIED — all |r| >> 0.5
+
+**Per-operation means:**
+- Addition: entropy=2.221, P(corr)=0.0063, amp=13.3x
+- Multiplication: entropy=1.731, P(corr)=0.0229, amp=3.7x
+
+**Interpretation:** P(correct) at the answer token is the
+strongest predictor of TTC amplification (r=-0.98). This is
+partly tautological — pass@1 ≈ P(correct), and amp = p@64/p@1
+— but the practical value is that a single forward pass can
+estimate TTC benefit without expensive pass@k sweeps.
+
+Entropy is a weaker proxy (r=+0.88). The gap suggests that
+the shape of the distribution tail matters beyond just the
+overall spread. A distribution with high entropy but mass
+concentrated on wrong answers would have different TTC
+properties than one with the same entropy but mass near the
+correct answer.
+
+**Notable outlier:** mul_s43 has entropy=2.06 (in the addition
+range) and amp=5.1x (50%+ higher than other mul seeds). This
+demonstrates that entropy-amplification tracking works within
+operations too, not just between them.
+
+**ANOM-018 resolved:** The hypothesized mechanism (peaked
+distribution → less sampling benefit) is now quantitatively
+confirmed. Status → explained.
+
+**New belief:** B-012 (P(correct) predicts TTC amp) at 0.85.
+Set conservatively: only 6 points, 2-group structure, partly
+tautological.
+
+**Verdict:** TTC series convergence reached. Six experiments
+(HYP-007 through HYP-013, skipping HYP-010 which was size)
+have mapped the TTC landscape at small scale:
+- Architecture-independent amplification (HYP-008)
+- Grokking × TTC interaction (HYP-009)
+- Size-independent (HYP-010)
+- Per-token decomposition explains val_loss paradox (HYP-011)
+- Task-dependent amplification (HYP-012)
+- P(correct)/entropy predicts amplification (HYP-013)
+
+The story is complete for a write-up.

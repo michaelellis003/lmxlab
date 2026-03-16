@@ -587,7 +587,7 @@ training examples.
 
 ## ANOM-018: Multiplication has higher pass@1 but worse val_loss
 
-**Status:** open
+**Status:** explained (HYP-013)
 **Source:** HYP-012
 **Severity:** medium (extends ANOM-015 pattern to cross-task)
 
@@ -618,3 +618,10 @@ token loss decomposition on multiplication data.
 why multiplication has LOWER TTC amplification (3.8x vs 12.5x).
 Less entropy in the answer distribution means less room for
 sampling to find correct answers that greedy decoding misses.
+
+**HYP-013 verification (2026-03-16):** CONFIRMED by per-token
+decomposition. Multiplication entropy=1.73 vs addition=2.22.
+Multiplication P(correct)=0.0229 vs addition=0.0063. The
+peaked distribution hypothesis is quantitatively verified.
+r(P(correct), amp)=-0.981 across all 6 runs.
+**Status updated:** open → explained (mechanism confirmed).

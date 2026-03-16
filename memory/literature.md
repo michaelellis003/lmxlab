@@ -1774,3 +1774,196 @@ hurts diversity and pass@k. The reasoning ceiling is set by
 the base model's coverage at large k.
 
 **Cited in:** HYP-012 pre-registration
+
+---
+
+## LIT-065: Brown et al. 2024
+
+**Title:** Large Language Monkeys: Scaling Inference Compute
+with Repeated Sampling
+**arXiv:** 2407.21787
+**Grade:** A (foundational TTC scaling result)
+
+**Context:** HYP-013 post-experiment lit search
+
+**Key finding:** Pass@k follows power-law scaling from
+per-problem P(correct). Repeated sampling is effective across
+code and math tasks, with the gain determined by the
+distribution of per-problem success probabilities.
+
+**Relevance:** Theoretical framework for our HYP-013 finding.
+Their power-law follows from heterogeneous P(correct) across
+problems. Our r=-0.98 between P(correct) and amplification
+is the within-task analog.
+
+**Cited in:** HYP-013 interpretation
+
+---
+
+## LIT-066: Schaeffer, Kazdan et al. 2025
+
+**Title:** How Do Large Language Monkeys Get Their Power Laws?
+**arXiv:** 2502.17578
+**Grade:** A (theory explaining LIT-065)
+
+**Context:** HYP-013 post-experiment lit search
+
+**Key finding:** Heavy-tailed per-problem P(correct)
+distributions produce power-law pass@k scaling. The tail
+shape determines the scaling exponent.
+
+**Relevance:** Provides the theoretical basis for why
+P(correct) predicts amplification. Our finding that P(correct)
+is a stronger predictor than entropy (r=-0.98 vs r=+0.88)
+is consistent: P(correct) is the fundamental variable,
+entropy is a proxy.
+
+**Cited in:** HYP-013 interpretation
+
+---
+
+## LIT-067: Levi et al. 2024
+
+**Title:** Inference-Aware Fine-Tuning for Best-of-N Sampling
+**arXiv:** 2412.15287
+**Grade:** B (prescriptive application)
+
+**Context:** HYP-013 post-experiment lit search
+
+**Key finding:** Standard fine-tuning makes models
+overconfident, reducing best-of-N gains. They propose
+inference-aware training that preserves diversity.
+
+**Relevance:** Consistent with our entropy-amplification
+finding: overconfidence (low entropy, high P(correct)) reduces
+amplification. Their solution modifies training; ours provides
+a diagnostic.
+
+**Cited in:** HYP-013 interpretation
+
+---
+
+## LIT-068: Huang et al. 2025
+
+**Title:** Self-Calibration for Efficient Test-Time Compute
+**arXiv:** 2503.00031
+**Grade:** B (practical application)
+
+**Context:** HYP-013 post-experiment lit search
+
+**Key finding:** Model confidence predicts TTC benefit,
+enabling early stopping and compute allocation.
+
+**Relevance:** Closest to our practical implication: use a
+single forward pass to predict which problems benefit from
+more sampling. Their approach uses full-sequence confidence;
+ours isolates the answer token.
+
+**Cited in:** HYP-013 interpretation
+
+---
+
+## LIT-069: Ren & Zhao 2025
+
+**Title:** Limiting Confidence for pass@N
+**arXiv:** 2502.07154
+**Grade:** B (prescriptive complement)
+
+**Context:** HYP-013 post-experiment lit search
+
+**Key finding:** Cross-entropy overconfidence is misaligned
+with pass@N — modify training loss to limit confidence and
+preserve sampling diversity.
+
+**Relevance:** Prescriptive version of our diagnostic finding.
+We show P(correct) anti-correlates with amplification
+(r=-0.98); they show how to modify training to keep
+P(correct) in the sweet spot.
+
+**Cited in:** HYP-013 interpretation
+
+---
+
+## LIT-070: Zhu et al. 2024
+
+**Title:** EDT: Entropy-based Dynamic Temperature Sampling
+**arXiv:** 2403.14541
+**Grade:** B (methodological)
+
+**Context:** HYP-013 post-experiment lit search
+
+**Key finding:** Per-token entropy can drive adaptive
+temperature selection during generation, improving
+quality-diversity tradeoff at negligible cost.
+
+**Relevance:** Uses entropy as a within-sequence decoding
+signal. Our work uses entropy as a cross-problem amplification
+predictor — complementary levels of analysis.
+
+**Cited in:** HYP-013 interpretation
+
+---
+
+## LIT-071: Wu et al. 2025
+
+**Title:** On the Role of Temperature Sampling in TTS
+**arXiv:** 2510.02611
+**Grade:** A (direct TTC + temperature)
+
+**Context:** HYP-013 post-experiment lit search
+
+**Key finding:** Different temperatures solve different problem
+subsets. Scaling along temperature dimension yields +7.3
+points over single-temperature TTS. Temperature diversity
+enlarges the reasoning boundary.
+
+**Relevance:** Complementary to our entropy finding: they
+show temperature modulates distribution shape; we show that
+the resulting distribution shape (entropy) predicts
+amplification.
+
+**Cited in:** HYP-013 interpretation
+
+---
+
+## LIT-072: Abdin et al. 2025
+
+**Title:** EAGER: Entropy-Aware Generation for Enhanced
+Reasoning
+**arXiv:** 2510.11170
+**Grade:** B (entropy-guided branching)
+
+**Context:** HYP-013 post-experiment lit search
+
+**Key finding:** Branch at high-entropy tokens during
+generation for adaptive TTC allocation within a sequence.
+
+**Relevance:** Uses entropy at the within-sequence level
+(which token to branch at). Our work uses entropy at the
+cross-problem level (which problem benefits from sampling).
+Different granularity, same signal.
+
+**Cited in:** HYP-013 interpretation
+
+---
+
+## LIT-073: Gao et al. 2026
+
+**Title:** Learning Adaptive LLM Decoding
+**arXiv:** 2603.09065
+**Grade:** A (most methodologically relevant)
+
+**Context:** HYP-013 post-experiment lit search
+
+**Key finding:** Entropy alone is insufficient for optimal
+adaptive decoding — learned policies using additional features
+outperform entropy-only policies. Token-level adapter improves
+Pass@1 by up to 10.2%.
+
+**Relevance:** Critical calibration for our finding. Our
+r(entropy, amp) = +0.879 is strong but not perfect. This paper
+confirms that entropy captures most but not all relevant
+information for TTC decisions. P(correct) at the answer token
+(our r=-0.98) may be a better feature than raw entropy.
+
+**Cited in:** HYP-013 interpretation
