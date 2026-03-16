@@ -3,6 +3,10 @@
 import sys
 from pathlib import Path
 
+import pytest
+
+pytest.importorskip("tiktoken")
+
 import mlx.core as mx
 
 # Add recipes to path for import
