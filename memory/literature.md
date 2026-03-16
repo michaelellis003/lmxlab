@@ -1434,3 +1434,75 @@ including SSMs. The architecture-independence finding has no
 prior literature to confirm or contradict.
 
 **Cited in:** HYP-008 interpretation
+
+---
+
+## LIT-049: Power et al. 2022 (Grokking)
+
+**Title:** Grokking: Generalization Beyond Overfitting on
+Small Algorithmic Datasets
+**Venue:** ICLR 2022 Workshop — **Grade A**
+**arXiv:** https://arxiv.org/abs/2201.02177
+
+**Key finding:** Neural networks can achieve perfect
+generalization well after memorizing training data. Weight
+decay is critical for inducing grokking. Smaller datasets
+and weaker regularization increase grokking delay.
+
+**Cited in:** HYP-009 pre-registration
+
+---
+
+## LIT-050: Nanda et al. 2023 (Grokking Mechanistic Interp)
+
+**Title:** Progress measures for grokking via mechanistic
+interpretability
+**Venue:** ICLR 2023 (Oral) — **Grade A**
+**arXiv:** https://arxiv.org/abs/2301.05217
+
+**Key finding:** Three phases in grokking on modular addition:
+memorization (0-1.4K epochs), circuit formation (1.4K-9.4K),
+cleanup (9.4K-14K). The generalization circuit forms
+gradually (continuous progress measures) even while val
+accuracy appears flat. Weight decay eliminates memorization
+components during cleanup.
+
+**Cited in:** HYP-009 pre-registration
+
+---
+
+## LIT-051: Gromov 2023 (Grokking Modular Arithmetic)
+
+**Title:** Grokking modular arithmetic
+**Venue:** arXiv preprint — **Grade C**
+**arXiv:** https://arxiv.org/abs/2301.02679
+
+**Key finding:** Even 2-layer fully-connected networks grok
+modular arithmetic. Weight decay 0.1-1.0 standard. Complete
+interpretability of learned Fourier-based representations.
+
+**Cited in:** HYP-009 pre-registration
+
+---
+
+## LIT-052: Post-experiment search — TTC + grokking
+
+**Context:** HYP-009 post-experiment literature check
+**Date:** 2026-03-15
+
+**Search terms:** "test-time compute grokking", "pass@k grokking
+transition", "best-of-N grokking", "sampling diversity grokking"
+
+**Result:** No relevant papers found. The intersection of TTC
+(pass@k / best-of-N) with grokking dynamics remains unexplored.
+Grokking papers focus on accuracy/loss trajectories and circuit
+formation, while TTC papers focus on fully-trained models. Our
+HYP-009 finding — that pass@64 saturates 39K steps before
+greedy accuracy grokking — appears to be genuinely novel.
+
+Closest related concept: Nanda et al. 2023 (LIT-050) showed
+"progress measures" (excluded loss) that change continuously
+even while val accuracy is flat. Our pass@64 metric acts as a
+naturally-occurring progress measure, but one that is directly
+actionable (it measures a usable capability, not just an
+internal representation property).

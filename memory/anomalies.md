@@ -489,3 +489,47 @@ same task.
 vs answer token) to distinguish explanation 1 from 2-4. This
 would require modifying the eval to report answer-token loss
 separately.
+
+---
+
+## ANOM-016: Only 1/3 seeds grok at wd=0.1 within 50K steps
+
+**Status:** open
+**Experiment:** HYP-009 (Grokking × TTC)
+**Date:** 2026-03-15
+
+**Observation:** With weight_decay=0.1, lr=1e-3, constant LR,
+only seed 42 grokked (at step 43K). Seeds 43 and 44 ran the
+full 50K steps without grokking. Both non-grokking seeds show
+the same oscillating plateau behavior (val_acc 50-87%, pass@64
+≈ 99%) but never break through to val_acc > 95%.
+
+All three seeds have identical training setup, model size (7M),
+and hyperparameters. The only difference is the random seed
+affecting initialization and data shuffling.
+
+**Expected:** Grokking literature (Power et al. 2022) typically
+uses wd=1.0, which is much more aggressive. At wd=0.1 (chosen
+because wd=1.0 prevented memorization with BPE tokenization),
+grokking may require more training or be more seed-dependent.
+
+**Possible explanations:**
+1. **Weight decay too low.** wd=0.1 may be at the boundary
+   where grokking sometimes happens but is not guaranteed.
+   Higher wd would accelerate the transition but requires
+   the model to be able to memorize first.
+2. **Seed-dependent basin.** Different initializations may
+   lead to different loss landscape regions. Some basins
+   support the grokking transition, others trap the model
+   in the oscillating plateau.
+3. **Simply needs more training.** Seeds 43/44 show upward
+   trends and may grok at 75-100K steps.
+
+**Impact:** The 1/3 grokking rate means HYP-009 conclusions
+rest primarily on a single seed. The pass@64 saturation finding
+is robust (all 3 seeds show pass@64 ≈ 99% from step ~5K), but
+the full grokking trajectory is from 1 seed.
+
+**Follow-up:** (a) Run seeds 43/44 to 100K steps to check if
+they eventually grok. (b) Test wd=0.3 as a middle ground. (c)
+Try more seeds at wd=0.1 to estimate the grokking probability.

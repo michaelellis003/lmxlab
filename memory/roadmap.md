@@ -169,24 +169,17 @@ not "fruit fly genetics."
 | — | Metric callbacks library | DONE (2026-03-15) |
 | HYP-007 | TTC scaling at 10M | DONE (2026-03-15, H7-a supported) |
 | HYP-008 | SSM/hybrid TTC scaling | DONE (2026-03-15, H8-a supported) |
+| HYP-009 | Grokking × TTC interaction | DONE (2026-03-15, H9-a strongly supported) |
 | DEC-004 | FLOP-matched comparisons | ACCEPTED |
 | DEC-005 | Chinchilla-optimal training | ACCEPTED |
 | DEC-008 | Val loss as primary metric | ACCEPTED |
 
 ## Queued Ideas
 
-**HYP-009: Grokking and TTC interaction**
-- HYP-007 models have train loss ~0.002 but pass@1 ~0.5%.
-  They memorize training data but don't generalize. What
-  happens near the grokking transition?
-- If we train much longer (10K-50K steps), the model may
-  grok modular arithmetic. Does pass@k improve dramatically
-  near the transition? Does TTC become more or less effective
-  as the model transitions from memorization to generalization?
-- Baeumel et al. 2025 shows digit-level circuits are
-  model-size-independent — grokking may be achievable at 10M.
-- Single architecture (LLaMA-10M, dropout=0.0), multiple
-  checkpoints along the training curve, pass@k at each.
+**HYP-009: Grokking and TTC interaction — COMPLETED**
+- pass@64 reveals latent generalization 39K steps before greedy
+  accuracy catches up. Strongest TTC result in the series.
+- See HYP-009 results in hypotheses.md.
 
 **HYP-010: TTC scaling exponent vs model size**
 - HYP-007 at 10M showed ~50% growth per doubling of k.

@@ -185,6 +185,7 @@ and assumed smaller models would be flat or quickly saturate.
 | — | Prior from Snell et al. (1.5B+ only) | A | Weakly against (scale transfer) | 0.25 |
 | 2026-03-15 | HYP-007: 10M model, pass@16/pass@1=5.6x, pass@64/pass@1=11.9x. No saturation. | F | Very strong for | 0.75 |
 | 2026-03-15 | HYP-008: All 4 architectures (LLaMA, Falcon-H1, Jamba, Bamba) show strong TTC scaling at 10M. p@64/p@1 ranges 13.4-14.8x. Architecture-independent. | F | Very strong for | 0.90 |
+| 2026-03-15 | HYP-009: During grokking, pass@64 reaches 98.9% at step 4K when pass@1 is only 14%. Pass@64 saturates 39K steps before greedy accuracy catches up. TTC reveals latent generalization hundreds of epochs early. | F | Very strong for | 0.95 |
 
 **Update (HYP-007):** 10M LLaMA models on modular arithmetic
 show robust pass@k scaling. pass@1 is low (0.55%) but pass@64
@@ -273,3 +274,29 @@ by better predicting the prompt tokens (common patterns) while
 being worse at the critical answer token. This echoes the
 broader observation that perplexity and downstream task
 performance don't always correlate (LIT-048 needed).
+
+---
+
+## B-011: TTC reveals latent generalization before greedy accuracy
+
+**Prior:** N/A (new belief from HYP-009)
+**Current:** 0.80
+**Source:** HYP-009 experiment results
+
+During the grokking transition on modular arithmetic, pass@64
+saturates to ~99% at the onset of circuit formation (step ~4K),
+while greedy accuracy (pass@1) doesn't reach 99% until step 43K
+— a 39,000-step (330-epoch) lead time. TTC acts as a "magnifying
+glass" for latent generalization capabilities that exist in the
+model's distribution but are too weak for greedy decoding.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-15 | HYP-009: Seed 42 grokked. pass@64=98.9% at step 4K when pass@1=14.1%, val_acc=19.9%. pass@1 reaches 99% at step 43K — 39K steps later. | F | Very strong for | 0.80 |
+
+**Update (HYP-009):** Strong evidence from 1 seed that grokked.
+Posterior set at 0.80 rather than higher because: (a) only 1/3
+seeds grokked (seeds 43/44 stuck in oscillating plateau), (b)
+only tested on modular arithmetic, (c) only one model size.
+The finding is dramatic but needs replication on other tasks
+and with more seeds before reaching 0.90+.
