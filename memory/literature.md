@@ -1967,3 +1967,119 @@ information for TTC decisions. P(correct) at the answer token
 (our r=-0.98) may be a better feature than raw entropy.
 
 **Cited in:** HYP-013 interpretation
+
+---
+
+## LIT-074: Tlaie 2024 (Mamba Grokking)
+
+**Title:** A Short Project on Mamba: Grokking & Interpretability
+**Author:** Alejandro Tlaie
+**Venue:** LessWrong blog post (May 2024) — **Grade D**
+**URL:** lesswrong.com/posts/gQDhqXepYdxWC7gRY
+
+**Key finding:** Demonstrates that Mamba (SSM) can grok
+modular addition. Only prior work on SSM grokking on mod
+arithmetic. Did not compare speed across architectures.
+
+**Cited in:** HYP-014 interpretation
+
+---
+
+## LIT-075: Yildirim 2026 (Geometric Inductive Bias)
+
+**Title:** The Geometric Inductive Bias of Grokking
+**Author:** Alper Yildirim
+**Venue:** arXiv preprint (March 2026) — **Grade A**
+**arXiv:** 2603.05228
+
+**Key finding:** Two factors cause grokking delay in
+transformers: (1) unbounded representational magnitude,
+(2) data-dependent attention routing. L2 norm throughout
+the residual stream ("spherical topology") reduces grokking
+onset by >20x without weight decay. Uniform attention also
+achieves 100% generalization.
+
+**Relevance:** SSM architectures have bounded state dynamics
+(similar to spherical topology) and avoid Softmax, possibly
+explaining faster grokking. Most relevant theoretical paper
+for our HYP-014 findings.
+
+**Cited in:** HYP-014 interpretation
+
+---
+
+## LIT-076: Prieto et al. 2025 (Softmax Collapse)
+
+**Title:** Grokking at the Edge of Numerical Stability
+**Authors:** Prieto, Barsbey, Mediano, Birdal
+**Venue:** arXiv (January 2025) — **Grade C**
+**arXiv:** 2501.04697
+
+**Key finding:** Grokking pushes models toward numerical
+instability in Softmax ("Softmax Collapse"). Gradients align
+with naive loss minimization (logit scaling without changing
+predictions), delaying generalization.
+
+**Relevance:** SSM layers don't use Softmax, avoiding this
+bottleneck. Explains why LLaMA (pure attention) groks slowest.
+
+**Cited in:** HYP-014 interpretation
+
+---
+
+## LIT-077: Singh, Misra, Orvieto 2026 (LN and Grokking)
+
+**Title:** Explaining Grokking in Transformers through the
+Lens of Inductive Bias
+**Venue:** arXiv (February 2026) — **Grade C**
+**arXiv:** 2602.06702
+
+**Key finding:** Layer Normalization position strongly
+modulates grokking speed. Different LN placements shape
+shortcut-learning and attention entropy.
+
+**Relevance:** Our architectures differ in normalization
+schemes. Grokking speed differences may be partly driven
+by normalization, not just attention-vs-SSM.
+
+**Cited in:** HYP-014 interpretation
+
+---
+
+## LIT-078: Prakash & Martin 2025 (Anti-Grokking)
+
+**Title:** Grokking and Generalization Collapse
+**Authors:** Prakash, Martin
+**Venue:** ICML 2025 — **Grade A**
+**arXiv:** 2506.04434
+
+**Key finding:** "Anti-grokking": test accuracy collapses
+>25 points after initial grokking, while train accuracy
+stays perfect. Detected via HTSR alpha metric. Correlation
+Traps (outlier singular values) provide early warning.
+
+**Relevance:** Directly explains Jamba's grokking instability
+(ANOM-019). Jamba grokked then un-grokked — matches anti-
+grokking exactly. MoE may create extra degrees of freedom
+enabling Correlation Trap formation.
+
+**Cited in:** HYP-014 interpretation, ANOM-019
+
+---
+
+## LIT-079: Grazzi et al. 2025 (Negative Eigenvalues SSM)
+
+**Title:** Unlocking State-Tracking in Linear RNNs Through
+Negative Eigenvalues
+**Authors:** Grazzi, Siems, Zela, Franke, Hutter, Pontil
+**Venue:** ICLR 2025 (Oral) — **Grade A**
+
+**Key finding:** Expanding eigenvalue range from [0,1] to
+[-1,1] in Linear RNNs significantly enhances state-tracking.
+Validated at 1.3B on language, code, and math.
+
+**Relevance:** Explains why Mamba-2 can solve modular
+arithmetic — its selective parameterization can represent
+negative eigenvalues for modular counting.
+
+**Cited in:** HYP-014 interpretation

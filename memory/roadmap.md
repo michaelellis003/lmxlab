@@ -149,18 +149,19 @@ through HYP-010) converge on a clear story:
 1. **Write up TTC findings.** The series has a publishable
    story: "Test-time compute scaling below 1B: architecture-,
    size-, and training-phase-independent amplification on
-   verifiable tasks." 4 experiments, clean methodology, novel
+   verifiable tasks." 7 experiments, clean methodology, novel
    findings. Blog post or short paper.
 
-2. **If pursuing understanding:** Idea B (mechanistic hybrid
-   analysis) is the strongest research thread. "What do SSM
-   layers learn vs attention layers?" Small scale is an
-   advantage. ANOM-015 (val_loss vs pass@k inversion) is a
-   concrete starting point.
+2. **Grokking instability in hybrid architectures.**
+   ANOM-019/020: Jamba and Bamba show un-grokking (loss of
+   generalization after initial grokking). Novel phenomenon.
+   Investigate: is it MoE routing (Jamba) or SSM state
+   dynamics (both)? Falcon-H1 doesn't un-grok despite also
+   being a hybrid — what makes it stable?
 
 3. **If pursuing community impact:** Idea C (educational
-   content) has highest practical value. TTC results could
-   be a 6th notebook: "Test-Time Compute at Small Scale."
+   content) has highest practical value. TTC + grokking
+   results could make 2 new notebooks.
 
 4. **If pursuing more TTC:** Test on a different task (e.g.,
    TinyStories generation, not modular arithmetic) to check
@@ -187,6 +188,7 @@ through HYP-010) converge on a clear story:
 | HYP-011 | Per-token loss decomposition | DONE (2026-03-16, ANOM-015 explained) |
 | HYP-012 | TTC cross-task amplification | DONE (2026-03-16, amp is task-dependent) |
 | HYP-013 | Entropy predicts TTC amp | DONE (2026-03-16, P(correct) is primary predictor) |
+| HYP-014 | Grokking across architectures | DONE (2026-03-16, SSM hybrids grok 1.2-2.2x faster) |
 | DEC-004 | FLOP-matched comparisons | ACCEPTED |
 | DEC-005 | Chinchilla-optimal training | ACCEPTED |
 | DEC-008 | Val loss as primary metric | ACCEPTED |

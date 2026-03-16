@@ -625,3 +625,91 @@ Multiplication P(correct)=0.0229 vs addition=0.0063. The
 peaked distribution hypothesis is quantitatively verified.
 r(P(correct), amp)=-0.981 across all 6 runs.
 **Status updated:** open → explained (mechanism confirmed).
+
+---
+
+## ANOM-019: Jamba grokking instability (un-grokking)
+
+**Status:** open
+**Experiment:** HYP-014 (grokking across architectures)
+**Date:** 2026-03-16
+
+**Observation:** Jamba grokked modular addition at step 36K
+(val_acc=96.7%) but immediately un-grokked — val_acc dropped
+to 65.7% at step 38K, 64.5% at step 44K, and never recovered
+above 83.4% through step 50K. This is not noise: the drop is
+40+ percentage points and sustained for 14K+ steps.
+
+By contrast, LLaMA and Falcon-H1 maintained 100% val_acc
+after grokking, never dropping below 99%.
+
+**Expected:** Once a model groks (develops generalizing
+circuits), it should maintain that capability. Weight decay
+should reinforce generalizing solutions.
+
+**Possible explanations:**
+1. **MoE routing instability.** Jamba uses 4 experts with
+   top-2 routing. The grokking circuit may depend on specific
+   expert assignments. As routing shifts, the circuit breaks.
+   The other architectures don't have MoE.
+2. **SSM state interference.** Jamba's Mamba layer may
+   develop SSM states that periodically interfere with the
+   grokking circuit. The interleaving of SSM and attention
+   creates complex dynamics.
+3. **Overparameterization.** Jamba has 7.6M params (10% more
+   than the others at 7.0M). The extra capacity from MoE may
+   allow the model to find alternative solutions that compete
+   with the grokking circuit.
+4. **Catastrophic forgetting analog.** The model may be
+   cycling between different solutions. Similar to loss of
+   plasticity in continual learning.
+
+**Impact:** Challenges the assumption that grokking is a
+one-way transition. If hybrid architectures can un-grok, the
+practical implications for training are significant — early
+stopping at the grokking point may be necessary.
+
+**Follow-up:** (a) Run Jamba to 100K+ steps to see if it
+re-stabilizes. (b) Test with higher weight decay. (c) Monitor
+expert routing entropy across grokking transition. (d) Compare
+with a non-MoE variant of Jamba (just SSM+attention, no MoE).
+
+---
+
+## ANOM-020: Bamba grokking oscillation then stabilization
+
+**Status:** open
+**Experiment:** HYP-014 (grokking across architectures)
+**Date:** 2026-03-16
+
+**Observation:** Bamba grokked at step 20K (val_acc=96.9%)
+but oscillated: dropped to 72.4% at step 22K, re-grokked to
+100% at step 26K, dropped to 76.2% at step 28K, then
+gradually stabilized (85.2% at step 30K, 95.0% at step 32K,
+95.4% at step 34K). The instability resolved after ~14K
+additional steps.
+
+By contrast, LLaMA and Falcon-H1 maintained stable 100%
+immediately after grokking.
+
+**Key difference from ANOM-019 (Jamba):** Bamba eventually
+stabilizes. Jamba does not (through 50K steps). Both show
+post-grok oscillation, but Bamba's resolves.
+
+**Possible explanations:**
+1. **Alternating pattern dynamics.** Bamba uses "M*" hybrid
+   pattern (1 Mamba + 1 attention layer). The alternating
+   structure may create competing SSM and attention solutions
+   that need additional training to harmonize.
+2. **Weight decay competition.** The generalizing circuit
+   established at step 20K may initially be fragile. Weight
+   decay promotes simpler solutions, and the model may cycle
+   through solution quality before settling on a stable one.
+3. **SSM state convergence.** The Mamba-2 state may need
+   additional training to develop stable representations for
+   the modular arithmetic pattern, even after the attention
+   layer has grokked.
+
+**Follow-up:** (a) Compare with Falcon-H1 (also "M*" pattern
+but no oscillation — why?). (b) Track attention weights and
+SSM state norms across the oscillation period.
