@@ -2336,3 +2336,29 @@ novel but opposite to our prediction.
 
 **Key methodology lesson:** Never draw causal conclusions
 from single-seed grokking experiments.
+
+---
+
+### 2026-03-16 — [HYPOTHESIS] HYP-016 pre-registered
+
+**Question:** Can early training signals (pass@64 or val_loss
+at step 2K) predict which seeds will grok within a single
+architecture (MoE-Jamba)?
+
+**Motivation:** B-014 showed cross-architecture prediction
+(rank correlation = 1.0, n=4 architectures) but was confounded.
+B-015 showed 10x seed variance, creating a natural within-
+architecture test.
+
+**Pilot (seed 45, 10K steps):** p@64 at step 2K = 0.999
+(near-saturated), val_acc = 0.401, not yet grokked. Concern:
+p@64 may saturate too early to differentiate seeds.
+
+**Competing hypotheses:**
+- H16-a (TTC predicts, 0.30): |rho| >= 0.6 for p@64
+- H16-b (Loss better, 0.35): val_loss has higher |rho|
+- H16-c (No signal, 0.35): both |rho| < 0.4
+
+**Design:** 10 seeds (42-51) × MoE-Jamba × 50K steps.
+
+**Recipe:** `recipes/hyp016_early_grokking_prediction.py`

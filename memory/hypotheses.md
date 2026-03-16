@@ -1864,7 +1864,7 @@ attention (LLaMA)?
 
 ### HYP-015: Does MoE cause grokking instability?
 
-**Status:** pre-registered (2026-03-16)
+**Status:** tested (2026-03-16)
 
 **Background:**
 In HYP-014, Jamba (SSM+attention+MoE) showed grokking
@@ -2033,3 +2033,91 @@ from "MoE causes instability" to "grokking on modular
 arithmetic is seed-dependent at this scale, with occasional
 un-grokking in 1/3 MoE seeds." The causal attribution to MoE
 was premature.
+
+---
+
+### HYP-016: Can early training signals predict grokking onset?
+
+**Status:** pre-registered (2026-03-16)
+
+**Background:**
+B-014 showed pass@64 at step 2K perfectly predicts grokking
+ORDER across 4 architectures (rank correlation = 1.0). But this
+could be confounded: architectures that learn faster generally
+will both grok sooner and have higher early pass@64.
+
+B-015 showed grokking onset varies 10x across seeds (4K-40K)
+for identical MoE-Jamba. This creates a natural experiment:
+do early training signals predict WHICH SEEDS grok within a
+single architecture?
+
+This is a clean test because architecture is held constant —
+any predictive signal must come from the training dynamics
+themselves, not architectural inductive bias.
+
+**Quality Gates (Step 0):**
+- Gate 1 (Importance): PASS. Grokking prediction is an active
+  research area. If early TTC signal predicts grokking, it would
+  be a practical tool for identifying promising training runs
+  without waiting for grokking onset.
+- Gate 2 (Scale): PASS. Grokking is inherently small-scale.
+  10 seeds at 50K steps is feasible (~4 hours).
+- Gate 3 (Prior coverage): PASS. B-014's cross-architecture
+  correlation has 4 data points. No within-architecture study
+  with 10+ seeds exists.
+- Gate 4 (Predictability): PASS. Pilot shows p@64 saturates
+  near 1.0 by step 2K — unclear if it can differentiate seeds.
+  val_loss / val_acc might be better predictors. Genuinely
+  uncertain.
+- Gate 5 (Methodology): PASS. 10 seeds, single architecture,
+  Spearman correlation + grokker/non-grokker separation.
+  Censored grok_step=60K for non-grokkers. Pre-specified
+  thresholds (|rho| >= 0.6 for support, < 0.4 for rejection).
+- Gate 6 (Sunk cost): PASS. First round on this question.
+
+**Prior Art (REA):**
+- [B-014] Own: pass@64 at step 2K predicts grokking order
+  across 4 architectures (rank correlation = 1.0, n=4).
+- [B-015] Own: Grokking onset varies 10x across seeds for
+  identical architecture. MoE-Jamba: 4K, 22K, 40K.
+- [HYP-009] Own: pass@64 reveals latent generalization 39K
+  steps before greedy accuracy catches up.
+- LIT-080 (Prakash & Martin 2026): Anti-grokking detection
+  methods. Does not study prediction of grokking onset.
+- LIT-082 (Prieto et al. 2025): Softmax collapse during
+  grokking. May relate to early weight structure.
+- **Gap:** No prior work on predicting grokking onset from
+  early training signals (especially TTC metrics).
+
+| ID | Hypothesis | Prediction | Falsification | Prior |
+|----|-----------|------------|---------------|-------|
+| H16-a | TTC predicts grokking | Spearman |rho| >= 0.6 between pass@64 at step 2K and grok_step (or pass@64 separates grokkers from non-grokkers with effect size > 0.5). | |rho| < 0.4 for pass@64. | 0.30 |
+| H16-b | Loss predicts better | val_loss at step 2K has higher |rho| than pass@64 with grok_step (and |rho_loss| >= 0.4). | |rho_loss| < |rho_p64| or |rho_loss| < 0.4. | 0.35 |
+| H16-c | No early signal | Both |rho| < 0.4 for pass@64 and val_loss at step 2K. Grokking onset is unpredictable from early signals. | Either metric has |rho| >= 0.4. | 0.35 |
+
+**Why these priors:**
+- H16-a low (0.30): Pilot shows p@64 saturates near 1.0 by
+  step 2K for all seeds, suggesting it may not differentiate.
+  The HYP-014 correlation was cross-architecture (confounded).
+- H16-b (0.35): val_loss has more dynamic range at step 2K and
+  might capture subtler differences. But loss predicting a
+  phase transition is a strong claim.
+- H16-c (0.35): Grokking onset timing may depend on weight
+  initialization details that are invisible to aggregate
+  metrics. The 10x seed variance in HYP-015 suggests high
+  stochasticity.
+
+**Design:**
+- 10 seeds (42..51) × 1 architecture (MoE-Jamba) = 10 runs
+- 50K steps, eval every 2K steps, batch_size=64
+- Same hyperparameters as HYP-015: wd=0.1, lr=1e-3, constant
+- Analysis: Spearman correlation, grokker/non-grokker means
+- Censoring: non-grokkers get grok_step=60K for correlation
+- HYP-015 seeds 42-44 are replicated (sanity check)
+
+**Note on pilot:** Seed 45 pilot (10K steps) showed p@64 at
+step 2K = 0.999, val_acc = 0.401, not yet grokked at 10K.
+The near-saturated p@64 is a concern for H16-a — if all seeds
+have p@64 ≈ 1.0 at step 2K, the metric can't differentiate.
+
+**Recipe:** `recipes/hyp016_early_grokking_prediction.py`
