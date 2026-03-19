@@ -2360,3 +2360,77 @@ Phase 2 — width reallocation:
    wider models fast enough — may differ on 8×H100
 5. Massive artifact headroom (11.3MB free) for other optimizations
    (bigger vocab, more recurrence loops, etc.)
+
+---
+
+## HYP-019: [PGOLF] Deeper Recurrence + Combined Optimizations
+
+**Experiment:** 19 — Deeper Recurrence and Combination Sweep
+**Status:** tested
+**Question:** Can deeper recurrence (more loops with 3 unique blocks)
+further improve BPB? Can combining weight sharing with schedule
+optimization compound the gains?
+
+**Context:** HYP-018 showed 3 unique blocks × 3 loops = 9 layers
+beats 9 unique blocks by 0.029 BPB. The artifact is only 4.7MB
+(11.3MB free). Two axes to explore:
+1. More depth via more loops (12, 15, 18 effective layers)
+2. Combining with schedule optimization (warmdown)
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H19-a | Deeper is better | 3×4=12 layers beats 3×3=9 | 12 layers worse than 9 |
+| H19-b | Diminishing returns | 3×5=15 not much better than 3×4=12 | 15 layers >0.02 better than 12 |
+| H19-c | Schedule+sharing compounds | wd=3000 + 3 blocks improves over either alone | Combined not better than sharing alone |
+
+**Priors:**
+- H19-a: 0.55 (deeper usually helps, but slower per step)
+- H19-b: 0.50 (hard to predict diminishing returns)
+- H19-c: 0.40 (schedule effects confounded in HYP-017)
+
+**Design:**
+- 3 blocks × {4,5} loops (NUM_LAYERS=12,15)
+- 3 blocks × 3 loops + warmdown={3000,4000,5000}
+- Extreme sharing: {1,2} blocks + warmdown=3000
+- Triple combo: 3 blocks + wd=5000 + lr=0.03
+
+**Results (11 runs, 2026-03-18):**
+
+Depth sweep:
+| Config | BPB | Steps | ms/step | Notes |
+|--------|-----|-------|---------|-------|
+| 3×4=12 layers | 1.9751 | 1009 | 595 | Worse — slower steps |
+| 3×5=15 layers | 1.9985 | 824 | 729 | Much worse |
+
+Sharing extremes:
+| Config | BPB | Steps | Artifact | Notes |
+|--------|-----|-------|----------|-------|
+| 1 block | 2.0046 | ~1400 | 1.9MB | Too few params |
+| 2 blocks | 1.9571 | ~1400 | 3.3MB | Still too few |
+| 1 block + wd=3000 | 1.9616 | ~1400 | 1.7MB | Not enough capacity |
+| 2 blocks + wd=3000 | 1.9224 | ~1400 | 2.9MB | Moderate |
+
+Schedule combinations (all with 3 unique blocks, 9 layers):
+| Config | BPB | Artifact | Notes |
+|--------|-----|----------|-------|
+| + wd=3000 | 1.8998 | 4.1MB | Good combo |
+| + wd=4000 | 1.8680 | 3.9MB | Better |
+| + wd=5000 | 1.8528 | 3.8MB | Even better |
+| **+ wd=5000 + lr=0.03** | **1.8436** | **3.6MB** | **Best shared config** |
+
+**Verdicts:**
+- H19-a (deeper is better): **FALSIFIED** — more depth = slower = fewer
+  steps = worse locally. 12 layers (1.975) worse than 9 (1.910).
+- H19-b: N/A — didn't reach regime where depth helps
+- H19-c (schedule+sharing compounds): **STRONGLY SUPPORTED** — each
+  optimization adds incrementally. Best combo (3u+wd=5000+lr=0.03) at
+  1.8436 matches the best 9-unique configs while using 64% less artifact.
+
+**Key insight:** The optimal sharing count is 3 blocks (U-shaped curve:
+1 < 2 < 3 > 5 > 9). Combined with aggressive warmdown + reduced LR,
+achieves 1.8436 BPB at only 3.6MB (12.4MB free within 16MB limit).
+
+**Confound note:** All warmdown/LR improvements are confounded by
+batch size (8K local vs 524K official). The weight sharing finding
+(3 blocks optimal) is less confounded — it provides regularization
+independent of batch size.

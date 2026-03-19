@@ -104,82 +104,103 @@ def propose(
         - iterations: int (training steps, default from env)
         - smoke: bool (if True, override to 200 steps)
     """
-    # HYP-018 depth recurrence / weight sharing sweep.
-    # Skip HYP-017 runs (already completed). Count only HYP-018 runs.
-    # Use wall_time > 500s (not step count) to filter out smoke tests,
-    # since wider models may complete <1000 steps in 600s.
-    hyp018_runs = [
+    # HYP-019b extreme sharing + aggressive schedule.
+    # Explore 1-2 unique blocks and combine with warmdown.
+    hyp019b_runs = [
         r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-018")
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-019b")
         and r.get("wall_time_s", 0) > 500
     ]
-    n = len(hyp018_runs)
+    n = len(hyp019b_runs)
 
-    # Phase 1: isolate sharing cost at same width
     configs = [
         {
-            "env_overrides": {"ITERATIONS": "5000"},
-            "description": "baseline rerun (9 unique, dim=512)",
-            "hypothesis": "HYP-018-baseline",
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "2",
+            },
+            "description": "2 unique blocks × 4.5 loops = 9 layers",
+            "hypothesis": "HYP-019b-sharing",
         },
-        {
-            "env_overrides": {"ITERATIONS": "5000", "UNIQUE_BLOCKS": "3"},
-            "description": "3 unique blocks, dim=512 (pure sharing cost)",
-            "hypothesis": "HYP-018-a",
-        },
-        {
-            "env_overrides": {"ITERATIONS": "5000", "UNIQUE_BLOCKS": "5"},
-            "description": "5 unique blocks, dim=512 (moderate sharing)",
-            "hypothesis": "HYP-018-c",
-        },
-    ]
-
-    # Phase 2: width reallocation with shared blocks
-    phase2_configs = [
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "MODEL_DIM": "768",
-                "NUM_HEADS": "8",
-                "NUM_KV_HEADS": "4",
+                "UNIQUE_BLOCKS": "1",
             },
-            "description": "3 unique, dim=768 (shared+wider, ~13.2M params)",
-            "hypothesis": "HYP-018-b",
+            "description": "1 unique block × 9 loops = 9 layers",
+            "hypothesis": "HYP-019b-sharing",
         },
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
                 "UNIQUE_BLOCKS": "3",
-                "MODEL_DIM": "896",
-                "NUM_HEADS": "8",
-                "NUM_KV_HEADS": "4",
+                "WARMDOWN_ITERS": "5000",
             },
-            "description": "3 unique, dim=896 (shared+wider, ~17.8M params)",
-            "hypothesis": "HYP-018-b",
+            "description": "3×3=9 layers + warmdown=5000 (best local schedule)",
+            "hypothesis": "HYP-019b-schedule",
         },
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "5",
-                "MODEL_DIM": "640",
-                "NUM_HEADS": "8",
-                "NUM_KV_HEADS": "4",
+                "UNIQUE_BLOCKS": "2",
+                "WARMDOWN_ITERS": "3000",
             },
-            "description": "5 unique, dim=640 (moderate sharing+wider, ~12.5M)",
-            "hypothesis": "HYP-018-b",
+            "description": "2 blocks + warmdown=3000",
+            "hypothesis": "HYP-019b-combined",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "1",
+                "WARMDOWN_ITERS": "3000",
+            },
+            "description": "1 block + warmdown=3000 (extreme sharing+schedule)",
+            "hypothesis": "HYP-019b-combined",
         },
     ]
 
-    all_configs = configs + phase2_configs
-    if n < len(all_configs):
-        return all_configs[n]
+    if n < len(configs):
+        return configs[n]
 
-    # All configs tested
+    # Phase 3: final combinations
+    hyp019c_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-019c")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    m = len(hyp019c_runs)
+
+    final_configs = [
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "WARMDOWN_ITERS": "5000",
+                "MATRIX_LR": "0.03",
+                "SCALAR_LR": "0.03",
+                "TIED_EMBED_LR": "0.04",
+            },
+            "description": "3u + wd=5000 + lr=0.03 (triple combo)",
+            "hypothesis": "HYP-019c-triple",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "WARMDOWN_ITERS": "4000",
+            },
+            "description": "3u + wd=4000 (between wd=3000 and 5000)",
+            "hypothesis": "HYP-019c-schedule",
+        },
+    ]
+
+    if m < len(final_configs):
+        return final_configs[m]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
-        "hypothesis": "HYP-018-done",
+        "hypothesis": "HYP-019-done",
     }
 
 

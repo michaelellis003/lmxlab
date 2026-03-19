@@ -563,3 +563,4 @@ models are too slow per step on Mac hardware.
 |------|----------|-------|-----------|------------|
 | 2026-03-18 | Prior: sharing typically hurts capacity; Universal Transformers showed it can work but at different scale. | C | Against | 0.30 |
 | 2026-03-18 | HYP-018: 3 unique blocks beats baseline by 0.029 BPB. 5 blocks also beats baseline but by less. Monotonic trend: more sharing = better. Confound: partially explained by step count advantage. | B | Strong for | 0.80 |
+| 2026-03-18 | HYP-019: U-shaped curve confirmed (1→2→**3**→5→9). 3 blocks optimal. Combined with schedule (3u+wd=5000+lr=0.03) achieves 1.8436 at 3.6MB, matching 9-unique configs. | B | Strong for | 0.85 |

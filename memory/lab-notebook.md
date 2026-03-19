@@ -2598,5 +2598,61 @@ if it acts as depth-efficient capacity).
 3. Explore larger vocabulary with shared blocks
 
 **Belief updates:**
-- NEW B-019: Weight sharing improves BPB at small scale (p=0.80)
+- NEW B-020: Weight sharing improves BPB at small scale (p=0.80)
 - B-018 → unchanged (schedule findings still confounded)
+
+---
+
+### 2026-03-18 [EXPERIMENT] HYP-019: Deeper Recurrence + Combos
+
+11 runs across 3 sub-experiments:
+
+**Depth sweep (3 unique blocks, varying loops):**
+- 3×4=12 layers: 1.9751 BPB (worse — only 1009 steps at 595ms)
+- 3×5=15 layers: 1.9985 BPB (much worse — 824 steps at 729ms)
+Verdict: more depth hurts locally (step count penalty dominates)
+
+**Extreme sharing (fewer unique blocks):**
+- 1 block: 2.0046 / 1 block + wd=3000: 1.9616
+- 2 blocks: 1.9571 / 2 blocks + wd=3000: 1.9224
+Verdict: U-shaped curve. 3 blocks is the sweet spot.
+
+**Schedule combinations with 3 unique blocks:**
+- + wd=3000: 1.8998 (good combo)
+- + wd=4000: 1.8680 (better)
+- + wd=5000: 1.8528 (even better)
+- **+ wd=5000 + lr=0.03: 1.8436** (BEST shared config, 3.6MB)
+
+---
+
+### 2026-03-18 [INTERPRET] HYP-019: Depth + Combos
+
+**H19-a (deeper is better): FALSIFIED** — locally, any change that
+increases per-step time hurts BPB due to step count reduction within
+600s wallclock. This applies to both width (HYP-018) and depth.
+
+**H19-c (schedule+sharing compounds): STRONGLY SUPPORTED** — the
+triple combo (3u + wd=5000 + lr=0.03) at 1.8436 BPB matches the
+best 9-unique-block configs while using 64% less artifact space.
+
+**Complete sharing curve (at dim=512, 9 layers):**
+1 block → 2 blocks → **3 blocks** → 5 blocks → 9 blocks
+2.005 → 1.957 → **1.910** → 1.928 → 1.939
+
+**Overall leaderboard (top 5):**
+1. 9u + wd=3000 + lr=0.03: 1.8172 (10.3MB, high variance ±0.04)
+2. 9u + wd=5000: 1.8395 (10.0MB)
+3. **3u + wd=5000 + lr=0.03: 1.8436 (3.6MB)** ← Pareto optimal
+4. 9u + wd=4000: 1.8453 (10.4MB)
+5. 3u + wd=5000: 1.8528 (3.8MB)
+
+**Strategic conclusion:** For competition submission:
+- Weight sharing (3 blocks) is the core architectural win
+- Schedule/LR tuning adds local signal but is confounded
+- 12.4MB of artifact headroom available for other improvements
+- Next: explore vocab size (R-PG-003) or test on official hardware
+
+**Belief updates:**
+- B-020 → 0.85 (sharing regularization confirmed across many configs)
+- NEW: local BPB ranking dominated by step count — any compute
+  increase hurts. This is a local artifact, not a general principle.
