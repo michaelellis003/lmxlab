@@ -104,139 +104,61 @@ def propose(
         - iterations: int (training steps, default from env)
         - smoke: bool (if True, override to 200 steps)
     """
-    # HYP-019b extreme sharing + aggressive schedule.
-    # Explore 1-2 unique blocks and combine with warmdown.
-    hyp019b_runs = [
+    # HYP-021: Throughput optimization via Muon steps + microbatch
+    # Reduce per-step time to get more steps in 600s wallclock.
+    hyp021_runs = [
         r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-019b")
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-021")
         and r.get("wall_time_s", 0) > 500
     ]
-    n = len(hyp019b_runs)
+    n = len(hyp021_runs)
 
     configs = [
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "2",
+                "UNIQUE_BLOCKS": "3",
             },
-            "description": "2 unique blocks × 4.5 loops = 9 layers",
-            "hypothesis": "HYP-019b-sharing",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "1",
-            },
-            "description": "1 unique block × 9 loops = 9 layers",
-            "hypothesis": "HYP-019b-sharing",
+            "description": "Baseline refresh: 3u blocks, default Muon (5 NS steps)",
+            "hypothesis": "HYP-021-baseline",
         },
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
                 "UNIQUE_BLOCKS": "3",
-                "WARMDOWN_ITERS": "5000",
+                "MUON_BACKEND_STEPS": "3",
             },
-            "description": "3×3=9 layers + warmdown=5000 (best local schedule)",
-            "hypothesis": "HYP-019b-schedule",
+            "description": "3u + 3 NS steps (vs default 5)",
+            "hypothesis": "HYP-021-ns3",
         },
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "2",
-                "WARMDOWN_ITERS": "3000",
+                "UNIQUE_BLOCKS": "3",
+                "MLX_MAX_MICROBATCH_TOKENS": "8192",
             },
-            "description": "2 blocks + warmdown=3000",
-            "hypothesis": "HYP-019b-combined",
+            "description": "3u + microbatch=8192 (vs default 4096)",
+            "hypothesis": "HYP-021-mb8k",
         },
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "1",
-                "WARMDOWN_ITERS": "3000",
+                "UNIQUE_BLOCKS": "3",
+                "MUON_BACKEND_STEPS": "3",
+                "MLX_MAX_MICROBATCH_TOKENS": "8192",
             },
-            "description": "1 block + warmdown=3000 (extreme sharing+schedule)",
-            "hypothesis": "HYP-019b-combined",
+            "description": "3u + 3 NS steps + microbatch=8192 (combined)",
+            "hypothesis": "HYP-021-combined",
         },
     ]
 
     if n < len(configs):
         return configs[n]
 
-    # Phase 3: final combinations
-    hyp019c_runs = [
-        r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-019c")
-        and r.get("wall_time_s", 0) > 500
-    ]
-    m = len(hyp019c_runs)
-
-    final_configs = [
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "WARMDOWN_ITERS": "5000",
-                "MATRIX_LR": "0.03",
-                "SCALAR_LR": "0.03",
-                "TIED_EMBED_LR": "0.04",
-            },
-            "description": "3u + wd=5000 + lr=0.03 (triple combo)",
-            "hypothesis": "HYP-019c-triple",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "WARMDOWN_ITERS": "4000",
-            },
-            "description": "3u + wd=4000 (between wd=3000 and 5000)",
-            "hypothesis": "HYP-019c-schedule",
-        },
-    ]
-
-    if m < len(final_configs):
-        return final_configs[m]
-
-    # HYP-020 SwiGLU vs relu² comparison
-    hyp020_runs = [
-        r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-020")
-        and r.get("wall_time_s", 0) > 500
-    ]
-    p = len(hyp020_runs)
-
-    swiglu_configs = [
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "MLP_TYPE": "swiglu",
-            },
-            "description": "SwiGLU 3u, default schedule (vs relu² 1.9102)",
-            "hypothesis": "HYP-020-swiglu",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "MLP_TYPE": "swiglu",
-                "WARMDOWN_ITERS": "5000",
-                "MATRIX_LR": "0.03",
-                "SCALAR_LR": "0.03",
-                "TIED_EMBED_LR": "0.04",
-            },
-            "description": "SwiGLU 3u + wd=5000 + lr=0.03 (full combo)",
-            "hypothesis": "HYP-020-swiglu-combo",
-        },
-    ]
-
-    if p < len(swiglu_configs):
-        return swiglu_configs[p]
-
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
-        "hypothesis": "HYP-020-done",
+        "hypothesis": "HYP-021-done",
     }
 
 

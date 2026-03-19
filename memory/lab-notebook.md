@@ -2696,3 +2696,81 @@ After 4 iterations (HYP-017 through HYP-020) and ~30 experiments:
 **Local iteration has diminishing returns** — schedule/LR
 optimization is noise on Mac due to 64x batch size mismatch.
 Pivot to GPU validation or vocab exploration.
+
+---
+
+### 2026-03-18 [PLAN] HYP-021: Throughput Optimization
+
+**Rationale:** Local BPB is dominated by step count (more steps =
+lower BPB). Two "free" levers remain:
+1. Reduce Muon Newton-Schulz iterations (5→3): saves ~40% of
+   optimizer overhead per step
+2. Increase microbatch size (4096→8192): may reduce MLX overhead
+
+Both are zero-cost in artifact size and architecture. If they work,
+the BPB gain is batch-size-independent (more compute per wallclock
+second always helps).
+
+**Note:** R-PG-003 (vocab exploration) is blocked — only sp1024
+tokenizer/dataset available locally. The download script supports
+`--variant sp4096` but the HF manifest only contains sp1024.
+R-PG-004 (low-rank) deprioritized — with 11.3MB artifact headroom,
+we don't need to save params, we need to spend them wisely.
+
+**Configs:**
+1. Baseline refresh: 3u blocks, default everything (reference)
+2. MUON_BACKEND_STEPS=3: fewer orthogonalization iterations
+3. MLX_MAX_MICROBATCH_TOKENS=8192: larger compute chunks
+4. MUON_BACKEND_STEPS=3 + MLX_MAX_MICROBATCH_TOKENS=8192: combined
+
+---
+
+### 2026-03-18 [EXPERIMENT] HYP-021: Throughput Optimization
+
+4 runs testing whether reducing per-step computation buys enough
+throughput to offset any quality loss.
+
+| Config | BPB | Steps | ms/step | Δ BPB |
+|--------|-----|-------|---------|-------|
+| Baseline (5 NS, mb=4096) | 1.9234 | 1312 | 457 | — |
+| 3 NS steps | 1.9963 | 1344 | 446 | -0.073 |
+| Microbatch=8192 | 1.9286 | 1322 | 454 | -0.005 |
+| Combined | 1.9927 | 1348 | 445 | -0.069 |
+
+**Key finding:** Muon's 5 Newton-Schulz steps are load-bearing.
+Reducing to 3 only saves 2.4% step time but destroys convergence
+(0.073 BPB worse). Microbatch size is irrelevant at 8K batch.
+
+---
+
+### 2026-03-18 [INTERPRET] HYP-021: No Free Throughput
+
+All 3 hypotheses falsified. The Muon optimizer's default settings
+are well-tuned — you can't trade optimizer quality for throughput
+profitably. The 5 Newton-Schulz steps provide quadratic convergence
+of the gradient orthogonalization, and 3 steps leaves the gradient
+poorly conditioned, causing slower training convergence that far
+exceeds the throughput benefit.
+
+**Implications for competition:**
+- Keep MUON_BACKEND_STEPS=5 (default). Do not tune.
+- Microbatch tuning is irrelevant at 524K official batch size
+  (already handled by GRAD_ACCUM_STEPS on GPU).
+- The only remaining "free" lever is training schedule, which is
+  confounded locally (see HYP-017).
+
+**Assessment of local iteration value:**
+After 5 iterations (HYP-017 through HYP-021) and ~35 experiments,
+the actionable local findings are:
+1. UNIQUE_BLOCKS=3 (+0.029 BPB, 63% smaller artifact) — HIGH confidence
+2. Keep relu² over SwiGLU — HIGH confidence
+3. Keep default Muon settings — HIGH confidence (new)
+4. Longer warmdown helps — MEDIUM confidence (confounded)
+
+**Remaining local experiments have diminishing returns.** The best
+path forward is:
+- Test UNIQUE_BLOCKS=3 on official 8xH100 hardware
+- If confirmed, use freed artifact budget for vocab exploration
+  (requires sp4096 tokenizer/dataset)
+- Skip R-PG-004 (low-rank) — headroom is not the bottleneck
+- Skip R-PG-009 (skip connections) — expected gain < noise floor

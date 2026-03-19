@@ -2465,3 +2465,58 @@ settings, SwiGLU hidden = dim×2×2/3 = dim×4/3 (rounded to 688).
 hidden dimension (1024 vs 688) of relu² provides more expressiveness
 than SwiGLU's smoother activation. This is a clean, batch-size
 independent result. Keep relu² for competition.
+
+---
+
+## HYP-021: [PGOLF] Throughput Optimization via Muon Steps + Microbatch
+
+**Experiment:** 21 — Step-Time Reduction for Higher Throughput
+**Status:** active
+**Question:** Can we reduce per-step computation time without hurting
+BPB, effectively trading compute quality for more training steps
+within the 600s wallclock budget?
+
+**Context:** With 3 unique blocks at dim=512, local training gets
+~1300 steps in 600s. The Muon optimizer uses 5 Newton-Schulz
+iterations per step for gradient orthogonalization. Each iteration
+is a matrix multiply on the gradient. Reducing this to 3 steps
+would save ~40% of Muon overhead. Additionally, the microbatch
+size (MLX_MAX_MICROBATCH_TOKENS) affects memory/compute tradeoffs.
+
+**Prior Art:**
+- Muon paper: 5 steps is a reasonable default but not deeply tuned.
+  Keller Jordan notes that fewer steps work at smaller scales.
+- The convergence of Newton-Schulz is quadratic, so 3 steps may
+  be "good enough" for 512-dim matrices.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H21-a | Fewer NS steps work | MUON_BACKEND_STEPS=3 achieves BPB within 0.005 of 5-step baseline, with measurably more steps in 600s | BPB degrades by >0.01 |
+| H21-b | Larger microbatch helps | MLX_MAX_MICROBATCH_TOKENS=8192 (vs 4096) reduces per-step time at same BPB | Per-step time unchanged or BPB degrades |
+| H21-c | Combined wins | 3 NS steps + larger microbatch achieves best BPB via throughput | Combined is worse than either alone |
+
+**Design:** Compare against best known config (3 unique blocks,
+default schedule). 600s wallclock, measure steps completed AND BPB.
+
+**Results:**
+| Config | BPB | Steps | ms/step | Δ BPB |
+|--------|-----|-------|---------|-------|
+| Baseline (3u, 5 NS, mb=4096) | 1.9234 | 1312 | 457 | — |
+| 3 NS steps | 1.9963 | 1344 | 446 | -0.073 |
+| Microbatch=8192 | 1.9286 | 1322 | 454 | -0.005 |
+| 3 NS + mb=8192 | 1.9927 | 1348 | 445 | -0.069 |
+
+**Verdict:**
+- H21-a **FALSIFIED** — 3 NS steps degrades BPB by 0.073, far
+  exceeding the 0.005 threshold. The 2.4% throughput gain (32 extra
+  steps) is overwhelmed by degraded gradient orthogonalization.
+  Muon's 5 Newton-Schulz steps are load-bearing.
+- H21-b **FALSIFIED** — Microbatch=8192 gives no meaningful speedup
+  at batch_tokens=8192 (only 8 sequences total, so 1 vs 2
+  microbatches makes negligible difference).
+- H21-c **FALSIFIED** — Combined is just the NS3 penalty with no
+  microbatch benefit.
+
+**Conclusion:** Default Muon settings (5 NS steps, mb=4096) are
+near-optimal for throughput/quality tradeoff. No free throughput
+gains available from optimizer tuning.

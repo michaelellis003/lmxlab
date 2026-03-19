@@ -50,7 +50,11 @@ document but bigger embedding table. With tied embeddings, the
 table is shared. With depth recurrence saving transformer params,
 a larger vocab might net improve BPB.
 **Expected gain:** 0.005-0.015 BPB (with depth recurrence)
-**Status:** queued
+**Status:** blocked (no sp4096 tokenizer/dataset locally)
+**Blocker:** HF manifest only contains sp1024. Creating sp4096
+requires downloading docs_selected.jsonl (~50GB) and retraining
+tokenizer. Best tested on GPU where vocab expansion can also
+use the 12.4MB artifact headroom from weight sharing.
 
 ## Tier 2: Moderate Impact, Lower Risk
 
@@ -91,6 +95,16 @@ Could explore denser skip patterns, different mixing strategies.
 **Expected gain:** 0.001-0.003 BPB
 **Status:** queued
 
+### R-PG-010: Optimizer Throughput Tuning
+**Priority:** Low (already tested)
+**Rationale:** Reduce Muon Newton-Schulz iterations or increase
+microbatch size to gain throughput within 600s wallclock.
+**Expected gain:** 0.005-0.010 BPB (via more steps)
+**Status:** tested (HYP-021)
+**Result:** 3 NS steps degrades BPB by 0.073 (step time only 2.4%
+faster). Microbatch size is irrelevant at 8K batch. Muon's 5 NS
+steps are load-bearing for convergence quality. No free throughput.
+
 ## Completed Items
 
 - R-PG-001: Schedule tuning (HYP-017) — longer warmdown helps, but
@@ -99,14 +113,17 @@ Could explore denser skip patterns, different mixing strategies.
   optimal, +0.029 BPB and 63% smaller artifact. Best combined config:
   3u + wd=5000 + lr=0.03 = 1.8436 at 3.6MB. 12.4MB headroom.
 - R-PG-006: SwiGLU (HYP-020) — relu² beats SwiGLU. Keep relu².
+- R-PG-010: Optimizer throughput (HYP-021) — keep defaults. 5 NS
+  steps are load-bearing. No free throughput gains.
 
 ## Recommended Competition Config
 
-Based on 30+ local experiments (confound: 8K batch vs 524K official):
+Based on 35+ local experiments (confound: 8K batch vs 524K official):
 
 **Definite changes (batch-independent):**
 - UNIQUE_BLOCKS=3 (weight sharing, +0.029 BPB, 63% smaller artifact)
 - Keep relu² (beats parameter-matched SwiGLU)
+- Keep MUON_BACKEND_STEPS=5 (3 steps destroys convergence)
 
 **Test on official hardware:**
 - WARMDOWN_ITERS=1500-1800 (conservative schedule extension)
@@ -115,6 +132,24 @@ Based on 30+ local experiments (confound: 8K batch vs 524K official):
 **Do NOT use locally-optimal values:**
 - WARMDOWN_ITERS=5000 and MATRIX_LR=0.03 are batch-size artifacts
 
+## Local Iteration Assessment
+
+After 5 research iterations (HYP-017 through HYP-021) with 35+
+experiments, **local iteration has reached diminishing returns:**
+
+1. Architecture changes (sharing, MLP type): thoroughly explored
+2. Schedule/LR: confounded by 64x batch size mismatch
+3. Throughput tricks: exhausted (optimizer settings are optimal)
+4. Vocab exploration: blocked (need sp4096 dataset)
+5. Low-rank/skip tweaks: expected gains below noise floor
+
+**Recommended next steps:**
+1. GPU validation: UNIQUE_BLOCKS=3 with default schedule
+2. GPU vocab exploration: sp4096 with shared blocks
+3. GPU QAT: if weight sharing confirmed, quantization-aware
+   training to recover int8 compression losses
+
 ## Retired Items
 
-(none yet)
+- R-PG-004: Low-rank — deprioritized, headroom is not the bottleneck
+- R-PG-009: Skip connections — expected gain < noise floor
