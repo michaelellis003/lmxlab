@@ -237,6 +237,56 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-026: Competition-informed structural experiments
+    hyp026_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-026")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp026_runs)
+
+    configs = [
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "NUM_LAYERS": "6",
+                "MLP_MULT": "3",
+            },
+            "description": "6L+3u+4h + MLP 3x (wider MLP, competition top tech)",
+            "hypothesis": "HYP-026-mlp3x",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "NUM_LAYERS": "6",
+                "LOGIT_SOFTCAP": "50.0",
+            },
+            "description": "6L+3u+4h + high softcap=50 (Optuna signal)",
+            "hypothesis": "HYP-026-softcap50",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "NUM_LAYERS": "6",
+                "MUON_MOMENTUM": "0.99",
+            },
+            "description": "6L+3u+4h + momentum=0.99 (competition consensus)",
+            "hypothesis": "HYP-026-mom99",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

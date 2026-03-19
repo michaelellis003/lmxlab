@@ -3215,3 +3215,105 @@ will be more reliable (B-022: local BPB is step-count-dominated).
 confounded by the 8K local batch size. Lower LR reduces effective
 gradient noise, which helps with the 64x-noisier local gradients.
 This effect may vanish at 524K official batch size.
+
+**UPDATE: 8 trials completed (stopped at trial 8).**
+
+Final results (8 full trials, sorted by BPB):
+
+| Trial | BPB | mom | mlr | slr | wd | qk | sc |
+|-------|-----|-----|-----|-----|------|------|------|
+| 4 | **1.7309** | 0.921 | 0.020 | 0.027 | 1500 | 0.72 | 47.2 |
+| 3 | 1.7397 | 0.988 | 0.011 | 0.036 | 4500 | 2.42 | 39.8 |
+| 1 | 1.7596 | 0.968 | 0.026 | 0.037 | 500 | 2.76 | 47.4 |
+| 6 | 1.7638 | 0.985 | 0.074 | 0.016 | 3000 | 1.22 | 45.3 |
+| 5 | 1.7714 | 0.988 | 0.053 | 0.028 | 4500 | 1.10 | 35.0 |
+| 7 | 1.7721 | 0.948 | 0.070 | 0.024 | 2000 | 1.70 | 28.1 |
+| 2 | 1.7735 | 0.922 | 0.028 | 0.014 | 4500 | 2.50 | 18.5 |
+
+**Optuna parameter importances (fANOVA):**
+1. scalar_lr: 35.7% — **most important, underexplored in competition**
+2. warmdown_iters: 25.7% — confounded by B-022
+3. logit_softcap: 17.7% — higher is better (~47 optimal)
+4. matrix_lr: 12.3% — lower is better (~0.02 locally)
+5. muon_momentum: 6.3% — barely matters (contradicts LIT-102 consensus)
+6. qk_gain_init: 2.3% — irrelevant
+
+**Key insight:** scalar_lr is the dominant factor locally, and competition
+submissions haven't tuned it. However, this is heavily confounded by B-022 —
+scalar_lr controls Adam optimizer for non-matrix params (embeddings, norms,
+biases), and lower values reduce noise in the 64x-noisier local batch.
+
+**Decision:** Move to structural experiments. Numeric tuning on Mac gives
+diminishing returns due to B-022 confound. Best to validate on GPU.
+
+---
+
+### 2026-03-19 [HYPOTHESIS] HYP-026: Competition-Informed Structural Experiments
+
+Testing 3 techniques from competition peer review on our best local
+architecture (6L, 3u, 4h/4kv):
+
+| Test | Change | Source | Expected |
+|------|--------|--------|----------|
+| MLP 3x | MLP_MULT=3 (wider MLP) | PR #65 (top submission) | +throughput cost, maybe +quality |
+| Softcap 50 | LOGIT_SOFTCAP=50 | Optuna signal (17.7% importance) | Small improvement, iso-step |
+| Mom 0.99 | MUON_MOMENTUM=0.99 | LIT-102 (4+ submissions) | Unclear (Optuna says 6.3%) |
+
+**Competing hypotheses:**
+- H26-a: MLP 3x helps despite throughput cost (quality > speed)
+- H26-b: Softcap 50 helps (Optuna signal transfers to full run)
+- H26-c: Mom 0.99 helps (competition consensus is right)
+
+**Control:** 6L+3u+4h/4kv with default params = 1.7363 BPB
+**Confound:** MLP 3x will be throughput-confounded (B-022)
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-026: Competition Technique Results
+
+| Config | BPB | Delta vs control | Steps | Artifact |
+|--------|-----|------------------|-------|----------|
+| Control (6L, defaults) | 1.7363 | — | 1996 | 5.9MB |
+| **MLP 3x** | 1.7658 | -0.030 | ~1600 | 7.0MB |
+| **Softcap 50** | 1.7489 | -0.013 | ~1996 | 5.9MB |
+| **Mom 0.99** | 1.8632 | **-0.127** | ~1996 | 6.2MB |
+
+---
+
+### 2026-03-19 [INTERPRET] HYP-026: All Competition Techniques Hurt Locally
+
+**Adjudication:**
+- H26-a (MLP 3x helps): **FALSIFIED** — 1.7658, -0.030 vs control.
+  Throughput cost (fewer steps from wider MLP) outweighs any quality
+  gain. Expected per B-022.
+- H26-b (Softcap 50 helps): **FALSIFIED** — 1.7489, -0.013 vs
+  control. The Optuna signal was misleading — softcap importance
+  was likely confounded by co-occurring LR differences in trials.
+- H26-c (Mom 0.99 helps): **STRONGLY FALSIFIED** — 1.8632, -0.127
+  vs control. This is the LARGEST negative effect seen across all
+  experiments. Competition consensus of 0.99 actively hurts at 8K
+  batch size.
+
+**Key insight — batch-size-dependent momentum:**
+At 524K batch (official), gradients are relatively clean, so higher
+momentum (0.99) helps by smoothing across mini-batches. At 8K batch
+(local), gradients are 64x noisier, so high momentum means the
+optimizer chases stale, noisy gradient estimates for too long. The
+optimal momentum scales with batch size: lower momentum for noisier
+gradients.
+
+This partially explains why the competition (always at 524K batch)
+converges on 0.99 while our local experiments see no benefit. The
+finding is consistent with B-022.
+
+**GPU test implications:**
+- MLP 3x: **MUST test on GPU** — the throughput confound may reverse
+  because GPU matmul scales better with wider dimensions
+- Softcap 50: **Low priority for GPU** — likely a noise artifact
+- Mom 0.99: **MUST test on GPU** — competition consensus strongly
+  suggests it helps at 524K batch, and our negative result confirms
+  the batch-size dependence
+
+**Anomaly:** None of the competition's "consensus" numeric tweaks
+work locally. This is a B-022 consequence, not a technique failure.
+All three should be retested at 524K batch on GPU.

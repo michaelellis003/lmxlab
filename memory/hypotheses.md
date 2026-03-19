@@ -2709,3 +2709,34 @@ SCALAR_LR [0.01-0.08] log, WARMDOWN_ITERS [500-5000] step=500,
 QK_GAIN_INIT [0.5-3.0], LOGIT_SOFTCAP [15.0-50.0].
 Fixed arch: 3u, 4h/4kv, 6L. Baseline params as trial 0.
 **Recipe:** recipes/pgolf_optuna.py
+
+**Result (8 trials):**
+- H25-a: NOT SUPPORTED — best trial only +0.005 over defaults
+- H25-b: TENTATIVELY SUPPORTED — BPB range is narrow (0.043)
+- H25-c: FALSIFIED — best trial has mom=0.921, not 0.99
+
+Parameter importances (fANOVA): scalar_lr 35.7% > warmdown 25.7% >
+softcap 17.7% > matrix_lr 12.3% > momentum 6.3% > qk_gain 2.3%
+
+---
+
+## HYP-026: [PGOLF] Competition-Informed Structural Experiments
+
+**Experiment:** 26 — Competition techniques on best local architecture
+**Status:** tested
+**Question:** Do competition-consensus techniques (MLP 3x, softcap 50,
+mom 0.99) improve BPB on our 6L+3u+4h/4kv architecture?
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H26-a | MLP 3x helps | >0.005 BPB improvement | MLP 3x worse |
+| H26-b | Softcap 50 helps | >0.005 BPB improvement | Softcap 50 worse |
+| H26-c | Mom 0.99 helps | >0.005 BPB improvement | Mom 0.99 worse |
+
+**Result:** ALL 3 FALSIFIED locally.
+- MLP 3x: 1.7658 (-0.030 vs control)
+- Softcap 50: 1.7489 (-0.013 vs control)
+- Mom 0.99: 1.8632 (-0.127 vs control, largest negative ever)
+
+All failures attributed to B-022 (batch-size confound). Must retest
+on GPU at 524K batch.
