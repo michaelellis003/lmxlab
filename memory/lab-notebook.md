@@ -3125,3 +3125,93 @@ experiments for 8xH100 validation:
 10. NTK-aware RoPE (train@1024, eval@4096)
 11. Iteration embeddings for depth recurrence
 12. NorMuon optimizer
+
+---
+
+### 2026-03-19 [HYPOTHESIS] HYP-025: Optuna TPE Numeric Tuning
+
+Pre-registered. Using Optuna TPE (Tree Parzen Estimator) to search
+over numeric hyperparameters with fixed architecture (3u, 4h/4kv, 6L).
+
+**Search space (6 parameters):**
+- MUON_MOMENTUM: [0.90, 0.99] (competition consensus: 0.99)
+- MATRIX_LR: [0.01, 0.08] log-uniform (baseline: 0.04)
+- SCALAR_LR: [0.01, 0.08] log-uniform (baseline: 0.04)
+- WARMDOWN_ITERS: [500, 5000] step=500 (baseline: 1200)
+- QK_GAIN_INIT: [0.5, 3.0] (baseline: 1.5)
+- LOGIT_SOFTCAP: [15.0, 50.0] (baseline: 30.0)
+
+**Competing hypotheses:**
+- H25-a: Optuna finds >0.02 BPB improvement over baseline params
+  (meaningful improvement from numeric tuning alone)
+- H25-b: Improvement is <0.02 BPB (current params are near-optimal
+  for this architecture)
+- H25-c: Competition-consensus momentum=0.99 is the dominant factor
+
+**Design:** 20 trials via Optuna TPE with median pruning.
+Baseline (trial 0) enqueued with default params for comparison.
+Study stored in experiments/optuna_pgolf.db.
+
+**Confound warning (B-022):** Local BPB is step-count-dominated.
+WARMDOWN_ITERS findings will be confounded (see HYP-017 precedent).
+MUON_MOMENTUM and LR findings should transfer better since they
+affect per-step quality, not step count.
+
+**Recipe:** recipes/pgolf_optuna.py
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-025: Optuna TPE Results (5 full trials)
+
+| Rank | Trial | BPB | mom | mlr | slr | wd | qk | sc |
+|------|-------|-----|-----|-----|-----|------|------|------|
+| 1 | **4** | **1.7309** | 0.921 | 0.020 | 0.027 | 1500 | 0.72 | 47.2 |
+| 2 | 3 | 1.7397 | 0.988 | 0.011 | 0.036 | 4500 | 2.42 | 39.8 |
+| 3 | 1 | 1.7596 | 0.968 | 0.026 | 0.037 | 500 | 2.76 | 47.4 |
+| 4 | 5 | 1.7714 | 0.988 | 0.053 | 0.028 | 4500 | 1.10 | 35.0 |
+| 5 | 2 | 1.7735 | 0.922 | 0.028 | 0.014 | 4500 | 2.50 | 18.5 |
+
+**New local best: 1.7309 BPB** (trial 4), +0.005 over HYP-024's 1.7363.
+All trials used fixed architecture: 3u, 4h/4kv, 6L.
+Study stored at experiments/optuna_pgolf.db.
+
+---
+
+### 2026-03-19 [INTERPRET] HYP-025: Optuna Numeric Tuning
+
+**Adjudication:**
+- H25-a (>0.02 BPB improvement): **NOT SUPPORTED** — best trial only
+  +0.005 over default params. With only 5 trials, this is within noise.
+- H25-b (current params near-optimal): **TENTATIVELY SUPPORTED** —
+  BPB range across 5 trials is only 0.043 (1.7309-1.7735). Default
+  params (1.7363 from HYP-024) sit within this range.
+- H25-c (momentum dominates): **FALSIFIED** — best trial has low
+  momentum (0.921), not the competition-consensus 0.99. However,
+  trial 3 (mom=0.988) is second best at 1.7397.
+
+**Patterns across trials:**
+1. **Lower matrix_lr consistently helps** — all top trials use
+   0.01-0.028 vs baseline 0.04. This is the clearest signal.
+2. **High logit softcap preferred** — top 3 trials all have
+   softcap >39. Higher softcap = less logit clamping = more
+   expressive output distribution.
+3. **Momentum is NOT clearly directional** — best (0.921) and
+   second (0.988) are at opposite extremes. Need more trials.
+4. **QK gain has wide variance** — 0.72 to 2.76 across top 3.
+   Not a strong signal in 5 trials.
+5. **Warmdown is confounded** (B-022, HYP-017 precedent).
+
+**Overall:** With only 5 trials, the Optuna study is inconclusive.
+The search space is 6-dimensional, and 5 trials is far too few for
+TPE to converge. The main value is confirming that lower matrix_lr
+and higher logit_softcap are promising directions. The +0.005 BPB
+improvement is within noise.
+
+**Recommendation:** Run 15-25 more Optuna trials to get meaningful
+convergence, OR move to GPU experiments where the numeric tuning
+will be more reliable (B-022: local BPB is step-count-dominated).
+
+**Confound warning:** Per B-022, all LR/warmdown findings are
+confounded by the 8K local batch size. Lower LR reduces effective
+gradient noise, which helps with the 64x-noisier local gradients.
+This effect may vanish at 524K official batch size.

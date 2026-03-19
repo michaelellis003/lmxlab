@@ -2327,3 +2327,135 @@ vocabularies, compatible with the parameter golf challenge framework.
 retrain tokenizers from scratch — can download and use directly.
 
 **Cited in:** Competition landscape review (2026-03-19)
+
+---
+
+## LIT-098: Per-loop LoRA Adapters (PRs #38, #51)
+
+**Source:** openai/parameter-golf PRs #38, #51 — **Grade D**
+
+Rank-4 LoRA on Q/V projections for loop specialization in depth
+recurrence. Each recurrence pass gets its own LoRA adapter, allowing
+shared base weights to specialize per-loop. Minimal param overhead
+(rank 4 × 2 projections × N loops). Direct upgrade for UNIQUE_BLOCKS.
+
+**Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-099: Iteration Embeddings (PR #54)
+
+**Source:** openai/parameter-golf PR #54 — **Grade D**
+
+Learned per-pass vectors added to the residual stream to differentiate
+recurrence loops. Simpler alternative to per-loop LoRA — adds only
+dim×N_loops parameters.
+
+**Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-100: LAWA Weight Averaging (PRs #38, #51)
+
+**Source:** openai/parameter-golf PRs #38, #51 — **Grade D**
+
+Stochastic weight averaging during the warmdown phase. Free quality
+boost with low implementation effort. Averages model weights over
+the last K checkpoints during LR decay.
+
+**Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-101: NorMuon Optimizer (PR #78)
+
+**Source:** openai/parameter-golf PR #78 — **Grade D**
+
+Modified Muon optimizer with normalization. Replacement for standard
+Muon. Details sparse in PR.
+
+**Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-102: Muon Momentum 0.99 Consensus (PRs #52, #61, #66, #70)
+
+**Source:** openai/parameter-golf PRs #52, #61, #66, #70 — **Grade D**
+
+Consistent finding across 4+ independent submissions: MUON_MOMENTUM=0.99
+outperforms the default 0.95. This is the most replicated numeric finding
+in the competition.
+
+**Cited in:** Competition peer review (2026-03-19), HYP-025 design
+
+---
+
+## LIT-103: QAT with STE (PR #65)
+
+**Source:** openai/parameter-golf PR #65 — **Grade D**
+
+Fake int6 quantization during training using Straight-Through Estimator.
+Reduces quantization gap from +0.048 to +0.0015 BPB. Cost: +54% per-step
+overhead during training.
+
+**Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-104: Ternary QAT (PR #69)
+
+**Source:** openai/parameter-golf PR #69 — **Grade D**
+
+Extreme quantization to {-1, 0, +1} at ~1.5 bits/weight. Enables
+4-5x more parameters per byte within the 16MB artifact limit.
+No GPU results reported yet.
+
+**Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-105: Document-Isolated Evaluation (PR #77)
+
+**Source:** openai/parameter-golf PR #77 — **Grade D**
+
+Separate validation documents by BOS boundaries, avoid cross-document
+context contamination in eval. Ensures BPB reflects real compression
+quality, not context leakage.
+
+**Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-106: NTK-aware RoPE for Eval (PR #60)
+
+**Source:** openai/parameter-golf PR #60 — **Grade D**
+
+Train at sequence length 1024, evaluate at 2048+ using NTK-aware RoPE
+scaling. Extends effective context at eval time without additional
+training cost.
+
+**Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-107: Overtone Init (PR #60)
+
+**Source:** openai/parameter-golf PR #60 — **Grade D**
+
+SVD spectral shaping of embedding initialization. Theory: better
+initial embedding geometry accelerates early training. Unclear
+magnitude of benefit.
+
+**Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-108: AI-Agent Technique Composition (PR #66)
+
+**Source:** openai/parameter-golf PR #66 — **Grade D**
+
+Automated bucketing and stacking of known techniques using an
+AI agent to compose changes. Meta-approach: let the agent pick which
+techniques to combine and in what order.
+
+**Cited in:** Competition peer review (2026-03-19)

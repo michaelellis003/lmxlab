@@ -2682,3 +2682,30 @@ benefit at this scale. The interaction with wide heads is untested.
 6L achieves 42% more steps (1996 vs 1404). This is likely a local
 throughput artifact — needs GPU validation to confirm whether 6L's
 quality holds at 524K batch size with 20K steps.
+
+---
+
+## HYP-025: [PGOLF] Optuna TPE Numeric Hyperparameter Search
+
+**Experiment:** 25 — Optuna TPE over numeric hyperparameters
+**Status:** active
+**Question:** Can Bayesian hyperparameter optimization (Optuna TPE)
+find numeric parameter settings that improve BPB beyond manual tuning?
+
+**Context:** Per DEC-014, we use agent search for structural changes
+and Optuna for numeric tuning. Competition review found that
+MUON_MOMENTUM=0.99 is a consensus setting across 5+ independent
+submissions. Our baseline uses 0.95.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H25-a | Optuna finds meaningful improvement | Best trial improves by >0.02 BPB over baseline | Best trial within 0.02 of baseline |
+| H25-b | Current params are near-optimal | Best trial within 0.02 of baseline | Best trial improves by >0.02 BPB |
+| H25-c | Momentum dominates | Best trial has momentum >0.97 AND momentum explains >50% of variance | Best trial has momentum <0.97 |
+
+**Design:** Optuna TPE, 20 trials, 6 parameters:
+MUON_MOMENTUM [0.90-0.99], MATRIX_LR [0.01-0.08] log,
+SCALAR_LR [0.01-0.08] log, WARMDOWN_ITERS [500-5000] step=500,
+QK_GAIN_INIT [0.5-3.0], LOGIT_SOFTCAP [15.0-50.0].
+Fixed arch: 3u, 4h/4kv, 6L. Baseline params as trial 0.
+**Recipe:** recipes/pgolf_optuna.py
