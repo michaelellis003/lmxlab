@@ -3382,8 +3382,8 @@ Best local architecture for 8xH100 submission:
     EVAL_STRIDE=256  # +0.032 BPB free (HYP-027, confirmed)
 
 Estimated artifact: ~5.4MB (well under 16MB limit, room for MLP 3x
-or larger vocab). Expected BPB: 1.07-1.22 range (based on competition
-scaling + our architectural improvements + sliding window ~0.03).
+or larger vocab). Expected BPB: 1.10-1.25 range with sp1024, potentially
+1.07-1.18 with sp2048 (SOTA is 1.1585 using sp2048 + similar stack).
 
 ---
 
@@ -3526,3 +3526,49 @@ on H100 where memory isn't constrained. Expected +0.01-0.03 BPB
 on top of sliding window's +0.032.
 
 **Status:** Deferred to GPU (DEC-015 reinforced).
+
+---
+
+### 2026-03-19 [PLAN] GPU Experiment Priority List (Updated)
+
+Competition SOTA has moved to **1.1585 BPB** (PR #122: sp2048 + sliding
+window + fp16 embeddings + SWA + NorMuon + FA3). Our estimated range was
+1.07-1.22; this confirms the upper bound is achievable.
+
+**Tier 1: Already validated locally (high confidence)**
+1. UNIQUE_BLOCKS=3 (weight sharing, +0.029 BPB)
+2. NUM_HEADS=4, NUM_KV_HEADS=4 (wide heads, +0.072 BPB)
+3. EVAL_STRIDE=256 (sliding window eval, +0.032 BPB free)
+4. MLP_TYPE=relu2 (confirmed better than SwiGLU)
+5. USE_SKIP=1 (confirmed helpful with wide heads)
+6. MUON_BACKEND_STEPS=5 (load-bearing)
+
+**Tier 2: Implemented, needs GPU validation**
+7. EVAL_SEQ_LEN=2048 or 4096 (NTK-aware RoPE, +0.01-0.03 est.)
+8. MUON_MOMENTUM=0.99 (competition consensus, batch-size-dependent)
+9. LOGIT_SOFTCAP=50 (may help at 524K batch)
+10. MLP_MULT=3 (may help at 524K batch)
+
+**Tier 3: Not yet implemented (high expected impact)**
+11. **sp2048 or sp4096 vocabulary** — SOTA uses sp2048. Requires
+    downloading tokenizer + re-tokenizing data. High impact.
+12. **fp16 embeddings** — saves artifact space, allows larger model
+13. **LAWA/SWA weight averaging** — free quality boost during warmdown
+14. **QAT (int6/int8 with STE)** — reduces quant gap from ~0.05 to 0.002
+
+**Tier 4: Research (uncertain impact)**
+15. Per-loop LoRA adapters for weight-shared blocks
+16. Iteration embeddings for recurrence differentiation
+17. NorMuon optimizer
+18. Longer training sequences (2048 or 4096 during training)
+
+**Recommended GPU run order:**
+- Run A: Tier 1 config as baseline (est. 1.15-1.25 BPB)
+- Run B: + mom=0.99 + softcap=50 + MLP 3x (test B-022 confounds)
+- Run C: + sp2048 vocab + fp16 embeddings (biggest unknown lever)
+- Run D: + LAWA + QAT (artifact optimization)
+- Run E: + NTK RoPE eval (stacks with sliding window)
+
+**Autorun local iteration: STOPPED.** All productive local experiments
+exhausted. 56+ experiments across HYP-017 through HYP-028. Best local
+BPB: 1.7046. Move to GPU for remaining work.
