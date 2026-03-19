@@ -190,6 +190,53 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-024: Deeper cycling (more effective layers, same params)
+    hyp024_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-024")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp024_runs)
+
+    configs = [
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "NUM_LAYERS": "12",
+            },
+            "description": "3u×4 cycles = 12 layers + 4h/4kv",
+            "hypothesis": "HYP-024-12L",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "NUM_LAYERS": "15",
+            },
+            "description": "3u×5 cycles = 15 layers + 4h/4kv",
+            "hypothesis": "HYP-024-15L",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "NUM_LAYERS": "6",
+            },
+            "description": "3u×2 cycles = 6 layers + 4h/4kv",
+            "hypothesis": "HYP-024-6L",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

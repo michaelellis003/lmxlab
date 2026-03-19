@@ -2974,3 +2974,154 @@ Optimistic: ~1.04-1.08 BPB (potential new SOTA)
 literature review during autorun loops — checking what competitors/researchers
 have already tried prevents redundant exploration and surfaces techniques
 we wouldn't discover through local experimentation alone.
+
+---
+
+### 2026-03-19 [PLAN] HYP-024: Deeper Cycling with Wide Heads
+
+**What:** Test whether more recurrence cycles (12/15 layers with 3
+unique blocks) improve BPB over the current 9 layers. With weight
+sharing, extra layers add zero parameters — only compute time.
+
+**Why:** Universal Transformers showed depth recurrence helps. HYP-019
+tested deeper cycling with narrow heads, but wide heads (4h/4kv) may
+interact differently. This is a structural change, not numeric tuning.
+
+**Expected outcome:** 12 layers (3×4 cycles) may improve by 0.005-0.015
+if the extra representational depth outweighs ~33% slower throughput.
+15 layers likely hits diminishing returns.
+
+**Risk:** On Mac, slower per-step time means fewer total steps within
+600s, which dominates BPB locally. This is the same throughput confound
+that made wider models fail locally. However, the overhead is smaller
+(~33% for 12 layers vs ~50% for wider MLP).
+
+**Artifact impact:** Zero — same 3 unique blocks, same parameters.
+
+---
+
+### 2026-03-19 [HYPOTHESIS] HYP-024: Deeper Cycling (NUM_LAYERS)
+
+Pre-registered. 3 competing hypotheses:
+- H24-a: 12 layers beats 9 (moderate depth helps)
+- H24-b: 12 helps but 15 is worse (diminishing returns)
+- H24-c: All deeper configs worse (wide heads enough already)
+
+Configs: 6/9/12/15 layers, all with UNIQUE_BLOCKS=3, NUM_HEADS=4,
+NUM_KV_HEADS=4. Control: 9 layers = 1.8512 BPB.
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-024: Depth Sweep Results
+
+| Config | BPB | Steps | ms/step | Artifact |
+|--------|-----|-------|---------|----------|
+| **6L (3u×2)** | **1.7363** | 1996 | 95ms | 5.9MB |
+| 9L (3u×3, control) | 1.8512 | 1404 | 130ms | 5.4MB |
+| 12L (3u×4) | 1.9595 | 1061 | 186ms | 5.0MB |
+| 15L (3u×5) | 1.9902 | 888 | 217ms | 4.8MB |
+
+---
+
+### 2026-03-19 [INTERPRET] HYP-024: Fewer Layers Win Locally
+
+**Adjudication:**
+- H24-a (12L beats 9L): **FALSIFIED** — 12L gets 1.9595, worse than 9L 1.8512
+- H24-b (diminishing returns): **FALSIFIED** — ALL deeper configs worse
+- H24-c (wide heads are enough): **SUPPORTED locally** — 9L already optimal
+  among the deeper configs, but unexpectedly 6L beats all
+
+**Surprising finding:** 6 layers (3u×2 cycles) achieves 1.7363 BPB — a
+new local best by +0.115 BPB over the 9L control. The mechanism is pure
+throughput: 95ms/step gives 1996 steps in 600s (42% more than 9L).
+
+**CRITICAL CAVEAT:** This is almost certainly a local throughput artifact.
+On 8xH100 with 524K batch size:
+- Per-step time is dominated by matmul, scaling ~linearly with depth
+- The throughput advantage of 6L vs 9L is ~33%, not the ~27% seen locally
+- BUT the step-count advantage may be smaller because GPU training uses
+  20K iterations (wallclock limited), not step-limited
+- 6 effective layers may genuinely lack representational depth for the task
+
+**GPU test priority:** 6L needs GPU validation. If the throughput
+advantage holds and quality doesn't suffer, this is a major finding.
+If quality drops, revert to 9L.
+
+**Key learning:** On Mac, step count dominates BPB so strongly that
+FEWER layers can beat MORE layers despite less depth. This is because
+the 600s wallclock cap with 8K batch size means ~1000-2000 steps total,
+and every millisecond per step costs final BPB. On GPU, 20K iterations
+with 524K batch may tell a completely different story.
+
+---
+
+### 2026-03-19 [REVIEW] Deep Competition Peer Review
+
+Conducted comprehensive review of all 86 PRs in openai/parameter-golf.
+Key new intelligence beyond previous LIT-092 through LIT-097:
+
+**Top non-cheating submission:** PR #65 at 1.1630 BPB
+(MLP 3x + int6 QAT + sliding window stride=64 + Muon tuning)
+
+**New techniques identified (15 total):**
+
+1. **Per-loop LoRA adapters** (PRs #38, #51): rank-4 LoRA on Q/V for
+   loop specialization in depth recurrence. Direct upgrade for our
+   UNIQUE_BLOCKS=3 approach.
+2. **Iteration embeddings** (PR #54): learned per-pass vectors added
+   to residual stream to differentiate recurrence loops.
+3. **LAWA** (weight averaging during warmdown, PRs #38, #51): free
+   quality boost, low implementation effort.
+4. **NorMuon optimizer** (PR #78): replacement for standard Muon.
+5. **Muon momentum 0.99** (PRs #52, #61, #66, #70): consistent finding
+   across multiple independent submissions.
+6. **QAT with STE** (PR #65): fake int6 quantization during training
+   reduces quant gap from +0.048 to +0.0015 BPB but +54% step overhead.
+7. **Ternary QAT** (PR #69): {-1,0,+1} weights at ~1.5 bits/weight,
+   enabling 4-5x more params per byte. No GPU results yet.
+8. **Document-isolated evaluation** (PR #77): separate val documents by
+   BOS boundaries, avoid cross-document context contamination.
+9. **NTK-aware RoPE** (PR #60): train@1024, eval@2048.
+10. **Overtone init** (PR #60): SVD spectral shaping of embeddings.
+11. **AI-agent technique composition** (PR #66): automated bucketing
+    and stacking of known techniques.
+
+**No Optuna/Bayesian optimization found.** All submissions use either
+manual tuning or AI-agent-driven composition.
+
+**No SSM/Mamba found.** Competition is entirely transformer-dominated.
+
+**Val-only training allowed** (controversial): PR #64 trains directly
+on val data, achieving 1.0149 BPB. Issue #67 debates this.
+
+Sources: LIT-098 through LIT-112 (to be recorded in literature.md)
+
+---
+
+### 2026-03-19 [PLAN] GPU Test Plan and Optuna Integration
+
+Based on competition peer review and local experiments, prioritized
+experiments for 8xH100 validation:
+
+**Tier 1: High-confidence architectural wins (run first)**
+1. UNIQUE_BLOCKS=3, NUM_HEADS=4, NUM_KV_HEADS=4 (our best arch)
+2. Same + sliding window eval stride=64 (free ~0.03 BPB)
+3. Compare 6L vs 9L with weight sharing on GPU
+
+**Tier 2: Technique composition (apply to best arch)**
+4. MLP_MULT=3 with int6 quantization (wider MLP, enabled by int6)
+5. FP16 tied embedding (free ~0.005 BPB)
+6. Per-loop LoRA adapters (rank 4) for recurrence specialization
+7. sp4096 or sp8192 vocabulary with public tokenizers
+
+**Tier 3: Optimizer tuning via Optuna (DEC-014 compliant)**
+8. Optuna TPE search over: MUON_MOMENTUM [0.90-0.99],
+   MATRIX_LR [0.01-0.06], WARMDOWN_ITERS [1000-5000],
+   WARMUP_STEPS [10-200], QK_GAIN_INIT [1.0-2.0]
+   Target: ~20-30 trials with Optuna pruning
+9. LAWA during warmdown (separate from Optuna, on/off)
+
+**Tier 4: Speculative (if time permits)**
+10. NTK-aware RoPE (train@1024, eval@4096)
+11. Iteration embeddings for depth recurrence
+12. NorMuon optimizer

@@ -2620,3 +2620,65 @@ schedule. Vary UNIQUE_BLOCKS from 1 to 5.
 wide heads. The U-curve shape is preserved identically. Head config
 and block count are additive, not interacting. The optimal sharing
 depth is independent of attention configuration.
+
+---
+
+## HYP-024: [PGOLF] Deeper Cycling (More Effective Layers)
+
+**Experiment:** 24 — NUM_LAYERS with Fixed UNIQUE_BLOCKS=3
+**Status:** tested
+**Question:** With 3 unique blocks and 4 wide heads, does increasing
+the effective depth (more recurrence cycles) improve BPB?
+
+**Context:** Currently cycling 3 blocks × 3 loops = 9 effective layers.
+With weight sharing, adding more layers adds ZERO parameters — only
+compute time. Each additional cycle costs ~11% more wall time (1/9th
+more layers). The question is whether the extra representational depth
+from more recurrence passes outweighs the reduced step count within
+the 600s time budget.
+
+**Quality gates:**
+- Importance: Yes — if deeper cycling helps, it's a free BPB win
+- Scale appropriate: Yes — this is a local Mac experiment
+- Prior coverage: HYP-019 tested deeper recurrence (3×4, 3×5 loops)
+  but with 8 narrow heads. Wide heads may interact differently.
+  HYP-023 tested block count but not total depth.
+- Predictability: Unclear — depends on throughput vs quality tradeoff
+- Methodology: Clean single-variable test
+- Sunk cost: NOT repeating — HYP-019 was with narrow heads
+
+**Literature:** Universal Transformers (Dehghani 2018) showed depth
+recurrence improves on many tasks. Our HYP-018/019 confirmed the
+benefit at this scale. The interaction with wide heads is untested.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H24-a | Moderate depth helps | 12 layers (3×4) beats 9 layers (3×3) by >0.005 BPB | 12 layers is worse or within 0.005 of 9 layers |
+| H24-b | Diminishing returns | 12 layers helps but 15 layers is worse than 12 (throughput loss dominates) | 15 layers beats 12 layers |
+| H24-c | Depth doesn't help with wide heads | All deeper configs are worse than 9 layers (wide heads already have enough representational capacity) | Any deeper config beats 9 layers by >0.005 |
+
+**Design:**
+- Control: 3u + 4h/4kv + 9 layers (1.8512 BPB, already measured)
+- Test 1: 3u + 4h/4kv + 12 layers (NUM_LAYERS=12)
+- Test 2: 3u + 4h/4kv + 15 layers (NUM_LAYERS=15)
+- Test 3: 3u + 4h/4kv + 6 layers (NUM_LAYERS=6, regression check)
+- All with default schedule, 600s time budget
+- Primary metric: val_bpb
+- Key confound: more layers = slower steps = fewer total steps
+
+**Result:**
+- H24-a: **FALSIFIED** — 12L (1.9595) worse than 9L (1.8512)
+- H24-b: **FALSIFIED** — ALL deeper configs worse
+- H24-c: **SUPPORTED locally** — but 6L (1.7363) beat 9L too
+
+| Config | BPB | Steps | ms/step | Artifact |
+|--------|-----|-------|---------|----------|
+| **6L (3u×2)** | **1.7363** | 1996 | 95ms | 5.9MB |
+| 9L (3u×3, control) | 1.8512 | 1404 | 130ms | 5.4MB |
+| 12L (3u×4) | 1.9595 | 1061 | 186ms | 5.0MB |
+| 15L (3u×5) | 1.9902 | 888 | 217ms | 4.8MB |
+
+**Key finding:** Locally, FEWER layers win because step count dominates.
+6L achieves 42% more steps (1996 vs 1404). This is likely a local
+throughput artifact — needs GPU validation to confirm whether 6L's
+quality holds at 524K batch size with 20K steps.

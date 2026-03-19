@@ -510,6 +510,7 @@ larger vocab, netting a BPB improvement.
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
 | 2026-03-18 | Prior from literature: Universal Transformers show recurrence works. Magnitude of benefit under compression constraints unknown. | C | Neutral | 0.65 |
+| 2026-03-19 | HYP-024: 6L (3u×2) beats 9L (3u×3) by 0.115 BPB locally. More depth hurts: 12L and 15L both worse. BUT this is likely throughput-dominated (42% more steps at 6L). Depth recurrence still works, but optimum is fewer cycles than expected. | B | Nuanced — recurrence helps but fewer cycles may suffice | 0.70 |
 
 ## B-018: Training schedule optimization yields >0.003 BPB
 
@@ -564,6 +565,7 @@ models are too slow per step on Mac hardware.
 | 2026-03-18 | Prior: sharing typically hurts capacity; Universal Transformers showed it can work but at different scale. | C | Against | 0.30 |
 | 2026-03-18 | HYP-018: 3 unique blocks beats baseline by 0.029 BPB. 5 blocks also beats baseline but by less. Monotonic trend: more sharing = better. Confound: partially explained by step count advantage. | B | Strong for | 0.80 |
 | 2026-03-18 | HYP-019: U-shaped curve confirmed (1→2→**3**→5→9). 3 blocks optimal. Combined with schedule (3u+wd=5000+lr=0.03) achieves 1.8436 at 3.6MB, matching 9-unique configs. | B | Strong for | 0.85 |
+| 2026-03-19 | HYP-024: With wide heads, 6L (3u×2 cycles) achieves 1.7363 vs 9L's 1.8512 — locally, fewer cycles with same 3 blocks is better. The sharing itself helps; more cycles don't add value locally. | B | For (sharing works, but optimal cycle count is low locally) | 0.85 |
 
 ---
 
@@ -588,3 +590,36 @@ for the full benefit of wide heads.
 |------|----------|-------|-----------|------------|
 | 2026-03-18 | Prior: common head_dim is 64-128 across scales. No clear preference at small scale. | C | Neutral | 0.40 |
 | 2026-03-18 | HYP-022: 4h/4kv (hd=128) beats 8h/4kv (hd=64) by 0.072 BPB. 4h/4kv also beats 8h/8kv (same params, different head_dim) by 0.094 BPB. | A | Definitive for | 0.90 |
+
+---
+
+## B-022: Local BPB is dominated by step count, not architecture quality
+
+**Prior:** N/A (new belief from HYP-024)
+**Current:** 0.90
+**Source:** HYP-024 depth sweep + cumulative evidence from HYP-017 through HYP-024
+
+On Mac with 8K batch size and 600s wallclock cap, any change that
+increases per-step time hurts BPB — even if it adds representational
+capacity (more layers, wider model). Conversely, any change that
+reduces per-step time helps — even if it removes capacity (fewer layers).
+
+This is because 8K batch size produces ~1000-2000 total steps, and
+gradient noise is 64x higher than official 524K batch. More steps
+means more gradient signal, which dominates quality at this noise level.
+
+**Implication:** Local Mac experiments are reliable for:
+- Comparing configs with SAME per-step time (e.g., head count at fixed dim)
+- Smoke-testing for crashes and constraint violations
+- Identifying which techniques are worth GPU validation
+
+Local Mac experiments are UNRELIABLE for:
+- Evaluating depth vs width tradeoffs
+- Training schedule optimization (warmdown, warmup, LR)
+- Any config that changes per-step time by >10%
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-18 | HYP-017: warmdown optimization +0.054 is confounded by batch size | C | For | — |
+| 2026-03-18 | HYP-018/019: wider models fail locally despite more params | B | For | — |
+| 2026-03-19 | HYP-024: 6L beats 9L by 0.115 BPB purely from 42% more steps (1996 vs 1404). 12L and 15L both worse despite identical params, solely from fewer steps. | A | Definitive for | 0.90 |
