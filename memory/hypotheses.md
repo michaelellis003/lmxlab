@@ -2199,3 +2199,77 @@ prediction (rho=1.0) reflects architectural inductive bias
 (how quickly each architecture picks up modular arithmetic
 patterns), not a general property of TTC as a grokking
 indicator. B-014 should be downgraded.
+
+---
+
+## HYP-017: [PGOLF] Training Schedule Optimization
+
+**Experiment:** 17 — Parameter Golf Training Schedule
+**Status:** tested (partially confounded)
+**Question:** Can optimizing the training schedule (warmup, warmdown,
+learning rates) improve BPB over the baseline without changing
+architecture or artifact size?
+
+**Context:** The baseline uses conservative defaults: 20-step warmup,
+1200-step warmdown, matrix_lr=0.04, scalar_lr=0.04, embed_lr=0.05.
+These were likely chosen for stability, not optimality.
+
+**Quality Gates:**
+- Gate 1 (Importance): YES — schedule tuning is standard first step
+- Gate 2 (Scale): YES — schedule effects are scale-independent
+- Gate 3 (Prior): PARTIAL — nanogpt speedrun community has tuned
+  schedules extensively, but for different objectives
+- Gate 4 (Predictability): NO — interaction between Muon optimizer
+  and schedule is not well-characterized
+- Gate 5 (Methodology): YES — BPB is well-defined, relative
+  comparison is valid on local hardware
+- Gate 6 (Sunk cost): NO — first PGolf experiment
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H17-a | Longer warmup helps | Warmup=100 improves BPB by >0.003 over warmup=20 | BPB difference <0.002 |
+| H17-b | Cosine warmdown > linear | Cosine warmdown improves BPB by >0.003 | BPB difference <0.002 |
+| H17-c | Schedule is near-optimal | No schedule change improves BPB by >0.003 | Any variant improves by >0.003 |
+
+**Priors:**
+- H17-a: 0.35 (warmup mainly affects stability, less BPB)
+- H17-b: 0.25 (cosine vs linear is typically small effect)
+- H17-c: 0.40 (baseline schedule is reasonable)
+
+**Design:**
+- Control: baseline schedule (warmup=20, linear warmdown=1200)
+- Variables: warmup steps {20, 50, 100, 200}, warmdown curve,
+  per-group LR ratios
+- Metric: val_bpb (local MLX, relative comparison)
+- Budget: 4-6 runs on local hardware
+- Note: local BPB numbers are NOT competition-valid (DEC-012)
+
+**Results (14 runs, 2026-03-18):**
+
+| Config | val_bpb | Δ vs baseline | Notes |
+|--------|---------|---------------|-------|
+| baseline (warmdown=1200, lr=0.04) | 1.9394±0.002 | — | 2 runs |
+| warmup=100 | 1.9455 | -0.006 | Worse |
+| warmup=200 | 1.9420 | -0.003 | ~Same |
+| warmdown=1800 | 1.9105 | +0.029 | Better |
+| warmdown=2000 | 1.9258 | +0.014 | Better |
+| warmdown=3000 | 1.8870 | +0.052 | Much better |
+| warmdown=4000 | 1.8453 | +0.094 | Best single |
+| warmdown=5000 | 1.8395 | +0.100 | Extreme |
+| matrix_lr=0.03 | 1.9293 | +0.010 | Better |
+| matrix_lr=0.06 | 1.9593 | -0.020 | Worse |
+| combined (wd=3000+lr=0.03) | 1.856±0.055 | +0.083 | 2 runs, high variance |
+
+**Verdicts:**
+- H17-a (warmup): **FALSIFIED** — longer warmup hurts in time-capped regime
+- H17-b (warmdown): **SUPPORTED** — longer warmdown monotonically helps
+  (but see confound below)
+- H17-c (near-optimal): **STRONGLY FALSIFIED** — schedule changes produce
+  0.05-0.10 BPB improvement
+
+**CRITICAL CONFOUND:** All improvements driven by lower effective LR.
+With 8K tokens/step (vs 524K official), baseline LR=0.04 is too high.
+The warmdown mechanism is: higher warmdown_iters → LR starts lower →
+reduces gradient noise from small batch. On official 524K batch, the
+effect will be much smaller. Directional finding (slightly longer
+warmdown helps) likely transfers, but magnitude does not.

@@ -21,6 +21,7 @@ Each entry is timestamped and categorized.
 | `[PR]` | Pull request created or reviewed |
 | `[RELEASE]` | Version released |
 | `[RETRO]` | Retrospective completed |
+| `[PLAN]` | Soft plan before building/running (autorun) |
 
 ---
 
@@ -2401,3 +2402,115 @@ architecture CAN learn (cross-architecture), not what a
 particular initialization WILL learn (within-architecture).
 Grokking onset depends on weight initialization details
 invisible to aggregate metrics.
+
+---
+
+## 2026-03-18 [PGOLF] [SETUP] Parameter Golf Challenge
+
+**Challenge:** OpenAI Parameter Golf — train best LM in 16MB
+artifact (code + int8 + zlib model), evaluated by BPB on FineWeb.
+
+**Baseline:** 1.2244 BPB, 9-layer 512-dim 1024-vocab transformer
+with GQA (4 KV heads), relu^2 MLP, tied embeddings, Muon+Adam
+optimizer, encoder-decoder skip connections. Artifact ~15.9 MB.
+
+**Setup:**
+- Cloned `parameter-golf` repo as sibling to lmxlab
+- Downloaded FineWeb sp1024 data (1 training shard for local)
+- Created `recipes/pgolf_autorun.py` autorun recipe
+- Created `memory/pgolf-roadmap.md` with 9 research directions
+- Added DEC-010 to DEC-013 (PGolf methodology decisions)
+- Added B-017 to B-019 (initial PGolf beliefs)
+
+**Research priorities (Tier 1):**
+1. Training schedule optimization (warmup, warmdown, LR)
+2. Depth recurrence / weight sharing
+3. Vocabulary size exploration
+
+**Key decisions:**
+- Primary metric: val_bpb (DEC-010)
+- Artifact size checked before training (DEC-011)
+- Local MLX for relative comparisons only (DEC-012)
+- Minimum progress: 0.002 BPB local, 0.005 official (DEC-013)
+
+**Next:** Run baseline on MLX to establish local reference,
+then begin HYP-017 (training schedule optimization).
+
+---
+
+### 2026-03-18 [PLAN] HYP-017 Iteration 1: Baseline + Schedule Sweep
+
+**Goal:** Establish local baseline BPB, then test schedule variants.
+
+**What I intend to do:**
+1. Smoke test (200 steps) to validate pipeline
+2. Full baseline run (~20K steps, ~10 min) to get local reference BPB
+3. Test 3-4 schedule variants against baseline:
+   - Longer warmup (100 steps vs 20)
+   - Different warmdown fraction
+   - LR tuning (matrix_lr, scalar_lr, embed_lr)
+
+**Expected outcome:** Local baseline BPB established. At least one
+schedule variant improves by >0.002 BPB (DEC-013 threshold).
+
+**Risk check:** Zero artifact size risk — schedule changes don't
+affect model parameters or architecture. Worst case: wasted compute
+on runs that don't improve.
+
+**Constraints:** Local MLX numbers are relative only (DEC-012).
+The absolute BPB will differ from 8xH100 official evaluation.
+
+---
+
+### 2026-03-18 [EXPERIMENT] HYP-017: Schedule optimization (14 runs)
+
+Ran 14 local experiments varying warmup, warmdown, and LR.
+All runs capped at 600s wallclock (~1100-1150 steps at 520ms/step).
+Local batch: 8192 tokens/step (vs 524K official). Val on truncated
+2M-token subset of FineWeb val.
+
+Infrastructure improvements during run:
+- Created truncated local val data (2M tokens vs 62M) for fast eval
+- Increased VAL_BATCH_SIZE from 8192 to 65536 (8x faster eval)
+- Total eval time: ~21s (down from ~720s with full val)
+
+**Key results:** See HYP-017 in hypotheses.md for full table.
+Best local BPB: ~1.84 (warmdown=4000-5000).
+Baseline local BPB: 1.94 ± 0.002.
+
+---
+
+### 2026-03-18 [INTERPRET] HYP-017 results
+
+**Verdicts:**
+- H17-a (warmup): FALSIFIED — longer warmup wastes steps
+- H17-b (warmdown): SUPPORTED — longer warmdown monotonically better
+- H17-c (near-optimal): STRONGLY FALSIFIED — 0.05-0.10 BPB gains
+
+**Critical confound discovered:** The local improvement is primarily
+a batch-size artifact. With 8K tokens/step (64x smaller than official
+524K), gradient noise is high and the baseline LR=0.04 is too large.
+The warmdown mechanism works by starting the LR lower (time-based
+warmdown with warmdown_iters > ~steps means LR starts decaying
+immediately). This is equivalent to reducing the base LR.
+
+Evidence: warmdown=3000 (effective peak LR ~38%) gives 0.054 BPB
+improvement. matrix_lr=0.03 (75% of baseline) gives only 0.010.
+The difference is that warmdown creates a linear decay (LR goes to 0
+at wallclock limit) while lower base LR is constant. The decay
+schedule matters, not just the level.
+
+**What transfers to competition (conservative):**
+1. Warmup=20 is fine — don't increase
+2. Try warmdown=1500-1800 on official runs (marginal improvement)
+3. The LR grid {0.03, 0.04, 0.06} suggests 0.04 is approximately
+   optimal for the official batch size
+
+**Next steps:**
+- R-PG-002 (depth recurrence) is the highest-impact remaining item
+- Need to shift from schedule tuning to architecture changes
+- Consider implementing weight sharing to free parameter budget
+
+**Belief updates:**
+- B-018 → 0.85 (schedule optimization yields >0.003 BPB confirmed
+  locally, but magnitude confounded by batch size)

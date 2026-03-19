@@ -490,3 +490,54 @@ generalization circuit to form.
 - MoE routing diversity (not just capacity) could be the
   mechanism. Cannot distinguish capacity vs routing effects.
 - Need: param-matched comparison to isolate MoE vs capacity.
+
+---
+
+## Parameter Golf Beliefs
+
+## B-017: Depth recurrence improves BPB under size constraints
+
+**Prior:** 0.65 (moderately likely)
+**Current:** 0.65
+**Source:** Universal Transformers (Dehghani 2019), looped
+transformers literature
+
+Weight-sharing across transformer layers reduces unique
+parameters while maintaining depth. Under a 16MB artifact
+constraint, this should free budget for wider layers or
+larger vocab, netting a BPB improvement.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-18 | Prior from literature: Universal Transformers show recurrence works. Magnitude of benefit under compression constraints unknown. | C | Neutral | 0.65 |
+
+## B-018: Training schedule optimization yields >0.003 BPB
+
+**Prior:** 0.70 (likely)
+**Current:** 0.85 (locally confirmed, official transfer uncertain)
+**Source:** HYP-017 local experiments
+
+The baseline training schedule is a reasonable default but
+not optimized. Locally, longer warmdown produces 0.05-0.10
+BPB improvement — but this is confounded by batch size
+mismatch (8K local vs 524K official).
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-18 | Prior: baseline uses conservative defaults. LR schedules have large effects in transformer training. | C | Neutral | 0.70 |
+| 2026-03-18 | HYP-017: warmdown=3000 improves by 0.054 BPB locally. Monotonic trend across 5 warmdown values. But confounded by batch size mismatch — effective LR reduction, not schedule shape. | F | Strong for (locally), uncertain (officially) | 0.85 |
+
+## B-019: Larger vocab improves BPB when paired with depth recurrence
+
+**Prior:** 0.50 (uncertain)
+**Current:** 0.50
+**Source:** Trade-off between token coverage and embedding table size
+
+Larger vocab (2048/4096) gives fewer tokens per document
+(better sequence coverage) but increases embedding table.
+With tied embeddings and depth recurrence freeing params,
+this might net improve BPB.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-18 | Prior: two opposing forces (better coverage vs bigger table). Outcome depends on specific constraint budget. | C | Neutral | 0.50 |

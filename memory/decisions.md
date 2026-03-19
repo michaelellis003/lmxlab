@@ -223,3 +223,49 @@ transfer via μP.
 5. **Coordinate check validation:** Implement the standard μP
    validation test (verify activations don't grow with width)
    as a unit test.
+
+---
+
+## DEC-010: Parameter Golf Primary Metric
+
+**Date:** 2026-03-18
+**Status:** accepted
+**Context:** OpenAI Parameter Golf challenge uses bits-per-byte
+(BPB) on FineWeb validation as the competition metric.
+**Decision:** Primary metric for all PGolf experiments is val_bpb
+(lower is better). val_loss is secondary.
+**Rationale:** BPB is tokenizer-agnostic and is the official
+scoring metric. Different from our usual val_loss primary.
+
+## DEC-011: Artifact Size Gate
+
+**Date:** 2026-03-18
+**Status:** accepted
+**Context:** PGolf has a hard 16,000,000 byte artifact limit
+(code + int8 quantized + zlib compressed model).
+**Decision:** Check estimated artifact size BEFORE training.
+Log runs that exceed 16MB as `constraint_violation`.
+**Rationale:** Prevents wasting full training runs on models
+that cannot produce valid submissions.
+
+## DEC-012: Local MLX for Iteration
+
+**Date:** 2026-03-18
+**Status:** accepted
+**Context:** Mac with Apple Silicon available for development.
+8xH100 GPUs needed for official validation.
+**Decision:** Use train_gpt_mlx.py locally for fast iteration.
+Local BPB is for relative comparison only (not absolute).
+**Rationale:** Faster iteration cycle. Architecture and
+relative improvements transfer to GPU even if absolute
+BPB numbers differ.
+
+## DEC-013: Minimum Progress Threshold
+
+**Date:** 2026-03-18
+**Status:** accepted
+**Context:** Need to know when to pivot vs continue tuning.
+**Decision:** Minimum BPB improvement to count as progress:
+0.002 for local runs, 0.005 for official submissions
+(matching the competition's SOTA threshold).
+**Rationale:** Below 0.002 is likely noise on local hardware.
