@@ -2772,3 +2772,50 @@ since this is eval-only. Add to GPU config.
 **Implementation complete:** EVAL_SEQ_LEN env var, _ntk_scale_rope(),
 _ntk_restore_rope() in train_gpt_mlx.py. Cannot test on Mac (OOM at
 2048 seq_len). Must test on GPU with more memory.
+
+---
+
+## HYP-029: [PGOLF] QAT Reduces INT8 Quantization Gap
+
+**Experiment:** 29 — Quantization-Aware Training with STE
+**Status:** active (implementation phase)
+**Question:** Does training with fake-quantized weights (INT8 STE)
+reduce the float-to-INT8 BPB gap compared to post-training quantization?
+
+**Background:** Current pipeline trains in float, then quantizes to
+INT8+zlib for the artifact. The quantization gap is ~0.05 BPB (measured
+as difference between float val_bpb and int8_zlib_roundtrip val_bpb).
+QAT inserts fake quantization (quantize→dequantize) in the forward pass
+during training, allowing the model to adapt its weights to be more
+quantization-friendly. The gradient passes through via STE.
+
+**Literature basis:**
+- EfficientQAT (ACL 2025): block-wise QAT then end-to-end tuning
+- LSQ (ICLR 2020): learned step size, 3-bit reaches FP baseline
+- STE theory (Yin ICLR 2019): coarse gradient correlates with population gradient
+- Our quantization research (memory/quantization.md): INT8 QAT is low-risk
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H29-a | QAT reduces gap >50% | INT8 gap drops from ~0.05 to <0.025 BPB | Gap >0.035 BPB |
+| H29-b | QAT eliminates gap | INT8 gap drops to <0.005 BPB | Gap >0.010 BPB |
+| H29-c | QAT hurts training | Float BPB degrades >0.02 from QAT overhead | Float BPB within 0.01 |
+| H29-d | QAT is neutral | Gap stays ~0.05 despite STE training | Gap <0.035 |
+
+**Design:**
+- Control: Standard training (current baseline)
+- Treatment: Same config + QAT_BITS=8, QAT_GROUP_SIZE=64
+- QAT starts after warmup (first ~100 steps without fake quantize)
+- Metric: (float_bpb - int8_bpb) gap, absolute float_bpb
+- Run on GPU (DEC-015: no local training experiments)
+
+**Implementation plan:**
+1. Add `fake_quantize()` helper using mx.quantize/mx.dequantize + STE
+2. Add QAT_BITS env var (0=disabled, 4/6/8=fake quant precision)
+3. Modify CastedLinear.__call__ to apply fake quantize when enabled
+4. Enable after warmup_steps to let model stabilize first
+
+**Risk check:**
+- Line budget: ~20 lines, within 147 remaining (1353/1500)
+- Artifact impact: zero (QAT only affects training, not serialization)
+- Worst case (H29-c): float BPB degrades 0.02 — easily reverted by setting QAT_BITS=0

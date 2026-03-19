@@ -3380,8 +3380,11 @@ Best local architecture for 8xH100 submission:
     ITERATIONS=20000
     MAX_WALLCLOCK_SECONDS=600
     EVAL_STRIDE=256  # +0.032 BPB free (HYP-027, confirmed)
+    FP16_EMBED=1     # fp16 embedding passthrough (competition standard)
+    SWA_START=0.75   # average last 25% of weights (needs GPU validation)
+    QAT_BITS=8       # fake-quantize weights to match INT8 serialization
 
-Estimated artifact: ~5.4MB (well under 16MB limit, room for MLP 3x
+Estimated artifact: ~5.9MB with fp16 embed (well under 16MB limit, room for MLP 3x
 or larger vocab). Expected BPB: 1.10-1.25 range with sp1024, potentially
 1.07-1.18 with sp2048 (SOTA is 1.1585 using sp2048 + similar stack).
 
@@ -3552,9 +3555,9 @@ window + fp16 embeddings + SWA + NorMuon + FA3). Our estimated range was
 **Tier 3: Not yet implemented (high expected impact)**
 11. **sp2048 or sp4096 vocabulary** — SOTA uses sp2048. Requires
     downloading tokenizer + re-tokenizing data. High impact.
-12. **fp16 embeddings** — saves artifact space, allows larger model
-13. **LAWA/SWA weight averaging** — free quality boost during warmdown
-14. **QAT (int6/int8 with STE)** — reduces quant gap from ~0.05 to 0.002
+12. ~~**fp16 embeddings**~~ — DONE: FP16_EMBED=1 env var
+13. ~~**LAWA/SWA weight averaging**~~ — DONE: SWA_START env var
+14. ~~**QAT (int6/int8 with STE)**~~ — DONE: QAT_BITS env var
 
 **Tier 4: Research (uncertain impact)**
 15. Per-loop LoRA adapters for weight-shared blocks
@@ -3599,3 +3602,107 @@ Literature suggests ~1% window is optimal, but with only ~5000 steps at
 Sources:
 - [LAWA paper (NeurIPS HITY 2022)](https://github.com/JeanKaddour/LAWA)
 - [When, Where and Why to Average Weights](https://arxiv.org/abs/2502.06761)
+
+---
+
+### 2026-03-19 [SETUP] MLX Training Optimizations Applied
+
+Applied 4 MLX optimizations from literature review to `train_gpt_mlx.py`.
+All are code-level improvements, no training experiments needed (respects DEC-015).
+
+**Changes made:**
+
+1. **`mx.fast.rms_norm` (line 175)**: Replaced manual `rms_norm()` with fused
+   Metal kernel `mx.fast.rms_norm(x, weight=None, eps=eps)`. Called 5x per
+   forward pass (embedding, q_norm, k_norm per attention layer). Fused kernel
+   avoids intermediate materializations and accumulates in higher precision.
+
+2. **`mx.eval(model.state)` after optimizer step (line 1241)**: Replaced
+   `mx.synchronize()` with `mx.eval(model.state)`. This forces evaluation of
+   updated parameters, detaching graph references so Metal can reclaim
+   activation memory. Key fix from Awni Hannun's "Writing Fast MLX" guide.
+
+3. **`mx.eval(accum)` in gradient accumulation loop (line 1237)**: When
+   `grad_accum_steps > 1`, evaluate accumulated gradients each sub-step to
+   prevent the computation graph from growing unboundedly. This is the #1
+   most common MLX OOM cause (GitHub issue #2840).
+
+4. **Metal memory limits at startup (lines 1030-1034)**: Set
+   `mx.set_memory_limit(70% of total)` and `mx.set_cache_limit(2 GB)` to
+   prevent runaway GPU allocation. Uses non-deprecated `mx.set_memory_limit()`
+   and `mx.set_cache_limit()` APIs (MLX 0.31+).
+
+5. **Fixed deprecated APIs**: Updated cleanup block to use `mx.clear_cache()`
+   instead of `mx.metal.clear_cache()`.
+
+**Validation:**
+- Syntax check passes (ast.parse)
+- Line count: 1341 (under 1500 limit)
+- `mx.fast.rms_norm(x, weight=None)` unit tested — correct output
+- `mx.eval(dict)` tested — works on gradient accum dict
+- Memory limit APIs tested — no deprecation warnings
+
+**Expected impact:**
+- Reduced OOM risk (may unblock SWA and NTK-RoPE testing locally)
+- Faster RMSNorm via fused kernel (medium-high impact, called 10+ times/fwd)
+- Better memory reclamation between steps (reduced peak memory)
+- More stable long-running autorun sessions
+
+---
+
+### 2026-03-19 [SETUP] FP16 Embedding Option (FP16_EMBED env var)
+
+Added `FP16_EMBED=1` env var to store the tied embedding/unembedding weight
+as fp16 instead of INT8 during artifact serialization. When enabled, the
+`tok_emb.weight` tensor (and anything matching `INT8_KEEP_FLOAT_NAME_PATTERNS`)
+is stored as fp16 passthrough instead of per-row INT8 quantized.
+
+**Cost:** ~0.5 MB more artifact (524K params × 2 bytes fp16 vs 1 byte INT8).
+With 5.4MB base artifact and 16MB limit, this is well within budget.
+
+**Benefit:** Embedding/unembedding is the most sensitive layer (shared with
+output projection via tying). Higher precision here preserves token-level
+discrimination. Competition SOTA (PR #122) uses fp16 embeddings.
+
+**Implementation:** Added `INT8_KEEP_FLOAT_NAME_PATTERNS` env var at module
+scope. When `FP16_EMBED=1`, includes "tok_emb" pattern. The quantization
+function checks both size threshold AND name patterns before deciding to
+keep as fp16.
+
+**GPU action:** Add `FP16_EMBED=1` to GPU config. Test impact on BPB vs
+artifact size.
+
+---
+
+### 2026-03-19 [PLAN] HYP-029: QAT with STE for INT8 Quantization Gap
+
+**What:** Implement Quantization-Aware Training in train_gpt_mlx.py.
+During training, insert fake quantization (quantize→dequantize via STE)
+in CastedLinear forward pass. This lets the model adapt weights to be
+more quantization-friendly, reducing the float→INT8 BPB gap.
+
+**Implementation:**
+- `fake_quantize(w)`: uses `mx.quantize`/`mx.dequantize` + STE trick
+  (`mx.stop_gradient(w_q - w) + w`) so gradient flows through as identity
+- `QAT_BITS` env var (0=disabled, 4/6/8=precision for fake quantize)
+- `QAT_GROUP_SIZE` env var (default 64, matching INT8 serialization)
+- Enabled after warmup to let model stabilize first
+- Applied only to 2D weight matrices in CastedLinear (not biases/norms)
+
+**Validation:**
+- STE forward: uses quantized values (diff = 0)
+- STE gradient: flows through as identity (verified with mx.grad)
+- INT4 MSE: 0.0083 (294x worse than INT8 → QAT essential for INT4)
+- INT6 MSE: 0.0005 (17x worse than INT8 → QAT helpful)
+- INT8 MSE: 0.00003 (already small → QAT may give marginal improvement)
+
+**Implication for GPU submission:**
+- Start with QAT_BITS=8 (matching current INT8 serialization)
+- If gap is already small, try QAT_BITS=6 or QAT_BITS=4 to enable
+  lower-precision serialization → more params in 16MB artifact
+- INT4+QAT could fit ~32M params in 16MB (currently ~17M with INT8)
+
+**Status:** Implementation complete, awaiting GPU validation.
+
+**Risk:** Zero artifact impact. QAT only affects training. Worst case:
+set QAT_BITS=0 to disable and revert to standard training.

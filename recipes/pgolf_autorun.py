@@ -21,12 +21,14 @@ Usage:
 """
 
 import argparse
+import gc
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from dataclasses import asdict
 from pathlib import Path
@@ -506,20 +508,38 @@ def run(
     cmd = [str(venv_python), str(script_path)]
 
     t0 = time.time()
-    result = subprocess.run(
-        cmd,
-        env=env,
-        cwd=str(PGOLF_DIR),
-        capture_output=True,
-        text=True,
-        timeout=1800,
-    )
+    # Write stdout/stderr to temp files to avoid accumulating
+    # large strings in the parent process across many runs.
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".log", delete=False
+    ) as stdout_f, tempfile.NamedTemporaryFile(
+        mode="w", suffix=".err", delete=False
+    ) as stderr_f:
+        stdout_path = stdout_f.name
+        stderr_path = stderr_f.name
+        result = subprocess.run(
+            cmd,
+            env=env,
+            cwd=str(PGOLF_DIR),
+            stdout=stdout_f,
+            stderr=stderr_f,
+            timeout=1800,
+        )
     wall_time_s = time.time() - t0
 
+    try:
+        with open(stdout_path) as f:
+            stdout_text = f.read()
+        with open(stderr_path) as f:
+            stderr_text = f.read()
+    finally:
+        os.unlink(stdout_path)
+        os.unlink(stderr_path)
+
     # Print output for agent parsing
-    print(result.stdout[-3000:] if len(result.stdout) > 3000 else result.stdout)
+    print(stdout_text[-3000:] if len(stdout_text) > 3000 else stdout_text)
     if result.returncode != 0:
-        print(f"STDERR:\n{result.stderr[-2000:]}")
+        print(f"STDERR:\n{stderr_text[-2000:]}")
         return {
             "val_bpb": float("inf"),
             "val_loss": float("inf"),
@@ -527,13 +547,13 @@ def run(
             "param_count": est_params,
             "wall_time_s": wall_time_s,
             "status": "crash",
-            "error": result.stderr[-500:],
+            "error": stderr_text[-500:],
             "description": description,
             "hypothesis": hypothesis,
         }
 
     # Parse metrics from output
-    metrics = _parse_metrics(result.stdout)
+    metrics = _parse_metrics(stdout_text)
     metrics["wall_time_s"] = wall_time_s
     metrics["description"] = description
     metrics["hypothesis"] = hypothesis
@@ -626,6 +646,10 @@ def main() -> None:
 
         # Log result
         log_result(metrics, config)
+
+        # Explicit gc + brief pause to let OS reclaim subprocess memory
+        gc.collect()
+        time.sleep(2)
 
         # Print JSON summary for agent parsing
         summary = {
