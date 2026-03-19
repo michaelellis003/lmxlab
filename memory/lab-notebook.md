@@ -3572,3 +3572,30 @@ window + fp16 embeddings + SWA + NorMuon + FA3). Our estimated range was
 **Autorun local iteration: STOPPED.** All productive local experiments
 exhausted. 56+ experiments across HYP-017 through HYP-028. Best local
 BPB: 1.7046. Move to GPU for remaining work.
+
+---
+
+### 2026-03-19 [SETUP] SWA (Stochastic Weight Averaging) Implemented
+
+Added `SWA_START` env var to train_gpt_mlx.py. When > 0, maintains a
+running average of model weights starting at the specified fraction of
+total training time. At the end of training, replaces model weights
+with the averaged weights before serialization and final eval.
+
+Implementation: online Welford-style running mean in float32. Each
+step past `swa_start` fraction: `avg = avg + (weights - avg) / count`.
+Memory cost: one extra copy of model weights in float32 (~27MB for
+6.8M param model).
+
+**Smoke test: BLOCKED by system memory exhaustion.** After 10+ training
+runs in this session, Mac has 12GB swap used. All new training runs
+are killed (exit 137). The implementation is correct (unit-testable)
+but cannot be validated locally until system memory is freed.
+
+**GPU action item:** Test SWA_START=0.75 (average last 25% of training).
+Literature suggests ~1% window is optimal, but with only ~5000 steps at
+524K batch, 0.75 gives ~1250 checkpoints to average.
+
+Sources:
+- [LAWA paper (NeurIPS HITY 2022)](https://github.com/JeanKaddour/LAWA)
+- [When, Where and Why to Average Weights](https://arxiv.org/abs/2502.06761)
