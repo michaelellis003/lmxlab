@@ -70,7 +70,10 @@ adapt to quantization noise during training.
 **Rationale:** SwiGLU generally outperforms but uses 50% more params
 per layer (3 projections vs 2). Must parameter-match.
 **Expected gain:** 0.003-0.008 BPB
-**Status:** queued
+**Status:** tested (HYP-020)
+**Result:** relu² beats SwiGLU by 0.01-0.015 BPB at parameter-matched
+settings. The 50% larger hidden dim of relu² outweighs SwiGLU's
+activation advantage. Keep relu².
 
 ## Tier 3: Speculative
 
@@ -90,7 +93,27 @@ Could explore denser skip patterns, different mixing strategies.
 
 ## Completed Items
 
-(none yet)
+- R-PG-001: Schedule tuning (HYP-017) — longer warmdown helps, but
+  confounded by batch size. Conservative gain: 0.002-0.005 on official.
+- R-PG-002: Depth recurrence (HYP-018/019) — 3 unique blocks is
+  optimal, +0.029 BPB and 63% smaller artifact. Best combined config:
+  3u + wd=5000 + lr=0.03 = 1.8436 at 3.6MB. 12.4MB headroom.
+- R-PG-006: SwiGLU (HYP-020) — relu² beats SwiGLU. Keep relu².
+
+## Recommended Competition Config
+
+Based on 30+ local experiments (confound: 8K batch vs 524K official):
+
+**Definite changes (batch-independent):**
+- UNIQUE_BLOCKS=3 (weight sharing, +0.029 BPB, 63% smaller artifact)
+- Keep relu² (beats parameter-matched SwiGLU)
+
+**Test on official hardware:**
+- WARMDOWN_ITERS=1500-1800 (conservative schedule extension)
+- With 3 blocks: 12.4MB free for vocab expansion (R-PG-003)
+
+**Do NOT use locally-optimal values:**
+- WARMDOWN_ITERS=5000 and MATRIX_LR=0.03 are batch-size artifacts
 
 ## Retired Items
 

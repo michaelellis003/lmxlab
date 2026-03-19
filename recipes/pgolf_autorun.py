@@ -197,10 +197,46 @@ def propose(
     if m < len(final_configs):
         return final_configs[m]
 
+    # HYP-020 SwiGLU vs relu² comparison
+    hyp020_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-020")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    p = len(hyp020_runs)
+
+    swiglu_configs = [
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "MLP_TYPE": "swiglu",
+            },
+            "description": "SwiGLU 3u, default schedule (vs relu² 1.9102)",
+            "hypothesis": "HYP-020-swiglu",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "MLP_TYPE": "swiglu",
+                "WARMDOWN_ITERS": "5000",
+                "MATRIX_LR": "0.03",
+                "SCALAR_LR": "0.03",
+                "TIED_EMBED_LR": "0.04",
+            },
+            "description": "SwiGLU 3u + wd=5000 + lr=0.03 (full combo)",
+            "hypothesis": "HYP-020-swiglu-combo",
+        },
+    ]
+
+    if p < len(swiglu_configs):
+        return swiglu_configs[p]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
-        "hypothesis": "HYP-019-done",
+        "hypothesis": "HYP-020-done",
     }
 
 

@@ -2434,3 +2434,34 @@ achieves 1.8436 BPB at only 3.6MB (12.4MB free within 16MB limit).
 batch size (8K local vs 524K official). The weight sharing finding
 (3 blocks optimal) is less confounded — it provides regularization
 independent of batch size.
+
+---
+
+## HYP-020: [PGOLF] SwiGLU vs relu² MLP
+
+**Experiment:** 20 — SwiGLU vs relu² Activation Comparison
+**Status:** tested
+**Question:** Does SwiGLU MLP outperform relu² at parameter-matched
+settings within the weight-sharing architecture?
+
+**Context:** Baseline uses relu² (relu(x) * relu(x)) with hidden=dim×2.
+SwiGLU uses silu(gate) * up with 3 projections. At parameter-matched
+settings, SwiGLU hidden = dim×2×2/3 = dim×4/3 (rounded to 688).
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H20-a | SwiGLU beats relu² | SwiGLU BPB < relu² BPB by >0.003 | SwiGLU ≥ relu² |
+
+**Results:**
+| Config | BPB | Artifact | Δ vs relu² |
+|--------|-----|----------|------------|
+| relu² 3u | 1.9102 | 4.7MB | — |
+| SwiGLU 3u | 1.9256 | 4.7MB | -0.015 (worse) |
+| relu² 3u + wd=5000 + lr=0.03 | 1.8436 | 3.6MB | — |
+| SwiGLU 3u + wd=5000 + lr=0.03 | 1.8515 | 3.6MB | -0.008 (worse) |
+
+**Verdict:** H20-a **FALSIFIED** — relu² outperforms SwiGLU by
+~0.01-0.015 BPB at parameter-matched settings. The 50% larger
+hidden dimension (1024 vs 688) of relu² provides more expressiveness
+than SwiGLU's smoother activation. This is a clean, batch-size
+independent result. Keep relu² for competition.

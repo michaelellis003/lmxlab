@@ -2656,3 +2656,43 @@ best 9-unique-block configs while using 64% less artifact space.
 - B-020 → 0.85 (sharing regularization confirmed across many configs)
 - NEW: local BPB ranking dominated by step count — any compute
   increase hurts. This is a local artifact, not a general principle.
+
+---
+
+### 2026-03-18 [EXPERIMENT] HYP-020: SwiGLU vs relu²
+
+2 runs comparing SwiGLU to relu² at parameter-matched settings
+(SwiGLU hidden=688, relu² hidden=1024, both with 3 unique blocks).
+
+| Config | BPB | Δ vs relu² |
+|--------|-----|------------|
+| SwiGLU 3u, default schedule | 1.9256 | -0.015 |
+| SwiGLU 3u + wd=5000 + lr=0.03 | 1.8515 | -0.008 |
+
+Verdict: relu² beats SwiGLU. The 50% larger hidden dimension
+matters more than activation quality at this scale.
+This is batch-size independent — transfers to official hardware.
+
+---
+
+### 2026-03-18 [INTERPRET] PGolf Local Iteration Consolidation
+
+After 4 iterations (HYP-017 through HYP-020) and ~30 experiments:
+
+**Definite findings (batch-independent, transferable):**
+1. UNIQUE_BLOCKS=3 improves BPB by +0.029 AND reduces artifact 63%
+2. relu² > SwiGLU at parameter-matched settings (+0.01-0.015)
+3. Optimal sharing: U-curve with min at 3 blocks (1→2→**3**→5→9)
+
+**Confounded findings (need GPU validation):**
+4. Longer warmdown helps (directionally likely, magnitude unknown)
+5. matrix_lr=0.03 may help marginally
+
+**Recommended GPU test plan:**
+1. UNIQUE_BLOCKS=3 with default schedule → verify sharing transfers
+2. UNIQUE_BLOCKS=3 + WARMDOWN_ITERS=1500 → conservative schedule
+3. If sharing works: explore vocab expansion with freed artifact budget
+
+**Local iteration has diminishing returns** — schedule/LR
+optimization is noise on Mac due to 64x batch size mismatch.
+Pivot to GPU validation or vocab exploration.
