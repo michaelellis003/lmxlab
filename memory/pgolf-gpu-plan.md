@@ -166,6 +166,67 @@ outperforms agent-based search (DEC-014).
 
 ---
 
+## Competition Intelligence (2026-03-19 Literature Review)
+
+Current SOTA is ~1.015 BPB (PR #64). Key techniques from top submissions
+that are **orthogonal to our architecture changes**:
+
+### Must-Have (Zero/Low Cost)
+
+1. **Sliding window evaluation** — ~0.03 BPB free. Score each token with
+   up to 4000 tokens of context. All top submissions use this.
+2. **fp16 embedding** — small gain, zero artifact cost.
+
+### High Priority (Artifact Budget Dependent)
+
+3. **Larger vocabulary (sp8192)** — 0.01-0.04 BPB. Public tokenizers
+   available at huggingface.co/sproos/parameter-golf-tokenizers.
+   This UNBLOCKS R-PG-003.
+4. **Longer sequences (4096)** — more context per forward pass.
+   Combined with sliding window for eval gains.
+5. **Int6 quantization** — int6 on MLP+attn, fp16 on embedding.
+   Saves ~4MB artifact. We may not need this given 10.6MB headroom.
+
+### Lower Priority
+
+6. **Test-Time Training (TTT)** — LoRA on val docs during eval.
+   Modest gains, complex to implement.
+
+### NOT Found in Competition
+
+- **SSM/Mamba** — no state-space submissions. Fixed 600s training +
+  16MB artifact appears to favor transformers with depth recurrence.
+- **Hybrid architectures** — no submissions combining SSM + attention.
+
+### Updated Expected Outcome
+
+With our architecture (3u + 4h/4kv) PLUS competition techniques:
+- Conservative: **1.08-1.12 BPB** (competitive with current field)
+- Optimistic: **1.04-1.08 BPP** (potential new SOTA range)
+
+### Updated Phase 3: Spend Artifact Budget
+
+Replace Option A with the now-unblocked vocab exploration:
+
+**Option A (revised): sp8192 Vocabulary**
+```bash
+UNIQUE_BLOCKS=3
+NUM_HEADS=4
+NUM_KV_HEADS=4
+# Download: from huggingface.co/sproos/parameter-golf-tokenizers
+# No need to retrain tokenizer — use pre-trained sp8192
+# Estimated artifact: ~9-10MB (still under 16MB)
+```
+
+### New Phase 5: Eval-Time Optimizations (after architecture locked)
+
+These don't affect training, only the submission script:
+1. Sliding window eval (4000 context)
+2. fp16 embedding storage
+3. (Optional) TTT with LoRA adapters
+
+---
+
 ## Code Changes Required
 
 All changes are already implemented in `train_gpt_mlx.py`:

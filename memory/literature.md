@@ -2222,3 +2222,108 @@ on a simple FC network — unclear if it transfers to
 transformers/hybrids.
 
 **Cited in:** HYP-016 interpretation
+
+---
+
+## LIT-092: Parameter Golf PR #64 (SOTA ~1.015 BPB)
+
+**Title:** Top leaderboard submission
+**Authors:** Competition participant (github.com/openai/parameter-golf)
+**Venue:** GitHub PR — **Grade D** (competition submission, not peer-reviewed)
+
+**Key techniques:** Sliding window eval (4000 context), int6 quantization
+(int6 MLP+attn, fp16 embedding), longer sequences (4096 tokens), optimizer
+tuning. Current best BPB on leaderboard.
+
+**Relevance:** Establishes the target to beat. Our architecture changes
+are orthogonal to most of these techniques.
+
+**Cited in:** Competition landscape review (2026-03-19)
+
+---
+
+## LIT-093: Parameter Golf PR #78 (Depth Recurrence + TTT)
+
+**Title:** Depth recurrence and test-time training submission
+**Authors:** Competition participant
+**Venue:** GitHub PR — **Grade D**
+
+**Key techniques:** Weight sharing (matches our UNIQUE_BLOCKS finding),
+test-time training with LoRA adapters on val documents, larger vocabulary
+using public tokenizers (huggingface.co/sproos/parameter-golf-tokenizers
+for sp1024/2048/4096/8192).
+
+**Relevance:** Independently confirms depth recurrence for parameter golf.
+TTT is a novel eval-time technique worth exploring. Public tokenizers
+unblock our vocab exploration (R-PG-003).
+
+**Cited in:** Competition landscape review (2026-03-19)
+
+---
+
+## LIT-094: Parameter Golf PR #54 (Longer Sequences + Wider MLP)
+
+**Title:** Sequence length and MLP width exploration
+**Authors:** Competition participant
+**Venue:** GitHub PR — **Grade D**
+
+**Key techniques:** Sequence length 1024→4096, wider MLP hidden dim,
+sliding window eval, sp8192 vocabulary.
+
+**Relevance:** Shows that longer sequences help at this scale. Our
+fixed 1024 sequence length may be leaving BPB on the table.
+
+**Cited in:** Competition landscape review (2026-03-19)
+
+---
+
+## LIT-095: Sliding Window Evaluation (multiple PRs)
+
+**Title:** Context-windowed BPB evaluation technique
+**Authors:** Multiple competition participants
+**Venue:** GitHub PRs — **Grade D**
+
+**Key finding:** Evaluating each token with maximum available context
+(up to 4000 tokens) instead of averaging across the full sequence gives
+~0.03 BPB improvement at zero artifact cost. Most competitive submissions
+use this technique.
+
+**Relevance:** Free BPB improvement we should implement for GPU runs.
+Does not affect training, only evaluation.
+
+**Cited in:** Competition landscape review (2026-03-19)
+
+---
+
+## LIT-096: Int6 Mixed-Precision Quantization (PR #64)
+
+**Title:** 6-bit weight quantization for parameter golf
+**Authors:** Competition participant
+**Venue:** GitHub PR — **Grade D**
+
+**Key finding:** Int6 on MLP and attention weights, fp16 on embedding
+table. Saves ~4MB artifact space compared to uniform int8, enabling
+larger models within the 16MB constraint.
+
+**Relevance:** Our 10.6MB headroom from weight sharing means we may
+not need aggressive quantization, but int6 could free additional space
+for vocabulary expansion.
+
+**Cited in:** Competition landscape review (2026-03-19)
+
+---
+
+## LIT-097: Public Parameter Golf Tokenizers
+
+**Title:** Pre-trained SentencePiece tokenizers for parameter golf
+**Authors:** sproos (HuggingFace user)
+**Venue:** HuggingFace Hub — **Grade D**
+**URL:** huggingface.co/sproos/parameter-golf-tokenizers
+
+**Key content:** Pre-trained tokenizers for sp1024, sp2048, sp4096, sp8192
+vocabularies, compatible with the parameter golf challenge framework.
+
+**Relevance:** Unblocks R-PG-003 (vocabulary exploration). No need to
+retrain tokenizers from scratch — can download and use directly.
+
+**Cited in:** Competition landscape review (2026-03-19)

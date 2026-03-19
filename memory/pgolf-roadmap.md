@@ -50,11 +50,11 @@ document but bigger embedding table. With tied embeddings, the
 table is shared. With depth recurrence saving transformer params,
 a larger vocab might net improve BPB.
 **Expected gain:** 0.005-0.015 BPB (with depth recurrence)
-**Status:** blocked (no sp4096 tokenizer/dataset locally)
-**Blocker:** HF manifest only contains sp1024. Creating sp4096
-requires downloading docs_selected.jsonl (~50GB) and retraining
-tokenizer. Best tested on GPU where vocab expansion can also
-use the 12.4MB artifact headroom from weight sharing.
+**Status:** unblocked (public tokenizers found)
+**Update (2026-03-19):** Public pre-trained tokenizers for sp1024/2048/4096/8192
+available at huggingface.co/sproos/parameter-golf-tokenizers (LIT-097).
+No need to retrain from scratch. sp8192 used by top competitors for
+0.01-0.04 BPB improvement. Test on GPU with our 10.6MB artifact headroom.
 
 ## Tier 2: Moderate Impact, Lower Risk
 
@@ -170,8 +170,33 @@ experiments:
 
 **Recommended next steps:**
 1. GPU validation: UNIQUE_BLOCKS=3 + NUM_HEADS=4 + NUM_KV_HEADS=4
-2. GPU vocab exploration: sp4096 with shared blocks + wide heads
-3. GPU QAT: if arch confirmed, quantization-aware training
+2. Sliding window eval: implement for submission script (R-PG-012, free ~0.03)
+3. GPU vocab exploration: sp8192 with shared blocks + wide heads (R-PG-003, unblocked)
+4. Longer sequences: 1024→4096 on GPU (R-PG-013)
+5. GPU QAT: if arch confirmed, quantization-aware training
+
+### R-PG-012: Sliding Window Evaluation
+**Priority:** Highest (free BPB improvement, eval-only)
+**Rationale:** Score each token with up to 4000 tokens of context instead
+of averaging across ~512. All top competitors use this. ~0.03 BPB free.
+**Expected gain:** 0.02-0.04 BPB
+**Status:** queued (implement for GPU submission script)
+**Source:** LIT-095
+
+### R-PG-013: Longer Sequences (1024→4096)
+**Priority:** High (pairs with sliding window)
+**Rationale:** More context per forward pass. Top competitors use 4096.
+**Expected gain:** 0.01-0.02 BPB
+**Status:** queued (GPU only — affects training time)
+
+### R-PG-014: SSM/Mamba/Hybrid Architectures
+**Priority:** Low (no evidence of viability)
+**Rationale:** No SSM or hybrid submissions found in competition PRs.
+The 600s training budget and 16MB artifact limit favor transformers with
+depth recurrence. SSM's advantage (linear attention) matters less when
+sequences are only 1024-4096 tokens.
+**Expected gain:** Unknown — likely negative given competition evidence
+**Status:** deprioritized (no competitive evidence, high risk)
 
 ## Retired Items
 

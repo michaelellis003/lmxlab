@@ -2916,3 +2916,61 @@ The optimal block count (3) is invariant to head configuration.
 This is good news — it means the architecture changes we found
 (sharing + wide heads) compose cleanly without interaction
 effects. The GPU plan doesn't need to re-sweep block counts.
+
+---
+
+### 2026-03-19 [REVIEW] Competition Landscape Literature Review
+
+**Motivation:** User asked about SSM/hybrid architectures for parameter golf.
+Conducted a literature review of the openai/parameter-golf repository PRs
+and web sources to map the competitive landscape.
+
+**Current SOTA:** ~1.015 BPB (PR #64, top of leaderboard as of 2026-03-19)
+
+**Top Techniques Used by Competitors (ranked by apparent BPB impact):**
+
+1. **Sliding window evaluation** (~0.03 BPB free) — score each token with
+   up to 4000 tokens of context instead of average ~512. Zero artifact cost.
+   Most submissions use this. (PR #64, #78, #54)
+2. **Int6 quantization** (~0.01-0.02 BPB via artifact savings) — mixed
+   precision: int6 on MLP+attention weights, fp16 on embedding. Saves ~4MB
+   of artifact for more params. (PR #64)
+3. **Longer sequences** (1024→4096) — more context per forward pass.
+   Combined with sliding window for eval gains. (PR #54, #64)
+4. **Larger vocabulary** (sp8192) — fewer tokens per document, better
+   compression. Public tokenizers at huggingface.co/sproos/parameter-golf-tokenizers.
+   Estimated gain: 0.01-0.04 BPB. (PR #78, #54)
+5. **Wider MLP** — increased FFN hidden dimension. Effective when paired
+   with quantization to stay under 16MB. (PR #54)
+6. **fp16 embedding** — store embedding table in fp16 instead of int8.
+   Small gain but free within artifact budget. (PR #64)
+7. **Depth recurrence** — weight sharing / cyclic blocks. Matches our
+   UNIQUE_BLOCKS=3 finding. (PR #78)
+8. **Test-Time Training (TTT)** — LoRA adapters trained on each val
+   document during eval. Modest gains over sliding window. (PR #78)
+9. **Optimizer tuning** — various Muon schedule/LR modifications. (multiple)
+
+**SSM/Mamba:** NO SSM or state-space submissions found in any PR or
+discussion. The competition's fixed 600s training budget and 16MB artifact
+limit appear to favor transformer-based approaches where depth recurrence
+is the main parameter-saving mechanism.
+
+**Key competitive intelligence:**
+- Our architecture changes (3u + 4h/4kv) are orthogonal to most top
+  techniques (sliding window, int6, longer sequences, larger vocab)
+- The 10.6MB artifact headroom from weight sharing is a significant
+  strategic advantage — most competitors are right at the 16MB limit
+- Sliding window eval is the single most impactful "free" improvement
+  that we haven't implemented yet
+- sp8192 tokenizer is publicly available and unblocks R-PG-003
+
+**Estimated combined BPB with our architecture + competition techniques:**
+Conservative: ~1.08-1.12 BPB (would be competitive)
+Optimistic: ~1.04-1.08 BPB (potential new SOTA)
+
+**Sources:** LIT-092 through LIT-097 (recorded in literature.md)
+
+**Methodological note:** Per user guidance, always consider doing a
+literature review during autorun loops — checking what competitors/researchers
+have already tried prevents redundant exploration and surfaces techniques
+we wouldn't discover through local experimentation alone.
