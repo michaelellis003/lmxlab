@@ -146,11 +146,53 @@ def propose(
     if n < len(configs):
         return configs[n]
 
-    # All local experiments complete. See pgolf-roadmap.md for
-    # GPU validation plan.
+    # HYP-023: Re-optimize block count with wide heads
+    hyp023_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-023")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp023_runs)
+
+    configs = [
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "2",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+            },
+            "description": "2u + 4h/4kv (fewer blocks with wide heads)",
+            "hypothesis": "HYP-023-2u",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "5",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+            },
+            "description": "5u + 4h/4kv (more blocks with wide heads)",
+            "hypothesis": "HYP-023-5u",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "1",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+            },
+            "description": "1u + 4h/4kv (extreme sharing with wide heads)",
+            "hypothesis": "HYP-023-1u",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
-        "description": "done — local iteration complete, see GPU plan",
+        "description": "done",
         "hypothesis": "DONE",
     }
 

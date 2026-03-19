@@ -2872,3 +2872,47 @@ changes (architecture, code modifications) that can't be parameterized.
 Our pgolf results confirm this split:
 - Big wins = structural (weight sharing +0.029, wide heads +0.072)
 - Small/confounded wins = numeric tuning (schedule, LR)
+
+---
+
+### 2026-03-19 [PLAN] HYP-023: Sharing Depth Re-optimization with Wide Heads
+
+**Rationale:** The U-shaped sharing curve (HYP-018/019) was measured
+with 8 heads (head_dim=64). The optimal block count (3) may differ
+with 4 heads (head_dim=128) because:
+1. Each block has more attention capacity with wide heads
+2. The regularization-vs-capacity tradeoff shifts
+3. Fewer blocks = even smaller artifact = more headroom
+
+We have strong evidence that 3 blocks is optimal with 8 heads.
+Is it still optimal with 4 heads? Or does the higher per-block
+quality mean we can use even fewer blocks (2) or need more (5)?
+
+**Configs:**
+1. Reference: 3u + 4h/4kv (1.8512, already measured)
+2. 2 unique blocks + 4h/4kv
+3. 5 unique blocks + 4h/4kv
+4. 1 unique block + 4h/4kv (extreme sharing, high regularization)
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-023: Block Count with Wide Heads
+
+| Config | BPB | Params | Artifact |
+|--------|-----|--------|----------|
+| 1u + 4h/4kv | 2.0023 | 2.6M | 2.2MB |
+| 2u + 4h/4kv | 1.9412 | 4.7M | 3.8MB |
+| **3u + 4h/4kv** | **1.8512** | **6.8M** | **5.4MB** |
+| 5u + 4h/4kv | 1.8945 | 11.0M | 8.6MB |
+
+U-curve preserved: 1<2<**3**>5. 3 blocks is still optimal.
+Head config and sharing depth are independent.
+
+---
+
+### 2026-03-19 [INTERPRET] HYP-023: Sharing Depth Is Universal
+
+The optimal block count (3) is invariant to head configuration.
+This is good news — it means the architecture changes we found
+(sharing + wide heads) compose cleanly without interaction
+effects. The GPU plan doesn't need to re-sweep block counts.

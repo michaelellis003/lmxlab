@@ -2584,3 +2584,39 @@ Q,K are projected into head_dim. At head_dim=128, each head can
 represent more complex attention patterns. The 8-head model has
 more INDEPENDENT attention patterns but each is less expressive.
 At this scale, expressiveness per head > number of patterns.
+
+---
+
+## HYP-023: [PGOLF] Sharing Depth Re-optimization with Wide Heads
+
+**Experiment:** 23 — Block Count × Head Config Interaction
+**Status:** active
+**Question:** Does the optimal number of unique blocks (3, found with
+8 heads) change when using 4 wide heads (head_dim=128)?
+
+**Context:** With 8 heads, the sharing U-curve was 1→2→**3**→5→9.
+Each block now has more attention capacity with 4 heads (full Q/K/V
+projections at 512×512). This could shift the regularization-vs-
+capacity tradeoff.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H23-a | 3 blocks still optimal | 3u + 4h/4kv remains best; 2u and 5u are both worse | Either 2u or 5u beats 3u by >0.005 |
+| H23-b | Fewer blocks better | Higher per-block capacity means less sharing needed; 5u+4h/4kv beats 3u+4h/4kv | 5u worse than 3u |
+| H23-c | More sharing better | Wide heads + deep recurrence synergize; 2u or 1u beats 3u | 2u and 1u both worse than 3u |
+
+**Design:** All configs use NUM_HEADS=4, NUM_KV_HEADS=4, default
+schedule. Vary UNIQUE_BLOCKS from 1 to 5.
+
+**Results:**
+| Config | BPB | Params | Artifact | Δ vs 3u |
+|--------|-----|--------|----------|---------|
+| 1u + 4h/4kv | 2.0023 | 2.6M | 2.2MB | -0.151 |
+| 2u + 4h/4kv | 1.9412 | 4.7M | 3.8MB | -0.090 |
+| **3u + 4h/4kv** | **1.8512** | **6.8M** | **5.4MB** | **—** |
+| 5u + 4h/4kv | 1.8945 | 11.0M | 8.6MB | -0.043 |
+
+**Verdict:** H23-a **SUPPORTED** — 3 blocks remains optimal with
+wide heads. The U-curve shape is preserved identically. Head config
+and block count are additive, not interacting. The optimal sharing
+depth is independent of attention configuration.
