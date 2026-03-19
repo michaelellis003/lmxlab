@@ -269,3 +269,33 @@ BPB numbers differ.
 0.002 for local runs, 0.005 for official submissions
 (matching the competition's SOTA threshold).
 **Rationale:** Below 0.002 is likely noise on local hardware.
+
+---
+
+## DEC-014: Agent Search vs Bayesian Optimization
+
+**Date:** 2026-03-18
+**Status:** accepted
+**Context:** Ravid Shwartz Ziv's analysis of Karpathy's autoresearch
+showed that Optuna TPE (Bayesian optimization) with 8 human-selected
+hyperparameters outperformed an AI agent searching freely, with the
+same number of trials (~85). Key insight: 8 informed parameters beat
+23 blind ones because the agent's "open-ended" search is really just
+hyperparameter search without a defined search space.
+**Decision:** For hyperparameter tuning, prefer structured Bayesian
+optimization (Optuna/TPE) with domain-informed parameter selection
+over open-ended agent exploration. Use agent search for STRUCTURAL
+changes (architecture, algorithm) where the search space can't be
+easily parameterized. This is what our autorun loop does well:
+the agent found weight sharing, head configuration changes, and
+skip connection interactions that Optuna couldn't discover because
+they aren't continuous hyperparameters.
+**Rationale:** Agents add value through (1) code modification for
+architectural changes and (2) reasoning about WHY results occurred.
+For pure numeric tuning within a fixed architecture, Bayesian
+methods are more sample-efficient. Our pgolf results confirm this
+split: the big wins (UNIQUE_BLOCKS=3 at +0.029, NUM_HEADS=4 at
++0.072) are structural changes an optimizer can't find, while
+schedule/LR tuning was confounded and low-value.
+**Source:** linkedin.com/in/ravidshwartzziv — "Do LLM Coding agents
+fool us?" post (2026-03)

@@ -146,45 +146,12 @@ def propose(
     if n < len(configs):
         return configs[n]
 
-    # HYP-022b: follow-up combinations based on 4-head success
-    hyp022b_runs = [
-        r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-022b")
-        and r.get("wall_time_s", 0) > 500
-    ]
-    m = len(hyp022b_runs)
-
-    combo_configs = [
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "USE_SKIP": "0",
-            },
-            "description": "3u + 4 heads + no skips (best combo)",
-            "hypothesis": "HYP-022b-combo",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "2",
-            },
-            "description": "3u + 4 heads + 2 KV heads (GQA with wide heads)",
-            "hypothesis": "HYP-022b-gqa2",
-        },
-    ]
-
-    if m < len(combo_configs):
-        return combo_configs[m]
-
+    # All local experiments complete. See pgolf-roadmap.md for
+    # GPU validation plan.
     return {
         "env_overrides": {"ITERATIONS": "5000"},
-        "description": "done",
-        "hypothesis": "HYP-022b-done",
+        "description": "done — local iteration complete, see GPU plan",
+        "hypothesis": "DONE",
     }
 
 

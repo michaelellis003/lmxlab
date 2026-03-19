@@ -2841,3 +2841,34 @@ throughput effect. This should transfer to GPU.
 
 **New best config:** UNIQUE_BLOCKS=3, NUM_HEADS=4, NUM_KV_HEADS=4
 BPB = 1.8512, artifact = 5.4MB (10.6MB headroom)
+
+---
+
+### 2026-03-18 [EXPERIMENT] HYP-022c: Head Count + Capacity Frontier
+
+Follow-up experiments testing extreme head configs and capacity
+allocation with the 4-head winning architecture.
+
+| Config | BPB | Params | Δ vs 4h/4kv |
+|--------|-----|--------|-------------|
+| 4h/4kv (best) | 1.8512 | 6.8M | — |
+| 2h/2kv (hd=256) | 1.9194 | 6.8M | -0.068 (worse) |
+| 4h/4kv + MLP_MULT=3 | 1.8918 | 8.4M | -0.041 (worse) |
+
+2 heads is too few — loses attention diversity. MLP_MULT=3 is
+too slow per step locally (same throughput trap). Head count
+sweet spot confirmed at 4.
+
+---
+
+### 2026-03-18 [DECISION] DEC-014: Agent vs Bayesian Optimization
+
+Recorded lesson from Ravid Shwartz Ziv's LinkedIn post comparing
+AI agent search to Optuna TPE on Karpathy's autoresearch benchmark.
+Key insight: for hyperparameter tuning, Bayesian optimization with
+8 human-selected params beats agents. But agents excel at structural
+changes (architecture, code modifications) that can't be parameterized.
+
+Our pgolf results confirm this split:
+- Big wins = structural (weight sharing +0.029, wide heads +0.072)
+- Small/confounded wins = numeric tuning (schedule, LR)
