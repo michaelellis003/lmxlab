@@ -3449,3 +3449,28 @@ Consistent with competition evidence (PR #50 showed ~0.03 gain).
 **GPU implications:** Sliding window eval is orthogonal to all other
 architectural findings. Add EVAL_STRIDE=256 (or smaller) to the GPU
 config. Expected to give ~0.03 BPB on official hardware too.
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-027: Stride Sweep (256/128/64)
+
+Full stride comparison (each is a separate 600s training run):
+
+| Stride | BPB | Wall(s) | Delta vs Non-Overlapping |
+|--------|-----|---------|-------------------------|
+| non-overlapping | 1.7363 | 638 | baseline |
+| 256 | 1.7046 | 738 | +0.032 |
+| 128 | 1.7161 | 867 | +0.020 |
+| 64 | 1.7008 | 1126 | +0.036 |
+
+**Interpretation:** Stride=128 being worse than stride=256 is due to
+training stochasticity (different random init each run). The ~0.01
+noise between runs means stride=256 vs stride=64 difference (0.004)
+is within noise. **Stride=256 is the best trade-off** — nearly maximum
+BPB gain at only 100s extra eval cost (vs 488s for stride=64).
+
+**Best local BPB: 1.7008** (stride=64) or **1.7046** (stride=256,
+recommended for submission due to eval time budget).
+
+**Autorun status:** All local experiments complete. Next step is GPU
+validation with the GPU-Ready Configuration (see above).

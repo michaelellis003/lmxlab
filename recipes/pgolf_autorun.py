@@ -308,6 +308,30 @@ def propose(
             "description": "6L+3u+4h + sliding window eval stride=256",
             "hypothesis": "HYP-027-stride256",
         },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "NUM_LAYERS": "6",
+                "EVAL_STRIDE": "128",
+            },
+            "description": "6L+3u+4h + sliding window eval stride=128",
+            "hypothesis": "HYP-027-stride128",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "NUM_LAYERS": "6",
+                "EVAL_STRIDE": "64",
+            },
+            "description": "6L+3u+4h + sliding window eval stride=64",
+            "hypothesis": "HYP-027-stride64",
+        },
     ]
 
     if n < len(configs):
