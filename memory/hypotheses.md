@@ -2757,3 +2757,18 @@ on GPU at 524K batch.
 Free eval-time improvement, zero model size cost. Consistent with
 competition evidence (PR #50: ~0.03 gain). Not confounded by B-022
 since this is eval-only. Add to GPU config.
+
+## HYP-028: [PGOLF] NTK-aware RoPE for Extended Eval Context
+
+**Experiment:** 28 — NTK-aware RoPE scaling at eval time
+**Status:** deferred (OOM on Mac, GPU only)
+**Question:** Does extending eval context via NTK-aware RoPE improve BPB?
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H28-a | NTK eval helps +0.01-0.03 | 2048 eval improves BPB | <0.005 improvement |
+| H28-b | Extended context doesn't help | <0.005 | >0.010 improvement |
+
+**Implementation complete:** EVAL_SEQ_LEN env var, _ntk_scale_rope(),
+_ntk_restore_rope() in train_gpt_mlx.py. Cannot test on Mac (OOM at
+2048 seq_len). Must test on GPU with more memory.

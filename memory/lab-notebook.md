@@ -3474,3 +3474,55 @@ recommended for submission due to eval time budget).
 
 **Autorun status:** All local experiments complete. Next step is GPU
 validation with the GPU-Ready Configuration (see above).
+
+---
+
+### 2026-03-19 [PLAN] HYP-028: NTK-aware RoPE for Extended Eval Context
+
+**Exception to DEC-015:** Like HYP-027 (sliding window), this is an
+eval-time-only change. B-022 does not apply.
+
+**Rationale:** Competition PR #60 (LIT-106) uses NTK-aware RoPE scaling
+to evaluate at 2048+ tokens despite training at 1024. This extends
+effective context at zero training cost. Combined with sliding window
+eval, this could give another free BPB boost.
+
+**Implementation plan:**
+1. Add EVAL_SEQ_LEN env var (default = TRAIN_SEQ_LEN)
+2. At eval time, if EVAL_SEQ_LEN > TRAIN_SEQ_LEN, scale rope_base:
+   `rope_base_eval = rope_base * (eval_seq_len / train_seq_len) ^ (dim / (dim - 2))`
+3. Temporarily patch model's RoPE base during eval
+4. Sliding window with the extended sequence length
+5. Compare: standard eval (1024) vs NTK eval (2048) vs NTK eval (4096)
+
+**Risk check:**
+- No artifact size impact (code-only change, ~10 lines)
+- No training cost — eval-only
+- MLX nn.RoPE accepts `base` parameter; may need to reconstruct
+  RoPE for eval or monkey-patch the base
+- If RoPE objects are frozen after init, may need to create new
+  RoPE instances for eval
+
+**Prediction:** +0.01-0.03 BPB improvement from extended context,
+orthogonal to sliding window gain. Total eval-time gains could
+reach +0.04-0.06 BPB.
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-028: NTK-aware RoPE — OOM on Mac
+
+**Result:** Cannot test locally. EVAL_SEQ_LEN=2048 causes OOM/kill
+on Mac (36GB unified memory). The 2048-length forward pass with
+4-head attention likely exceeds available memory when combined with
+MLX's compiled graph state. Multiple attempts with different
+VAL_BATCH_SIZE (65536, 8192, 2048) all resulted in exit code 137.
+
+**Implementation is ready:** _ntk_scale_rope() and _ntk_restore_rope()
+are implemented in train_gpt_mlx.py. eval_val() dispatches correctly
+with seq_len_override. Just needs a machine with more memory (GPU).
+
+**GPU action item:** Test EVAL_SEQ_LEN=2048 and EVAL_SEQ_LEN=4096
+on H100 where memory isn't constrained. Expected +0.01-0.03 BPB
+on top of sliding window's +0.032.
+
+**Status:** Deferred to GPU (DEC-015 reinforced).
