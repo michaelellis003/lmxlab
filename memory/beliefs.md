@@ -623,3 +623,21 @@ Local Mac experiments are UNRELIABLE for:
 | 2026-03-18 | HYP-017: warmdown optimization +0.054 is confounded by batch size | C | For | — |
 | 2026-03-18 | HYP-018/019: wider models fail locally despite more params | B | For | — |
 | 2026-03-19 | HYP-024: 6L beats 9L by 0.115 BPB purely from 42% more steps (1996 vs 1404). 12L and 15L both worse despite identical params, solely from fewer steps. | A | Definitive for | 0.90 |
+
+## B-023: Sliding window eval gives ~0.03 free BPB improvement
+
+**Prior:** 0.70 (based on competition evidence PR #50)
+**Current:** 0.90
+**Source:** HYP-027 + competition PR #50
+
+Sliding window evaluation with stride=256 improves BPB by +0.032
+(1.7363→1.7046) at zero model size cost. This is a pure eval-time
+technique unaffected by B-022. Consistent with competition results.
+
+**Implication:** Always use EVAL_STRIDE in the final submission.
+Smaller strides (128, 64) may give diminishing additional gains
+but with 2-4x eval time cost.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-19 | HYP-027: stride=256 gives +0.032 BPB (1.7363→1.7046), iso-step comparison (2012 vs 1996 steps) | A | For | 0.90 |

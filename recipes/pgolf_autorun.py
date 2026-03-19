@@ -287,6 +287,32 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-027: Sliding window evaluation
+    hyp027_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-027")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp027_runs)
+
+    configs = [
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "NUM_LAYERS": "6",
+                "EVAL_STRIDE": "256",
+            },
+            "description": "6L+3u+4h + sliding window eval stride=256",
+            "hypothesis": "HYP-027-stride256",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

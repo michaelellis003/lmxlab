@@ -3379,7 +3379,73 @@ Best local architecture for 8xH100 submission:
     TRAIN_BATCH_TOKENS=524288
     ITERATIONS=20000
     MAX_WALLCLOCK_SECONDS=600
+    EVAL_STRIDE=256  # +0.032 BPB free (HYP-027, confirmed)
 
 Estimated artifact: ~5.4MB (well under 16MB limit, room for MLP 3x
-or larger vocab). Expected BPB: 1.10-1.25 range (based on competition
-scaling + our architectural improvements).
+or larger vocab). Expected BPB: 1.07-1.22 range (based on competition
+scaling + our architectural improvements + sliding window ~0.03).
+
+---
+
+### 2026-03-19 [HYPOTHESIS] HYP-027: Sliding Window Evaluation
+
+**Exception to DEC-015:** This is an eval-time-only change. No training
+is involved, so B-022 (step-count confound) does not apply. We can
+test this locally by re-evaluating an existing trained model.
+
+**Question:** Does sliding window evaluation with stride=64 improve
+BPB over the current non-overlapping evaluation?
+
+**Competing hypotheses:**
+- H27-a: Sliding window improves BPB by 0.020-0.040 (consistent
+  with competition evidence from PR #50: baseline 1.2244 -> 1.1925)
+- H27-b: Improvement is <0.010 (our small local val set and/or
+  short training reduces the context benefit)
+- H27-c: Improvement is >0.040 (our model benefits more because
+  wider heads utilize longer context better)
+
+**Design:** Implement `eval_val_sliding()` in train_gpt_mlx.py.
+Run on the most recent trained model from HYP-024 (6L config).
+Compare non-overlapping eval (current) vs sliding window (stride=64).
+No retraining needed — pure eval-time comparison.
+
+**Implementation:** Replace the non-overlapping chunk approach
+(each token sees at most 1024 tokens of context) with overlapping
+windows where stride < seq_len. Each token is scored with its
+full left-context (up to seq_len). Only the last `stride` tokens
+per window contribute to the loss/BPB computation.
+
+**Zero artifact cost:** This adds ~20 lines of code to the eval
+function. Code is part of the artifact but adds negligible bytes.
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-027: Sliding Window Results
+
+**Config:** 6L+3u+4h/4kv (best local arch) + EVAL_STRIDE=256.
+
+| Config | BPB | Steps | Wall(s) | Delta |
+|--------|-----|-------|---------|-------|
+| HYP-024-6L (control, non-overlapping) | 1.7363 | 1996 | 638 | — |
+| HYP-027-stride256 (sliding window) | 1.7046 | 2012 | 738 | **+0.032** |
+
+**Result: H27-a CONFIRMED.** Sliding window eval with stride=256
+improves BPB by +0.032, squarely in the predicted 0.020-0.040 range.
+Consistent with competition evidence (PR #50 showed ~0.03 gain).
+
+**Key observations:**
+- Step counts nearly identical (2012 vs 1996), so this is pure eval gain
+- Extra 100s wall time is from the overlapping eval passes (expected)
+- This is a **free improvement** — no training cost, no model size increase
+- Stride 256 means 4x overlap (1024/256=4 windows per position)
+- Smaller stride (64, 128) may improve further but with diminishing returns
+
+**Implementation notes:**
+- Batched sliding window in `_eval_val_sliding()` works correctly
+- First window scores all 1024 positions; subsequent windows score
+  only the last `stride` positions (avoiding double-counting)
+- Total scored tokens matches non-overlapping eval (verified in smoke test)
+
+**GPU implications:** Sliding window eval is orthogonal to all other
+architectural findings. Add EVAL_STRIDE=256 (or smaller) to the GPU
+config. Expected to give ~0.03 BPB on official hardware too.

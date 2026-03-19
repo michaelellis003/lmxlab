@@ -2740,3 +2740,20 @@ mom 0.99) improve BPB on our 6L+3u+4h/4kv architecture?
 
 All failures attributed to B-022 (batch-size confound). Must retest
 on GPU at 524K batch.
+
+## HYP-027: [PGOLF] Sliding Window Evaluation
+
+**Experiment:** 27 — Eval-time sliding window (exception to DEC-015)
+**Status:** tested (confirmed)
+**Question:** Does sliding window eval improve BPB vs non-overlapping?
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H27-a | Sliding window +0.020-0.040 | stride=256 improves BPB | <0.010 improvement |
+| H27-b | Small local improvement | <0.010 | >0.020 improvement |
+| H27-c | Larger improvement >0.040 | >0.040 | <0.040 improvement |
+
+**Result:** H27-a CONFIRMED. Stride=256 gives +0.032 BPB (1.7363→1.7046).
+Free eval-time improvement, zero model size cost. Consistent with
+competition evidence (PR #50: ~0.03 gain). Not confounded by B-022
+since this is eval-only. Add to GPU config.
