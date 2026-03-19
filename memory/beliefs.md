@@ -541,3 +541,25 @@ this might net improve BPB.
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
 | 2026-03-18 | Prior: two opposing forces (better coverage vs bigger table). Outcome depends on specific constraint budget. | C | Neutral | 0.50 |
+| 2026-03-18 | HYP-018: 3 unique blocks frees 11.3MB artifact budget. Massive headroom for larger embedding table now available. | C | For | 0.55 |
+
+## B-020: Weight sharing improves BPB at small scale
+
+**Prior:** 0.30 (unlikely — sharing loses capacity)
+**Current:** 0.80
+**Source:** HYP-018 depth recurrence experiments
+
+Weight sharing (cycling N unique blocks for 9 effective layers)
+improves BPB over unique blocks at the same width. 3 unique
+blocks at dim=512 achieves 1.9102 vs 1.9393 baseline (+0.029).
+More sharing is better (3 blocks > 5 blocks > 9 unique).
+
+The effect combines regularization (~0.017 BPB from sharing itself)
+with throughput (~0.012 BPB from 13.5% more steps due to faster
+per-step time). Width reallocation fails locally because wider
+models are too slow per step on Mac hardware.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-18 | Prior: sharing typically hurts capacity; Universal Transformers showed it can work but at different scale. | C | Against | 0.30 |
+| 2026-03-18 | HYP-018: 3 unique blocks beats baseline by 0.029 BPB. 5 blocks also beats baseline but by less. Monotonic trend: more sharing = better. Confound: partially explained by step count advantage. | B | Strong for | 0.80 |

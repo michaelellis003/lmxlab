@@ -104,107 +104,74 @@ def propose(
         - iterations: int (training steps, default from env)
         - smoke: bool (if True, override to 200 steps)
     """
-    # HYP-017 schedule sweep. Configs are indexed by run number.
-    # Filter out smoke tests (steps < 1000) for counting.
-    real_runs = [
+    # HYP-018 depth recurrence / weight sharing sweep.
+    # Skip HYP-017 runs (already completed). Count only HYP-018 runs.
+    # Use wall_time > 500s (not step count) to filter out smoke tests,
+    # since wider models may complete <1000 steps in 600s.
+    hyp018_runs = [
         r for r in past_results
-        if r.get("metrics", {}).get("steps", 0) >= 1000
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-018")
+        and r.get("wall_time_s", 0) > 500
     ]
-    n = len(real_runs)
+    n = len(hyp018_runs)
 
+    # Phase 1: isolate sharing cost at same width
     configs = [
         {
             "env_overrides": {"ITERATIONS": "5000"},
-            "description": "baseline: 5000 steps, default schedule",
-            "hypothesis": "HYP-017-baseline",
+            "description": "baseline rerun (9 unique, dim=512)",
+            "hypothesis": "HYP-018-baseline",
         },
         {
-            "env_overrides": {"ITERATIONS": "5000", "WARMUP_STEPS": "100"},
-            "description": "warmup=100 (vs baseline 20)",
-            "hypothesis": "HYP-017-a",
+            "env_overrides": {"ITERATIONS": "5000", "UNIQUE_BLOCKS": "3"},
+            "description": "3 unique blocks, dim=512 (pure sharing cost)",
+            "hypothesis": "HYP-018-a",
         },
         {
-            "env_overrides": {"ITERATIONS": "5000", "WARMUP_STEPS": "200"},
-            "description": "warmup=200 (vs baseline 20)",
-            "hypothesis": "HYP-017-a",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "WARMDOWN_ITERS": "2000",
-            },
-            "description": "warmdown=2000 (vs baseline 1200)",
-            "hypothesis": "HYP-017-b",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "WARMDOWN_ITERS": "3000",
-            },
-            "description": "warmdown=3000 (vs baseline 1200)",
-            "hypothesis": "HYP-017-b",
-        },
-        {
-            "env_overrides": {"ITERATIONS": "5000", "MATRIX_LR": "0.06"},
-            "description": "matrix_lr=0.06 (vs baseline 0.04)",
-            "hypothesis": "HYP-017-lr",
-        },
-        {
-            "env_overrides": {"ITERATIONS": "5000", "MATRIX_LR": "0.03"},
-            "description": "matrix_lr=0.03 (vs baseline 0.04)",
-            "hypothesis": "HYP-017-lr",
+            "env_overrides": {"ITERATIONS": "5000", "UNIQUE_BLOCKS": "5"},
+            "description": "5 unique blocks, dim=512 (moderate sharing)",
+            "hypothesis": "HYP-018-c",
         },
     ]
 
-    # Phase 2: refined schedule variants
+    # Phase 2: width reallocation with shared blocks
     phase2_configs = [
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
-                "WARMDOWN_ITERS": "1800",
+                "UNIQUE_BLOCKS": "3",
+                "MODEL_DIM": "768",
+                "NUM_HEADS": "8",
+                "NUM_KV_HEADS": "4",
             },
-            "description": "warmdown=1800 (between baseline 1200 and best 3000)",
-            "hypothesis": "HYP-017-b-refined",
+            "description": "3 unique, dim=768 (shared+wider, ~13.2M params)",
+            "hypothesis": "HYP-018-b",
         },
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
-                "WARMDOWN_ITERS": "3000",
-                "MATRIX_LR": "0.03",
-                "SCALAR_LR": "0.03",
-                "TIED_EMBED_LR": "0.04",
+                "UNIQUE_BLOCKS": "3",
+                "MODEL_DIM": "896",
+                "NUM_HEADS": "8",
+                "NUM_KV_HEADS": "4",
             },
-            "description": "best combo: warmdown=3000 + lr=0.03",
-            "hypothesis": "HYP-017-combined",
+            "description": "3 unique, dim=896 (shared+wider, ~17.8M params)",
+            "hypothesis": "HYP-018-b",
         },
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
-                "WARMDOWN_ITERS": "5000",
+                "UNIQUE_BLOCKS": "5",
+                "MODEL_DIM": "640",
+                "NUM_HEADS": "8",
+                "NUM_KV_HEADS": "4",
             },
-            "description": "warmdown=5000 (full linear decay, extreme low LR)",
-            "hypothesis": "HYP-017-b-extreme",
+            "description": "5 unique, dim=640 (moderate sharing+wider, ~12.5M)",
+            "hypothesis": "HYP-018-b",
         },
     ]
 
-    # Phase 3: variance check and extreme
-    phase3_configs = [
-        {
-            "env_overrides": {"ITERATIONS": "5000"},
-            "description": "baseline (rerun for variance check)",
-            "hypothesis": "HYP-017-variance",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "WARMDOWN_ITERS": "4000",
-            },
-            "description": "warmdown=4000 (between 3000 and 5000)",
-            "hypothesis": "HYP-017-b-sweep",
-        },
-    ]
-
-    all_configs = configs + phase2_configs + phase3_configs
+    all_configs = configs + phase2_configs
     if n < len(all_configs):
         return all_configs[n]
 
@@ -212,7 +179,7 @@ def propose(
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
-        "hypothesis": "HYP-017-done",
+        "hypothesis": "HYP-018-done",
     }
 
 
@@ -286,6 +253,8 @@ def _estimate_param_count(env: dict[str, str]) -> int:
     num_kv_heads = int(env.get("NUM_KV_HEADS", BASELINE["NUM_KV_HEADS"]))
     head_dim = dim // int(env.get("NUM_HEADS", BASELINE["NUM_HEADS"]))
     kv_dim = num_kv_heads * head_dim
+    unique_blocks = int(env.get("UNIQUE_BLOCKS", "0"))
+    n_stored = unique_blocks if unique_blocks > 0 else layers
 
     # Embedding (tied, so counted once)
     embed = vocab * dim
@@ -293,10 +262,10 @@ def _estimate_param_count(env: dict[str, str]) -> int:
     attn = dim * dim + dim * kv_dim + dim * kv_dim + dim * dim
     mlp = dim * (dim * mlp_mult) + (dim * mlp_mult) * dim
     per_layer = attn + mlp
-    # Skip weights
+    # Skip weights (always num_layers // 2, not affected by sharing)
     skip = (layers // 2) * dim
 
-    return embed + layers * per_layer + skip
+    return embed + n_stored * per_layer + skip
 
 
 def _estimate_artifact_bytes(param_count: int) -> int:

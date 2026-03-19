@@ -2273,3 +2273,90 @@ The warmdown mechanism is: higher warmdown_iters → LR starts lower →
 reduces gradient noise from small batch. On official 524K batch, the
 effect will be much smaller. Directional finding (slightly longer
 warmdown helps) likely transfers, but magnitude does not.
+
+---
+
+## HYP-018: [PGOLF] Depth Recurrence / Weight Sharing
+
+**Experiment:** 18 — Parameter Golf Depth Recurrence
+**Status:** active
+**Question:** Can weight sharing across transformer blocks maintain
+quality while freeing parameter budget for a wider model, ultimately
+improving BPB within the 16MB artifact constraint?
+
+**Context:** The baseline uses 9 unique Block instances (~1.83M params
+each = 16.5M block params). With weight sharing (N unique blocks cycled
+for 9 effective layers), only N blocks are stored in the artifact.
+The freed budget can be reallocated to wider dimensions (more capacity
+per unique block) or larger vocabulary.
+
+Universal Transformers (Dehghani et al. 2019) showed weight sharing
+works in transformers. Key question is whether at this scale (17M
+params), the regularization benefit of sharing outweighs the
+representational capacity loss.
+
+**Quality Gates:**
+- Gate 1 (Importance): YES — most parameter-efficient architecture change
+- Gate 2 (Scale): UNCERTAIN — weight sharing may behave differently at
+  small scale vs large scale
+- Gate 3 (Prior): YES — Universal Transformers, ALBERT (Lan et al. 2020)
+  demonstrated weight sharing works; but those used different architectures
+- Gate 4 (Predictability): YES — can predict artifact size savings precisely
+- Gate 5 (Methodology): YES — same local BPB comparison as HYP-017
+- Gate 6 (Sunk cost): NO — first architecture change for PGolf
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H18-a | Sharing hurts at same width | 3 unique blocks at dim=512 has BPB > baseline by >0.05 | Δ < 0.02 |
+| H18-b | Width reallocation compensates | 3 blocks × dim=768 matches or beats 9 × dim=512 baseline | BPB > baseline + 0.03 |
+| H18-c | Less sharing is better | 5 unique blocks outperforms 3 unique blocks at same width | 3 blocks matches or beats 5 blocks |
+| H18-d | Optimal is shared+wider | Best config uses shared blocks + wider dim | Best is 9 unique (no sharing) |
+
+**Priors:**
+- H18-a: 0.70 (sharing likely hurts at same width — less capacity)
+- H18-b: 0.45 (uncertain — width vs depth tradeoff is model-dependent)
+- H18-c: 0.60 (less sharing preserves more position-specific capacity)
+- H18-d: 0.40 (speculative — depends on H18-b outcome)
+
+**Design:**
+Phase 1 — isolate sharing cost:
+  - Baseline: 9 unique, dim=512 (rerun for comparison)
+  - 3 unique, dim=512 (pure sharing, 1/3 params in blocks)
+  - 5 unique, dim=512 (moderate sharing)
+Phase 2 — width reallocation:
+  - 3 unique, dim=768 (~13.2M params, ~9.8MB artifact)
+  - 3 unique, dim=896 (~17.8M params, ~13.2MB artifact)
+  - 5 unique, dim=640 (~12.5M params, ~9.3MB artifact)
+- Metric: val_bpb (local MLX, relative comparison)
+- Budget: 6 runs on local hardware (~11 min each)
+- Implementation: add UNIQUE_BLOCKS env var to train_gpt_mlx.py;
+  cycle blocks with modulo indexing in forward pass
+
+**Results (6 runs, 2026-03-18):**
+
+| Config | val_bpb | Artifact (MB) | Steps | ms/step |
+|--------|---------|---------------|-------|---------|
+| Baseline (9 unique, dim=512) | 1.9393 | 12.6 | 1157 | 519 |
+| 3 unique, dim=512 | **1.9102** | 4.7 | 1313 | 457 |
+| 5 unique, dim=512 | 1.9276 | 7.5 | 1253 | 479 |
+| 3 unique, dim=768 | 1.9754 | 8.4 | 780 | 770 |
+| 3 unique, dim=768 (dup) | 1.9764 | 8.4 | 780 | 770 |
+| 5 unique, dim=640 | 1.9611 | 10.2 | 900 | 667 |
+
+**Verdicts:**
+- H18-a (sharing hurts at same width): **FALSIFIED** — sharing helps by 0.029 BPB
+- H18-b (width reallocation compensates): **FALSIFIED locally** — wider
+  models too slow for 600s step budget (fewer steps)
+- H18-c (5 blocks > 3 blocks): **FALSIFIED** — 3 blocks beats 5 blocks
+  (more sharing is better at this scale)
+- H18-d (shared+wider is optimal): **FALSIFIED locally** — best is 3
+  blocks at original width (dim=512)
+
+**Key insights:**
+1. Weight sharing acts as effective regularization at this scale
+2. 3 unique blocks → 63% smaller artifact (4.7MB vs 12.6MB)
+3. Faster per-step training (457ms vs 519ms) → 13.5% more steps
+4. Width reallocation fails locally because GPU/Mac can't compute
+   wider models fast enough — may differ on 8×H100
+5. Massive artifact headroom (11.3MB free) for other optimizations
+   (bigger vocab, more recurrence loops, etc.)

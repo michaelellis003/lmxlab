@@ -34,7 +34,14 @@ Conservative expected gain on official: 0.002-0.005 BPB.
 N blocks' parameters. Universal Transformers showed this works.
 Frees parameter budget for wider layers or bigger vocab.
 **Expected gain:** 0.01-0.02 BPB (via reallocation of saved params)
-**Status:** queued
+**Status:** tested (HYP-018)
+**Result:** 3 unique blocks × 3 loops at dim=512 gives 0.029 BPB
+improvement AND 63% smaller artifact (4.7MB vs 12.6MB). Sharing
+acts as regularization at this scale. Width reallocation fails
+locally (wider models too slow per step). More sharing is better
+(3 blocks > 5 blocks). Opens 11.3MB artifact headroom.
+**Next:** Test deeper recurrence (3 blocks × {4,5} loops) and
+combine with vocab/schedule changes.
 
 ### R-PG-003: Vocabulary Size Exploration
 **Priority:** High (interacts with depth recurrence)
