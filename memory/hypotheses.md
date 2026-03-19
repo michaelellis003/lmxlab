@@ -2520,3 +2520,67 @@ default schedule). 600s wallclock, measure steps completed AND BPB.
 **Conclusion:** Default Muon settings (5 NS steps, mb=4096) are
 near-optimal for throughput/quality tradeoff. No free throughput
 gains available from optimizer tuning.
+
+---
+
+## HYP-022: [PGOLF] Attention Configuration + Skip Connection Ablation
+
+**Experiment:** 22 — GQA Configuration and Skip Ablation
+**Status:** active
+**Question:** Do the default attention configuration (8 heads, 4 KV
+heads) and encoder-decoder skip connections contribute positively to
+BPB under weight sharing?
+
+**Context:** With 3 unique blocks, the model has ~6M params. Attention
+is Q(512×512) + K(512×256) + V(512×256) + O(512×512) = ~786K per
+block. KV heads are 4 (head_dim=64, kv_dim=256). Skip weights are
+4×512 = 2048 params (negligible), but skip connections add compute
+overhead (storing encoder outputs + element-wise add in decoder).
+
+**Prior Art:**
+- GQA (Ainslie 2023): reduces KV cache at inference, not training.
+  At dim=512 with 8 heads, the KV bottleneck may matter differently.
+- Encoder-decoder skips are unusual for autoregressive LMs. The
+  baseline inherits this from the parameter-golf starter code.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H22-a | More KV heads help | NUM_KV_HEADS=8 (no GQA) improves BPB by >0.003 | BPB same or worse |
+| H22-b | Fewer heads help | NUM_HEADS=4 (4 KV heads = MHA) at larger head_dim=128 | BPB degrades >0.005 |
+| H22-c | Skips are free | Removing skip connections degrades BPB | BPB unchanged or better without skips |
+
+**Design:** All configs use UNIQUE_BLOCKS=3, default schedule.
+
+**Results:**
+| Config | BPB | Params | Artifact | Δ BPB |
+|--------|-----|--------|----------|-------|
+| Baseline (8h/4kv, skips) | 1.9234 | 6.0M | 4.7MB | — |
+| 8h/8kv (full MHA) | 1.9449 | 6.8M | 5.2MB | -0.022 |
+| **4h/4kv (wide MHA, hd=128)** | **1.8512** | **6.8M** | **5.4MB** | **+0.072** |
+| No skips | 1.9142 | 6.0M | 4.8MB | +0.009 |
+| 4h/4kv + no skips | 1.8856 | 6.8M | 5.4MB | +0.038 |
+| 4h/2kv (GQA) | 1.893 | 6.0M | 4.9MB | +0.030 |
+
+**Verdict:**
+- H22-a **FALSIFIED** — Full MHA with 8 KV heads HURTS by 0.022.
+  Extra K/V params at same head_dim don't help.
+- H22-b **STRONGLY SUPPORTED** — 4 heads with head_dim=128 is
+  +0.072 BPB better! This is the largest single improvement found
+  across all experiments. Wider heads provide more expressive
+  attention patterns at this scale. The key insight: at dim=512,
+  8 heads gives 64-dim heads which are too narrow for complex
+  attention. 4 heads at 128-dim is dramatically better.
+- H22-c **MIXED** — No skips slightly better (+0.009) at baseline
+  head config, but skips HELP with 4-head config (removing them
+  loses 0.034). Skip connections interact with head configuration.
+
+**Best config found:** UNIQUE_BLOCKS=3, NUM_HEADS=4, NUM_KV_HEADS=4
+(with skip connections). BPB = 1.8512, artifact = 5.4MB.
+
+**Why 4h/4kv > 8h/8kv at same param count:**
+Both have kv_dim=dim=512 (full MHA). The difference is head_dim:
+128 vs 64. Each attention head computes softmax(QK^T/√d)V where
+Q,K are projected into head_dim. At head_dim=128, each head can
+represent more complex attention patterns. The 8-head model has
+more INDEPENDENT attention patterns but each is less expressive.
+At this scale, expressiveness per head > number of patterns.

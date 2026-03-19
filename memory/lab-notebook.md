@@ -2774,3 +2774,70 @@ path forward is:
   (requires sp4096 tokenizer/dataset)
 - Skip R-PG-004 (low-rank) — headroom is not the bottleneck
 - Skip R-PG-009 (skip connections) — expected gain < noise floor
+
+---
+
+### 2026-03-18 [PLAN] HYP-022: Attention Config + Skip Ablation
+
+**Rationale:** Two architectural degrees of freedom remain untested
+under weight sharing: (1) GQA configuration — do we need 4 KV heads
+or would 8 (full MHA) or fewer total heads be better? (2) Skip
+connections — the encoder-decoder skip pattern is unusual for
+autoregressive LMs and adds memory overhead. These are batch-size
+independent tests.
+
+**Configs:**
+1. NUM_KV_HEADS=8 (full MHA, no GQA): +256K params per block for
+   K/V projections, but removes KV bottleneck
+2. NUM_HEADS=4, NUM_KV_HEADS=4 (MHA, head_dim=128): half the heads
+   but double the head dimension, fewer attention patterns
+3. USE_SKIP=0 (no skip connections): removes encoder-decoder skip
+   pattern, saves memory per step, tests if skips help
+
+---
+
+### 2026-03-18 [EXPERIMENT] HYP-022: Attention Config + Skip Ablation
+
+6 runs testing head count, GQA, and skip connections under weight
+sharing (3 unique blocks).
+
+| Config | BPB | Params | Artifact | Δ BPB |
+|--------|-----|--------|----------|-------|
+| Baseline (8h/4kv, skips) | 1.9234 | 6.0M | 4.7MB | — |
+| 8h/8kv (full MHA) | 1.9449 | 6.8M | 5.2MB | -0.022 |
+| **4h/4kv (hd=128)** | **1.8512** | **6.8M** | **5.4MB** | **+0.072** |
+| No skips | 1.9142 | 6.0M | 4.8MB | +0.009 |
+| 4h/4kv + no skips | 1.8856 | 6.8M | 5.4MB | +0.038 |
+| 4h/2kv (GQA) | 1.893 | 6.0M | 4.9MB | +0.030 |
+
+---
+
+### 2026-03-18 [INTERPRET] HYP-022: Wide Heads Are King
+
+**HEADLINE: 4 heads with head_dim=128 improves BPB by 0.072.**
+This is the single biggest improvement found in 40+ experiments,
+surpassing even weight sharing (+0.029).
+
+**Mechanism:** At dim=512, 8 heads gives head_dim=64 which limits
+each head's attention expressiveness. Reducing to 4 heads doubles
+head_dim to 128, giving each head much more capacity for complex
+attention patterns. The model has fewer independent attention
+streams but each is far more powerful.
+
+**Key interactions:**
+- 4h/4kv (full MHA) > 4h/2kv (GQA) by 0.042: KV capacity matters
+  with wide heads — the query heads need matching KV richness
+- Skips help WITH 4 heads (removing loses 0.034) but slightly
+  hurt WITHOUT 4 heads (removing gains 0.009). The encoder-decoder
+  skip connections are complementary to wide attention heads.
+- 8h/8kv (more KV at same head_dim) HURTS by 0.022 vs 8h/4kv.
+  At narrow head_dim=64, extra KV capacity adds params without
+  benefit. Head expressiveness is the bottleneck, not KV count.
+
+**Batch-size independence:** This is a pure architecture change.
+The per-step time is slightly higher (4h/4kv model has 6.8M vs
+6.0M params) but the BPB improvement is far larger than any
+throughput effect. This should transfer to GPU.
+
+**New best config:** UNIQUE_BLOCKS=3, NUM_HEADS=4, NUM_KV_HEADS=4
+BPB = 1.8512, artifact = 5.4MB (10.6MB headroom)

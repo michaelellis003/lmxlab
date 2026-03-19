@@ -564,3 +564,27 @@ models are too slow per step on Mac hardware.
 | 2026-03-18 | Prior: sharing typically hurts capacity; Universal Transformers showed it can work but at different scale. | C | Against | 0.30 |
 | 2026-03-18 | HYP-018: 3 unique blocks beats baseline by 0.029 BPB. 5 blocks also beats baseline but by less. Monotonic trend: more sharing = better. Confound: partially explained by step count advantage. | B | Strong for | 0.80 |
 | 2026-03-18 | HYP-019: U-shaped curve confirmed (1→2→**3**→5→9). 3 blocks optimal. Combined with schedule (3u+wd=5000+lr=0.03) achieves 1.8436 at 3.6MB, matching 9-unique configs. | B | Strong for | 0.85 |
+
+---
+
+## B-021: Wider attention heads are better at small scale
+
+**Prior:** 0.40 (uncertain — standard practice is 64-128 head_dim)
+**Current:** 0.90
+**Source:** HYP-022 attention configuration experiments
+
+At dim=512 with weight sharing (3 unique blocks), 4 heads at
+head_dim=128 dramatically outperforms 8 heads at head_dim=64
+(+0.072 BPB, the single largest improvement across 40+
+experiments). Each head needs sufficient dimensionality for
+expressive attention patterns. At head_dim=64, the attention
+is too narrow to capture complex token relationships.
+
+Full MHA (matching KV heads) is important: 4h/4kv beats 4h/2kv
+by 0.042 BPB. The KV heads need to match the query head count
+for the full benefit of wide heads.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-18 | Prior: common head_dim is 64-128 across scales. No clear preference at small scale. | C | Neutral | 0.40 |
+| 2026-03-18 | HYP-022: 4h/4kv (hd=128) beats 8h/4kv (hd=64) by 0.072 BPB. 4h/4kv also beats 8h/8kv (same params, different head_dim) by 0.094 BPB. | A | Definitive for | 0.90 |

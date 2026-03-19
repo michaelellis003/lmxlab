@@ -104,61 +104,87 @@ def propose(
         - iterations: int (training steps, default from env)
         - smoke: bool (if True, override to 200 steps)
     """
-    # HYP-021: Throughput optimization via Muon steps + microbatch
-    # Reduce per-step time to get more steps in 600s wallclock.
-    hyp021_runs = [
+    # HYP-022: Attention config + skip connection ablation
+    hyp022_runs = [
         r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-021")
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-022")
         and r.get("wall_time_s", 0) > 500
     ]
-    n = len(hyp021_runs)
+    n = len(hyp022_runs)
 
     configs = [
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
                 "UNIQUE_BLOCKS": "3",
+                "NUM_KV_HEADS": "8",
             },
-            "description": "Baseline refresh: 3u blocks, default Muon (5 NS steps)",
-            "hypothesis": "HYP-021-baseline",
+            "description": "3u + full MHA (8 KV heads, no GQA)",
+            "hypothesis": "HYP-022-mha",
         },
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
                 "UNIQUE_BLOCKS": "3",
-                "MUON_BACKEND_STEPS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
             },
-            "description": "3u + 3 NS steps (vs default 5)",
-            "hypothesis": "HYP-021-ns3",
+            "description": "3u + 4 heads (head_dim=128, MHA)",
+            "hypothesis": "HYP-022-4h",
         },
         {
             "env_overrides": {
                 "ITERATIONS": "5000",
                 "UNIQUE_BLOCKS": "3",
-                "MLX_MAX_MICROBATCH_TOKENS": "8192",
+                "USE_SKIP": "0",
             },
-            "description": "3u + microbatch=8192 (vs default 4096)",
-            "hypothesis": "HYP-021-mb8k",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "MUON_BACKEND_STEPS": "3",
-                "MLX_MAX_MICROBATCH_TOKENS": "8192",
-            },
-            "description": "3u + 3 NS steps + microbatch=8192 (combined)",
-            "hypothesis": "HYP-021-combined",
+            "description": "3u + no skip connections",
+            "hypothesis": "HYP-022-noskip",
         },
     ]
 
     if n < len(configs):
         return configs[n]
 
+    # HYP-022b: follow-up combinations based on 4-head success
+    hyp022b_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-022b")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    m = len(hyp022b_runs)
+
+    combo_configs = [
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "USE_SKIP": "0",
+            },
+            "description": "3u + 4 heads + no skips (best combo)",
+            "hypothesis": "HYP-022b-combo",
+        },
+        {
+            "env_overrides": {
+                "ITERATIONS": "5000",
+                "UNIQUE_BLOCKS": "3",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "2",
+            },
+            "description": "3u + 4 heads + 2 KV heads (GQA with wide heads)",
+            "hypothesis": "HYP-022b-gqa2",
+        },
+    ]
+
+    if m < len(combo_configs):
+        return combo_configs[m]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
-        "hypothesis": "HYP-021-done",
+        "hypothesis": "HYP-022b-done",
     }
 
 

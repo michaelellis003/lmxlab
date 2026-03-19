@@ -105,6 +105,18 @@ microbatch size to gain throughput within 600s wallclock.
 faster). Microbatch size is irrelevant at 8K batch. Muon's 5 NS
 steps are load-bearing for convergence quality. No free throughput.
 
+### R-PG-011: Attention Head Configuration
+**Priority:** Highest (batch-independent, largest gain found)
+**Rationale:** Baseline uses 8 heads at head_dim=64. Wider heads
+(fewer heads, larger head_dim) may be better at small scale.
+**Expected gain:** 0.03-0.07 BPB
+**Status:** tested (HYP-022)
+**Result:** 4 heads with head_dim=128 improves BPB by +0.072 —
+THE LARGEST SINGLE IMPROVEMENT across 40+ experiments. Full MHA
+(4 KV heads matching 4 query heads) is crucial. GQA with 2 KV
+heads gives only +0.030. Skips remain helpful (+0.034 with wide
+heads). New best: 3u + 4h/4kv = 1.8512 at 5.4MB.
+
 ## Completed Items
 
 - R-PG-001: Schedule tuning (HYP-017) — longer warmdown helps, but
@@ -115,39 +127,51 @@ steps are load-bearing for convergence quality. No free throughput.
 - R-PG-006: SwiGLU (HYP-020) — relu² beats SwiGLU. Keep relu².
 - R-PG-010: Optimizer throughput (HYP-021) — keep defaults. 5 NS
   steps are load-bearing. No free throughput gains.
+- R-PG-011: Wide attention heads (HYP-022) — 4 heads at hd=128
+  beats 8 heads at hd=64 by +0.072 BPB. Biggest win found.
 
 ## Recommended Competition Config
 
-Based on 35+ local experiments (confound: 8K batch vs 524K official):
+Based on 40+ local experiments (confound: 8K batch vs 524K official):
 
 **Definite changes (batch-independent):**
 - UNIQUE_BLOCKS=3 (weight sharing, +0.029 BPB, 63% smaller artifact)
+- NUM_HEADS=4, NUM_KV_HEADS=4 (wide heads hd=128, +0.072 BPB)
 - Keep relu² (beats parameter-matched SwiGLU)
+- Keep skip connections (help +0.034 with wide heads)
 - Keep MUON_BACKEND_STEPS=5 (3 steps destroys convergence)
+
+**Combined local improvement:** +0.072 over 3u baseline, +0.101
+over original 9-block baseline. New best: 1.8512 at 5.4MB.
+**10.6MB artifact headroom** for vocab expansion or wider model.
 
 **Test on official hardware:**
 - WARMDOWN_ITERS=1500-1800 (conservative schedule extension)
-- With 3 blocks: 12.4MB free for vocab expansion (R-PG-003)
+- With 5.4MB artifact: 10.6MB free for vocab expansion (R-PG-003)
 
 **Do NOT use locally-optimal values:**
 - WARMDOWN_ITERS=5000 and MATRIX_LR=0.03 are batch-size artifacts
 
 ## Local Iteration Assessment
 
-After 5 research iterations (HYP-017 through HYP-021) with 35+
-experiments, **local iteration has reached diminishing returns:**
+After 6 research iterations (HYP-017 through HYP-022) with 40+
+experiments:
 
-1. Architecture changes (sharing, MLP type): thoroughly explored
-2. Schedule/LR: confounded by 64x batch size mismatch
-3. Throughput tricks: exhausted (optimizer settings are optimal)
-4. Vocab exploration: blocked (need sp4096 dataset)
-5. Low-rank/skip tweaks: expected gains below noise floor
+**Thoroughly explored:**
+1. Weight sharing (U-curve, 3 blocks optimal)
+2. MLP type (relu² > SwiGLU)
+3. Head configuration (4 wide heads >> 8 narrow heads)
+4. Skip connections (helpful with wide heads)
+5. Optimizer throughput (defaults are optimal)
+
+**Still blocked/confounded:**
+6. Schedule/LR: confounded by 64x batch size mismatch
+7. Vocab exploration: blocked (need sp4096 dataset)
 
 **Recommended next steps:**
-1. GPU validation: UNIQUE_BLOCKS=3 with default schedule
-2. GPU vocab exploration: sp4096 with shared blocks
-3. GPU QAT: if weight sharing confirmed, quantization-aware
-   training to recover int8 compression losses
+1. GPU validation: UNIQUE_BLOCKS=3 + NUM_HEADS=4 + NUM_KV_HEADS=4
+2. GPU vocab exploration: sp4096 with shared blocks + wide heads
+3. GPU QAT: if arch confirmed, quantization-aware training
 
 ## Retired Items
 
