@@ -3317,3 +3317,69 @@ finding is consistent with B-022.
 **Anomaly:** None of the competition's "consensus" numeric tweaks
 work locally. This is a B-022 consequence, not a technique failure.
 All three should be retested at 524K batch on GPU.
+
+---
+
+### 2026-03-19 [DECISION] DEC-015: Local Mac iteration complete, move to GPU
+
+**Context:** 50+ experiments across HYP-017 through HYP-026. Three
+consecutive hypotheses (HYP-024/025/026) have confirmed B-022: local
+BPB is dominated by step count, not architecture quality.
+
+**Decision:** Stop local Mac experiments. Focus on:
+1. Preparing GPU-ready configs with our architectural findings
+2. Implementing code-level techniques (per-loop LoRA, LAWA)
+3. Creating the GPU experiment plan
+
+**Rationale:**
+- Reliable local findings: wide heads (4h), weight sharing (3u),
+  skip connections, relu^2 MLP. These are iso-step comparisons.
+- Unreliable local findings: depth (6L vs 9L), LR, momentum,
+  warmdown, softcap. All confounded by batch size.
+- Diminishing returns: 50+ experiments, last 15 experiments have
+  not improved the architecture beyond what was found in HYP-022.
+
+**What transfers to GPU:**
+- UNIQUE_BLOCKS=3 (63% smaller artifact)
+- NUM_HEADS=4, NUM_KV_HEADS=4 (head_dim=128)
+- relu^2 > SwiGLU (at same params)
+- USE_SKIP=1 (with wide heads)
+- MUON_BACKEND_STEPS=5
+
+**What needs GPU validation:**
+- 6L vs 9L depth
+- MUON_MOMENTUM (0.95 vs 0.99)
+- MLP_MULT (2 vs 3 with int6 quant)
+- Sliding window eval stride=64
+- Vocabulary size (sp1024 vs sp4096/sp8192)
+- Per-loop LoRA adapters
+- LAWA weight averaging
+
+---
+
+### 2026-03-19 [PLAN] GPU-Ready Configuration
+
+Best local architecture for 8xH100 submission:
+
+    UNIQUE_BLOCKS=3
+    NUM_HEADS=4
+    NUM_KV_HEADS=4
+    MODEL_DIM=512
+    NUM_LAYERS=9  # Start with 9, test 6 on GPU
+    MLP_TYPE=relu2
+    USE_SKIP=1
+    TIE_EMBEDDINGS=1
+    MUON_MOMENTUM=0.95  # Test 0.99 on GPU
+    MUON_BACKEND_STEPS=5
+    MATRIX_LR=0.04
+    SCALAR_LR=0.04
+    WARMDOWN_ITERS=1200
+    VOCAB_SIZE=1024
+    TRAIN_SEQ_LEN=1024
+    TRAIN_BATCH_TOKENS=524288
+    ITERATIONS=20000
+    MAX_WALLCLOCK_SECONDS=600
+
+Estimated artifact: ~5.4MB (well under 16MB limit, room for MLP 3x
+or larger vocab). Expected BPB: 1.10-1.25 range (based on competition
+scaling + our architectural improvements).

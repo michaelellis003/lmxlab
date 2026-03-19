@@ -299,3 +299,24 @@ split: the big wins (UNIQUE_BLOCKS=3 at +0.029, NUM_HEADS=4 at
 schedule/LR tuning was confounded and low-value.
 **Source:** linkedin.com/in/ravidshwartzziv — "Do LLM Coding agents
 fool us?" post (2026-03)
+
+---
+
+## DEC-015: Local Mac Iteration Complete, Move to GPU
+
+**Date:** 2026-03-19
+**Status:** accepted
+**Context:** 50+ experiments across HYP-017 through HYP-026. B-022
+(step count dominates local BPB) means local Mac experiments are
+unreliable for: depth/width tradeoffs, LR/momentum tuning, and any
+config that changes per-step time. Three consecutive hypotheses
+(HYP-024/025/026) confirmed diminishing returns.
+**Decision:** Stop local Mac experiments for parameter golf. Focus on:
+(1) preparing GPU configs with reliable architectural findings,
+(2) implementing code-level techniques for GPU runs,
+(3) documenting what to test on GPU vs what's already validated.
+**Rationale:** Reliable local findings (wide heads, weight sharing,
+skip connections, relu^2) are all iso-step comparisons. Everything
+else is confounded by the 64x batch size mismatch. Further local
+experiments would be wheel-spinning.
+**Source:** B-022, HYP-024/025/026 results
