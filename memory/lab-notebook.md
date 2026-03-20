@@ -4093,3 +4093,23 @@ The worse val_bpb is entirely from step deficit, not quality.
 **Conclusion**: SmearGate+BigramHash improves per-step quality. On GPU where hash/embed
 overhead is negligible relative to matmuls, this should be a net positive. Keep in GPU submission.
 B-022 pattern confirmed — overhead-sensitive changes can't be validated locally.
+
+---
+
+### 2026-03-20 `[EXPERIMENT]` OrthoInit Local Validation
+
+**HYP**: Orthogonal initialization for all large matrices (with output projections scaled
+by 1/sqrt(2*num_layers)) improves BPB vs zero-init output projections.
+
+| Config | Steps | ms/step | val_bpb (float) | val_bpb (int8) |
+|--------|-------|---------|-----------------|----------------|
+| Baseline (zero-init outputs) | 2001 | 300 | **1.7094** | **1.7108** |
+| OrthoInit (all large mats) | 2009 | 299 | 1.7515 | 1.7526 |
+| **Delta (iso-step)** | +8 | -1 | **-0.042** | **-0.042** |
+
+**Conclusion**: OrthoInit hurts by -0.042 BPB (iso-step, clean comparison). Zero-init output
+projections are better at this scale. The scaled ortho outputs (1/sqrt(12)≈0.29) inject more
+signal than zero-init, possibly disrupting early learning dynamics.
+
+**Action**: Update GPU submission to use zero-init for output projections instead of scaled ortho.
+Keep ortho for non-output matrices only (q/k/v/MLP input projections).
