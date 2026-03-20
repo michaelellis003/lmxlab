@@ -3760,3 +3760,48 @@ This is a Tier 3 experiment for GPU.
 
 **Belief update:** B-024 NEW: INT8 PTQ gap is negligible (~0.001 BPB)
 for this architecture. Confidence 0.80 (one run, but gap is very small).
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-030: SWA_START=0.75 vs Baseline
+
+**Config:** 6L+3u+4h/4kv, EVAL_STRIDE=256, 8K batch, 600s, local val set (2M tokens).
+
+| Metric | Baseline | SWA_START=0.75 |
+|--------|----------|----------------|
+| Steps | 1941 | 2021 |
+| ms/step | 309 | 297 |
+| Float val_bpb | 1.7182 | 1.7235 |
+| INT8 val_bpb | 1.7196 | 1.7346 |
+| Quant gap | 0.0014 | 0.0111 |
+| Artifact | 5.87 MB | 5.91 MB |
+
+**Adjudication:**
+- H30-a (SWA improves BPB): **FALSIFIED** — float BPB degraded by 0.005
+- H30-b (SWA hurts BPB): **SUPPORTED** — consistent degradation at both float and INT8
+- H30-c (SWA reduces INT8 gap): **FALSIFIED** — gap increased 8x (0.0014 → 0.0111)
+
+**SWA hurt on every metric** despite the SWA run having 4% more training steps.
+
+**Root cause analysis:** SWA averages 503 checkpoints from the last 25% of
+training. With only ~2000 total steps at 8K batch size, the model is still
+rapidly improving during this window — the average of improving checkpoints
+is strictly worse than the final checkpoint. SWA benefits require convergent
+or near-flat loss landscapes, which don't exist at this low step count and
+high gradient noise.
+
+**INT8 gap amplification:** The averaged weights have intermediate values
+that don't align with INT8 quantization grid points. Individual trained
+weights naturally settle into quantization-friendly distributions; averaging
+pulls them off-grid.
+
+**B-022 interaction:** SWA is ALSO batch-size confounded. At 524K batch with
+~5000 steps, the final 25% (1250 steps) would be in a much flatter loss
+region, and SWA is expected to help. Competition SOTA uses SWA successfully.
+
+**Decision:** Do NOT use SWA_START=0.75 locally. Keep it implemented for GPU
+validation where the loss landscape is flatter. If used on GPU, consider
+SWA_START=0.90 or 0.95 (narrower averaging window) to mitigate the
+quantization gap amplification.
+
+**Belief update:** B-025 NEW: SWA hurts at high gradient noise / low step count.

@@ -2819,3 +2819,31 @@ quantization-friendly. The gradient passes through via STE.
 - Line budget: ~20 lines, within 147 remaining (1353/1500)
 - Artifact impact: zero (QAT only affects training, not serialization)
 - Worst case (H29-c): float BPB degrades 0.02 — easily reverted by setting QAT_BITS=0
+
+---
+
+## HYP-030: [PGOLF] SWA Improves BPB
+
+**Experiment:** 30 — Stochastic Weight Averaging
+**Status:** tested (SWA hurts at 8K batch — float BPB +0.005 worse, INT8 gap 8x worse)
+**Question:** Does averaging model weights during the warmdown phase
+improve final BPB compared to using the final checkpoint?
+
+**Background:** SWA/LAWA maintains a running mean of model weights
+during training. Literature reports 0.5-1.5% improvement. Competition
+SOTA (PR #122) uses SWA. Our implementation (SWA_START env var) uses
+online Welford running mean starting at the specified fraction of
+total training time. B-022 caveat: SWA adds minimal per-step overhead
+(one array add+scale), so step count should be iso with baseline.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H30-a | SWA improves BPB | Float BPB improves >0.005 | BPB same or worse |
+| H30-b | SWA hurts BPB | Float BPB degrades >0.005 | BPB same or better |
+| H30-c | SWA reduces INT8 gap | INT8 gap decreases >30% | Gap same or increases |
+
+**Design:**
+- Control: HYP-029 baseline (1.7426 float BPB, 1765 steps)
+- Treatment: Same config + SWA_START=0.75 (average last 25%)
+- Config: 6L+3u+4h/4kv, EVAL_STRIDE=256, 8K batch, 600s
+- Key metric: float val_bpb, int8 val_bpb, step count (must be iso)

@@ -664,3 +664,28 @@ error is 30-295x higher. INT4+QAT could allow ~32M params in 16MB
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
 | 2026-03-19 | HYP-029: Baseline gap=0.0011, QAT gap=0.0014. Both <0.002. Prior expectation of ~0.05 was 50x too high. | A | Definitive for | 0.95 |
+| 2026-03-19 | HYP-030: SWA amplifies INT8 gap 8x (0.0014→0.0111). Averaged weights are less quantization-friendly. | B | Caution — SWA interacts badly with INT8 PTQ | 0.95 |
+
+---
+
+## B-025: SWA hurts at high gradient noise / low step count
+
+**Prior:** N/A (new belief from HYP-030)
+**Current:** 0.75
+**Source:** HYP-030 experiment results
+
+SWA with a 25% averaging window hurts BPB when training with high
+gradient noise (8K batch vs 524K official). At ~2000 steps with 8K
+batch, the model is still rapidly improving — averaging over an
+improving trajectory is worse than the final checkpoint. Additionally,
+SWA dramatically amplifies the INT8 quantization gap (0.0014→0.0111,
+8x worse) because averaged weights sit between quantization grid points.
+
+**Implication:** Don't use SWA locally. On GPU with 524K batch and
+flatter loss landscape, SWA may still help (competition SOTA uses it).
+If used on GPU, try SWA_START=0.90+ to narrow the window and minimize
+quantization gap amplification.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-19 | HYP-030: SWA hurt float BPB by 0.005 and INT8 BPB by 0.015. INT8 gap 8x worse. 503 checkpoints averaged. | A | Strong for | 0.75 |
