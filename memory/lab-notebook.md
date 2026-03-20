@@ -4142,3 +4142,32 @@ step count advantage.
 
 **Literature support**: Consistent with ALBERT (wider+shared > narrower+unique), Takase &
 Kiyono (cycle sharing outperforms), and Layer Diversity paper (3 blocks = diversity sweet spot).
+
+---
+
+### 2026-03-20 `[EXPERIMENT]` Width Scaling: dim=640 with 3u Sharing
+
+**HYP**: Wider model (dim=640) with weight sharing has better per-step quality.
+
+| Config | Params | Steps | ms/step | val_bpb (int8) | Artifact |
+|--------|--------|-------|---------|----------------|----------|
+| 3u, dim=512 | 6.8M | 2001 | 300 | **1.7108** | 5.97MB |
+| 3u, dim=640 | 10.5M | 1386 | 433 | 1.7847 | 8.12MB |
+
+Iso-step comparison at step 1200: train_loss 3.00 (dim=640) vs 3.15 (dim=512).
+**Per-step quality +0.146 at dim=640** despite worse final BPB (31% fewer steps).
+
+**Conclusion**: On GPU where step counts would equalize, dim=640 with sharing should
+significantly outperform dim=512. The per-step advantage is large (+0.146 train loss)
+and consistent with ALBERT's finding that wider+shared > narrower+unique.
+
+### Literature Review Summary (2026-03-20)
+
+Key papers supporting weight sharing strategy:
+- **ALBERT** (ICLR 2020): 4x wider + all-shared crushes narrower + unique
+- **Takase & Kiyono** (SustaiNLP 2023): Cycle sharing (our pattern) > Sequence > Full
+- **Relaxed Recursive Transformers** (ICLR 2025): Shared + LoRA recovers 96% quality
+- **Layer Diversity** (2025): Explains U-curve — 3 blocks is diversity sweet spot
+- **Subformer** (2021): Sandwich sharing: -3.6 perplexity, -37% params in LM
+- **Train Large, Then Compress** (2020): Wider converges faster, sharing has negligible degradation
+- Caution: ALBERT found sharing hurts more at wider dims (but they used M=1, not M=3)
