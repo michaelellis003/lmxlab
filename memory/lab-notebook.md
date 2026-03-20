@@ -4113,3 +4113,8 @@ signal than zero-init, possibly disrupting early learning dynamics.
 
 **Action**: Update GPU submission to use zero-init for output projections instead of scaled ortho.
 Keep ortho for non-output matrices only (q/k/v/MLP input projections).
+
+**Follow-up**: Ortho non-output + zero-init outputs = 1.7379 (float), 1.7391 (int8).
+Still -0.028 BPB worse than default init (Glorot) baseline. Ortho for non-output matrices
+alone doesn't help locally. Kept in GPU submission as "needs GPU validation" — Muon may
+orthogonalize updates anyway, making init less important at convergence.
