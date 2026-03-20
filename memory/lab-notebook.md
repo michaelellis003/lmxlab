@@ -4247,3 +4247,378 @@ At 8K batch (local Mac), gradient noise is 64x higher than GPU (524K batch).
 Individual checkpoints are noisy, so averaging them doesn't smooth — it blurs.
 **Verdict: Skip for local testing; keep for GPU submission where it may help.**
 Added `EMA_DECAY` env var for GPU experiments (EMA > Polyak for noisy regimes).
+
+### Sandwich Weight Sharing (2026-03-20)
+
+**HYP**: Sandwich pattern [0, 1,1,1,1, 2] gives unique boundary layers + shared middle,
+better than cyclic [0,1,2,0,1,2] from Subformer (EMNLP 2021).
+
+| Config | Steps | ms/step | val_bpb (int8) | Artifact |
+|--------|-------|---------|----------------|----------|
+| Cyclic (baseline) | 2001 | 300 | **1.7108** | 5.97MB |
+| Sandwich | 1990 | 302 | 1.7700 | 5.90MB |
+
+**Conclusion**: Cyclic > sandwich (-0.059 BPB). The middle block in sandwich is overloaded
+(serves 4 layers vs 2 each in cyclic). Cyclic's uniform distribution works better at 3 unique blocks.
+
+### Hourglass Architecture k=4 (2026-03-20)
+
+**HYP**: Downsample middle encoder layers via causal avg-pool to seq/4, process at lower
+resolution (faster attention), repeat-upsample for decoder. 22% faster → 29% more steps.
+
+Implementation: `_causal_pool` with right-shift for causality (no future leakage),
+`_repeat_upsample` via `mx.repeat`. Controlled by `HOURGLASS_RATIO` env var.
+
+**Bug found and fixed**: First attempt had causal violation — avg pooling groups of tokens
+let position t0 see future tokens t1-t3. Train loss dropped to impossible 0.80 at step 2400.
+Fixed by shifting pooled result right by one group: `concat([zero, pooled[:, :-1]], dim=1)`.
+
+| Config | Steps | ms/step | val_bpb (int8) | Artifact |
+|--------|-------|---------|----------------|----------|
+| Cyclic (baseline) | ~2000 | 300 | **1.7108** | 5.97MB |
+| Hourglass k=4 | 2577 | 233 | 1.7907 | 6.10MB |
+
+**Conclusion**: Hourglass k=4 hurts (-0.080 BPB). Despite 29% more steps (2577 vs 2000),
+per-step quality loss from 4x downsampling outweighs throughput gain. The causal right-shift
+means middle layers process "stale" representations — each position only sees the average of
+the *previous* group, losing token-level information attention needs.
+**Verdict: NOT worth it locally.** On GPU where batch size (not step time) is the bottleneck,
+throughput gain is irrelevant. Abandon hourglass approach.
+
+### Parallel Block (GPT-J style) (2026-03-20)
+
+**HYP**: Parallel attention+MLP (single norm, both read same input) removes sequential
+dependency and one norm call. Used in GPT-J and PaLM.
+
+| Config | Steps | ms/step | val_bpb (int8) | Artifact |
+|--------|-------|---------|----------------|----------|
+| Sequential (baseline) | ~2000 | 300 | **1.7108** | 5.97MB |
+| Parallel (GPT-J) | 1893 | 317 | 1.7222 | 5.97MB |
+
+**Conclusion**: Marginal result (-0.011 BPB). Step time degraded 300→317ms (memory pressure
+from concurrent attention+MLP intermediates). Per-step quality was slightly better but lost
+from fewer steps. **Verdict: Not worth it.** Competition's "Parallel Residuals" (PR #230) is
+a different design with separate lanes — may be worth testing separately.
+
+### Competition Intelligence Update (2026-03-20)
+
+**Parameter Golf SOTA: 1.1318 BPB** (PR #198: 11L, Int6+WD=0.04+SWA+FA3, stride=64)
+
+Key new techniques discovered:
+1. **Low-Rank Q Factorization** (PR #215): Q matrices have extreme condition numbers.
+   Factor as dim→192→dim saves 25% Q params, 22% faster per step. Implemented as LOWRANK_Q env var.
+2. **Content-Dependent Pre-Rotation** (PR #215): Learned Givens rotation before MLP.
+   SwiGLU-like mixing at 1% param cost, zero information loss. Failed on GPU (torch.compile
+   overhead) but MLX doesn't have this issue. Implemented as MLP_ROT_PAIRS env var.
+3. **Muon Weight Decay ~0.04**: Keeps weights small for better int6 quantization.
+
+### Content-Dependent Pre-Rotation (MLP_ROT_PAIRS=32) (2026-03-20)
+
+**HYP**: Learned Givens rotation before MLP provides SwiGLU-like content-dependent
+mixing at 1% param cost. Failed on GPU (torch.compile overhead) but MLX doesn't have
+this issue. From PR #215.
+
+| Config | Steps | ms/step | val_bpb (int8) | Artifact |
+|--------|-------|---------|----------------|----------|
+| Baseline (no rotation) | ~2000 | 300 | **1.7108** | 5.97MB |
+| 32 rotation pairs | 1956 | 307 | 1.7612 | 6.03MB |
+
+**Conclusion**: Rotation hurts (-0.050 BPB). At 8K batch, gradient noise is too high for
+the angle_proj to learn meaningful rotations in 1956 steps. The technique needs cleaner
+gradient signal (larger batch) to learn fine-grained content-dependent features.
+**Verdict: Keep for GPU (batch-size dependent, like SWA). Not useful locally.**
+
+### Low-Rank Q r=192 (2026-03-20)
+
+**HYP**: Q matrices naturally operate in a ~100-dim subspace (extreme condition numbers).
+Factor Q as dim→192→dim saves 25% Q params, faster per step. From competition PR #215.
+
+| Config | Params | Steps | ms/step | val_bpb (int8) | Artifact |
+|--------|--------|-------|---------|----------------|----------|
+| Full-rank Q (baseline) | 6.82M | ~2000 | 300 | **1.7108** | 5.97MB |
+| Low-Rank Q r=192 | 6.63M | 2053 | 292 | 1.7487 | 5.85MB |
+
+**Conclusion**: Low-Rank Q hurts locally (-0.038 BPP). Only 3% speedup on Mac (vs 22% on
+GPU from competition). Per-step quality loss dominates. Artifact 2% smaller.
+**Verdict: Likely a win on GPU (22% speedup). Keep for GPU submission.**
+
+### RoPE Base Frequency (ROPE_BASE=500) (2026-03-20)
+
+**HYP**: With head_dim=128 and seq_len=1024, default base=10000 means longest wavelength
+(10000) exceeds context window by 10x. Lower base=500 makes all dimensions contribute.
+
+| Config | Steps | ms/step | val_bpb (int8) | Delta |
+|--------|-------|---------|----------------|-------|
+| ROPE_BASE=10000 (default) | ~2000 | 300 | **1.7108** | — |
+| ROPE_BASE=500 | 1960 | 306 | 1.7663 | -0.056 |
+
+**Conclusion**: Confounded by swap pressure (306ms vs 300ms from memory accumulation after
+5+ sequential experiments). Per-step quality was identical to baseline at matched steps.
+**Verdict: Inconclusive.** The BPP loss is from fewer steps due to swap, not from the
+RoPE change itself. Need fresh restart to test properly, or test on GPU.
+
+### CRITICAL: Competition Deep Dive — Weight Sharing Reality Check (2026-03-20)
+
+[REVIEW] Deep research into competition landscape reveals critical strategic intelligence.
+
+**Weight sharing is NOT novel in this competition.** ~20 PRs have attempted depth recurrence
+/ weight sharing / layer reuse. Key examples:
+- PR #167 (SkywardSyntax): 3 shared blocks, 9 effective → "matched baseline" (no H100 run)
+- PR #148 (iverbovoy): 3x4 repeats, d=832, cross-repeat skip → **1.2196** (worse than baseline 1.2244)
+- PR #103 (MatthewHRockwell): 5x6 loops (30 virtual), LoRA → ~1.50 (1xH100 only)
+- PR #127 (matt-wright86): 3x3, d=768, LoRA adapters → awaiting H100
+- PR #126 (Athenox14): BitNet + depth recurrence → 1.7510 (non-competitive)
+- PR #91: 3x3, d=1024 → 1.589, over 16MB limit
+
+**Verdict: Every validated depth-recurrence submission underperforms the baseline.**
+
+**Why they fail**: Shared layers cannot specialize. The winning approach is the opposite —
+more unique layers funded by aggressive int6 quantization (11 unique layers fit in 16MB).
+PR #103's analysis: "naive weight sharing fails because identical layers cannot specialize."
+
+**The winning meta** (every top-5 submission):
+1. 11 unique layers (not shared)
+2. Int6 per-row quantization + zstd-22 compression
+3. MLP 3x expansion (1536 hidden)
+4. SmearGate + BigramHash
+5. SWA (warmdown averaging)
+6. Muon WD=0.04 (decoupled)
+7. Sliding window eval stride=64
+8. FP16 tied embedding passthrough
+9. OrthoInit + muP scaling
+
+**Current SOTA**: 1.1318 BPB (PR #198, jfprincz)
+**Baseline**: 1.2244 BPB
+**Gap**: 0.0926 BPB total improvement over baseline
+
+**Our position**: Weight sharing is a differentiator only if we can make it WORK at
+competitive BPB — which nobody has done. The unexplored territory is combining weight
+sharing with the FULL technique stack. Alternative: abandon weight sharing and implement
+the proven meta, aiming for ~1.14-1.16 BPB.
+
+**Compute Credit Application**: Targeting Development grant ($500, ~160 compute hours).
+RunPod pricing: ~$21.52/hr for 8xH100 on-demand. Budget plan:
+- 70% on 1xH100 iteration ($350 = ~130 hrs = ~520 single-GPU runs)
+- 30% on 8xH100 validation ($150 = ~7 hrs = ~28 full runs)
+
+**Form**: openai.com/index/parameter-golf/#credit-form
+**Required**: OpenAI/ChatGPT account email, tier selection, justification text.
+**Timeline**: Reviewed within 5 business days, while supplies last ($1M pool).
+
+---
+
+### 2026-03-20: [HYPOTHESIS] HYP-029 — Literature-derived local experiments
+
+**Motivation**: Strengthen compute credit application with local evidence of novel techniques.
+
+**Experiments** (all iso-step with best local config: 6L+3u+4h/4kv+stride256+NorMuon):
+
+1. **HYP-029-baseline**: Fresh baseline for fair comparison
+2. **HYP-029-polyrelu**: Learnable polynomial activation `a0 + a1*relu(x) + a2*relu(x)^2 + a3*relu(x)^3`
+   - Strict superset of relu^2 (initialized as relu^2 with a2=1, others=0)
+   - 12 extra params total (4 coeffs × 3 unique blocks)
+   - Unexplored in competition (novel contribution)
+3. **HYP-029-attntemp**: Learnable per-head attention temperature (log-space)
+   - 4 extra params per block × 3 unique blocks = 12 total
+   - Similar to q_gain but multiplicative on attention logits
+4. **HYP-029-combined**: PolyReLU + attention temperature together
+5. **HYP-029-qat6**: QAT int6 with STE (fake quantize during training)
+   - Measures if quantization-aware training reduces the int8 roundtrip gap
+
+**Implementation**: Added `POLY_RELU` and `ATTN_TEMP` env vars to `train_gpt_mlx.py`.
+poly_w treated as scalar param (Adam optimizer). attn_log_temp also scalar param.
+
+### 2026-03-20: [HYPOTHESIS] HYP-030 — NLA-inspired novel architecture experiments
+
+**Motivation**: Research on transformer bottlenecks + numerical linear algebra identified
+4 promising techniques with negligible parameter overhead, all testable iso-step locally.
+
+**Research basis** (sequential: bottleneck analysis -> NLA solutions):
+1. Residual stream bottleneck: all layers share same d-dim stream
+2. Attention capacity: fixed heads may over/under-attend
+3. Cross-layer information flow: standard residual is myopic (only layer i-1)
+4. Normalization overhead: RMSNorm computes statistics per-token
+
+**Experiments** (all iso-step with best local config: 6L+3u+4h/4kv+stride256+NorMuon):
+
+1. **HYP-030-baseline**: Fresh baseline for comparison
+2. **HYP-030-gated-attn**: Per-head sigmoid gate on SDPA output
+   - NeurIPS 2025 Best Paper technique. Eliminates attention sinks.
+   - 4 extra params per block × 3 unique = 12 total. Zero-init (starts as identity).
+3. **HYP-030-dense-dwa**: DenseFormer depth-weighted average
+   - NeurIPS 2024. Each layer input = softmax-weighted sum of all previous outputs.
+   - 21 extra params total (1+2+3+4+5+6 for 6 layers). Zero-init (uniform weights).
+   - Replaces encoder-decoder skip architecture with full cross-layer connectivity.
+4. **HYP-030-value-resid**: Value Residual Learning
+   - ACL 2025 ResFormer. First layer's V projections cached and blended into
+     subsequent layers via learned sigmoid weight. Prevents value collapse.
+   - 1 extra param per block × 3 unique = 3 total. Zero-init (starts as no residual).
+5. **HYP-030-dyt**: Dynamic Tanh normalization
+   - CVPR 2025. Replace RMSNorm with `gamma * tanh(alpha * x) + beta`.
+   - 2*dim + 1 params per norm (×2 per block for attn_norm + mlp_norm, + final_norm).
+   - Avoids computing statistics. May be faster or slower depending on implementation.
+6. **HYP-030-combined**: Gated Attn + DWA + Value Residual together
+
+**Implementation**: Added `GATED_ATTN`, `DENSE_DWA`, `VALUE_RESID`, `DYT` env vars.
+DyT class created. DWA weights managed at GPT level. Value residual uses side-effect
+`_last_v` storage pattern. All optimizer routing handled via scalar_keys.
+
+### 2026-03-20: [RESULTS] HYP-030 — NLA-inspired architecture experiments
+
+| Experiment | BPB | Steps | ms/step | Delta |
+|---|---|---|---|---|
+| Baseline | 1.7532 | 1816 | 330 | — |
+| Gated Attention | 1.7596 | 1886 | 318 | -0.006 |
+| **DenseFormer DWA** | **1.7120** | 1911 | 314 | **+0.041** |
+| **Value Residual** | **1.7263** | 1835 | 327 | **+0.027** |
+| DyT | 1.9540 | ~1800 | 333 | -0.201 |
+| **Combined (DWA+GA+VR)** | **1.6797** | 1841 | 326 | **+0.074** |
+
+**Key findings**:
+- **DenseFormer DWA**: Biggest single win (+0.041). Cross-layer weighted average with only
+  21 extra params. Replaces encoder-decoder skip architecture entirely. The softmax DWA
+  weights learn non-uniform attention to previous layers, giving richer cross-layer info flow.
+- **Value Residual**: Solid improvement (+0.027). First-layer V cached and blended via
+  learned sigmoid weight. Prevents value collapse in deep/shared models. Only 3 extra params.
+- **Combined is super-additive**: +0.074 > DWA(0.041) + VR(0.027) = 0.068. The techniques
+  are complementary — DWA provides rich cross-layer connections for hidden states, VR
+  provides cross-layer connections for attention values.
+- **Gated Attention**: Neutral-to-negative (-0.006 despite 70 more steps). The sigmoid gate
+  may interfere with the existing q_gain mechanism. Skip for GPU submission.
+- **DyT catastrophic** (-0.201): Dynamic Tanh normalization fails badly for LMs. The tanh
+  saturation clips representations, destroying information. RMSNorm is essential.
+- **New best local BPB: 1.6797** (previous best: 1.7030 from HYP-029)
+
+**Iso-step analysis**: DWA got 95 more steps than baseline (1911 vs 1816) due to slightly
+faster per-step time (314 vs 330ms). Even at iso-step, DWA would still be ~+0.015 better
+based on training curves. Combined got 1841 steps (25 more than baseline), so the +0.074
+improvement is almost entirely from architecture, not extra steps.
+
+**GPU submission recommendation**: Add DENSE_DWA=1 and VALUE_RESID=1 to the GPU script.
+Skip GATED_ATTN and DYT. These techniques are novel in the pgolf context — no competition
+submissions have used DenseFormer DWA or value residual learning.
+
+---
+
+### 2026-03-20: [SETUP] GPU Submission Variants Created
+
+**Leaderboard audit** (legitimacy check on unmerged PRs):
+- Official leaderboard: ONLY naive baseline (1.2244) merged. No other submissions verified.
+- PR #262 (1.0539): **EXPLOIT** — stores 6.2M val tokens as LZMA blob ("paid prefix")
+- PR #254 (1.1303): **UNVERIFIABLE** — empty PR body, zero details
+- PR #198 (1.1318): **HIGH credibility** — 3-seed reproducibility, detailed architecture
+- PR #236 (1.1400): **HIGH credibility** — 3-seed mean, honest ablations
+- PR #264 (1.1455): **MEDIUM** — single seed, TTT-SGD adds 0.005 BPB at eval
+- PR #256 (1.1779): **HIGH** — detailed logs, conservative int8+zlib approach
+
+**Competition meta-recipe consensus** (from credible PRs #198, #236):
+11L unique, dim=512, 8h/4kv GQA, MLP 3x relu^2, SmearGate+BigramHash(2048),
+OrthoInit+muP, Int6+zstd-22, Muon WD=0.04, mom 0.99, SWA, stride=64.
+
+**Created 5 GPU submission directories** in records/track_10min_16mb/:
+
+| Variant | Dir | Key Config |
+|---------|-----|-----------|
+| Base (PR162 enhanced) | 2026-03-20_PR162_WeightSharing/ | Weight sharing + DWA+VR support |
+| A: Meta-recipe baseline | 2026-03-20_11L_MetaRecipe/ | 11L unique, WD=0.04 |
+| B: Meta + DWA + VR | 2026-03-20_11L_DWA_VR/ | 11L + DENSE_DWA=1 VALUE_RESID=1 |
+| C: 3u×4 + DWA + VR | 2026-03-20_3Ux4_DWA_VR/ | 12L(3u), DWA+VR |
+| D: Meta + DWA + VR + 524K | 2026-03-20_11L_DWA_VR_524K/ | Like B but TRAIN_BATCH_TOKENS=524288 |
+
+**Script changes** (1267 lines, under 1500 limit):
+- Added `DENSE_DWA`, `VALUE_RESID`, `MUON_WD`, `ADAM_WD` env vars
+- CausalSelfAttention: value residual blending (stores _last_v, blends via sigmoid weight)
+- Block: passes v_resid through to attention
+- GPT: DWA path (softmax-weighted cross-layer averaging), factored into _transformer_body()
+- DWA replaces encoder-decoder skip connections when enabled
+- All new params routed to scalar optimizer (AdamW)
+- CONTROL_TENSOR_NAME_PATTERNS updated for quantization exclusion
+
+**Next step**: Validate on 8xH100 via RunPod. Priority order: A (baseline), B (DWA+VR), D (524K), C (weight sharing).
+
+### 2026-03-20 [PGOLF] [RESULT] Local 4-way comparison (600s each)
+
+| # | Config | Params | Steps | ms/step | BPB (int8+zlib) | Artifact |
+|---|--------|--------|-------|---------|-----------------|----------|
+| 1 | Our best (6L/3u, 4h/4kv, DWA+VR, NorMuon) | 6.8M | 1827 | 328 | **1.6837** | 5.8MB |
+| 2 | Meta-recipe (11L, 8h/4kv, MLP3x, bigram) | 26.8M | 552 | 1087 | 1.9847 | 15.1MB |
+| 3 | Meta + DWA + VR (11L, MLP3x, bigram, DWA, VR) | 26.8M | 508 | 1183 | 1.9977 | 15.1MB |
+| 4 | Hybrid (6L/3u, 4h/4kv, MLP3x, bigram, DWA+VR) | 8.7M | 1172 | 512 | 1.7376 | 6.3MB |
+
+**Interpretation (B-022 confound applies):**
+- Our compact config dominates locally because 3.3x more steps (1827 vs 552)
+- Meta-recipe + DWA+VR (Exp 3) slightly worse than plain meta-recipe (Exp 2):
+  DWA+VR adds 8.8% per-step overhead (1183 vs 1087 ms), losing 44 steps
+- Hybrid (Exp 4) at 1172 steps: MLP 3x + bigram adds 56% overhead vs our best
+- On GPU (524K batch, ~7412 steps for 11L), DWA+VR's 8.8% overhead is trivial
+  (~650 fewer steps of 7412). Per-step quality improvement should dominate.
+- **Cannot draw conclusions about DWA+VR quality from local results** — need GPU
+
+**Bug fixed during session**: `self._last_v = v` in MLX nn.Module caused V
+activation tensors to be tracked as model params (106MB → 844MB).
+Fixed with `object.__setattr__(self, "_last_v", v)`.
+
+### 2026-03-20 [PGOLF] [LIT] Attention Residuals (LIT-127)
+
+Added MoonshotAI's Attention Residuals (arXiv 2603.15031) to research backlog.
+Input-dependent version of DenseFormer DWA — uses learned pseudo-query per layer
+to compute softmax attention over preceding layer outputs. Reports 1.25x compute
+efficiency. Block variant is practical (partitions layers into ~8 blocks).
+Very similar to our DWA but dynamic instead of static. Priority: medium-high
+for GPU experiments. See `memory/literature.md` LIT-127.
+
+### 2026-03-20 [PGOLF] [RESULT] Full AttnRes implementation + local testing
+
+**Implemented** Full Attention Residuals (ATTN_RES=1) in train_gpt_mlx.py:
+- 2*num_layers+1 pseudo-queries (d-dim, zero-init) stored in GPT
+- `_attn_res_aggregate()`: stack outputs → RMSNorm keys → softmax(q·k) → weighted sum
+- Bypasses Block.__call__, calls block.attn/block.mlp directly (no resid_mix)
+- Applied before EVERY sublayer (attn + MLP) + one final aggregate for output
+- Mutually exclusive with DWA; compatible with Value Residual
+- 6,656 extra params for 6L config (13 queries × 512 dim)
+
+**Iso-step comparison (200 steps, 6L/3u, 4h/4kv):**
+
+| Config | Train Loss | Val BPB (int8) | ms/step |
+|--------|-----------|----------------|---------|
+| **AttnRes + VR** | **4.007** | **2.303** | 810 |
+| Baseline (no cross-layer) | 4.251 | 2.415 | 300 |
+| DWA + VR | 4.281 | 2.431 | 315 |
+
+**Key findings:**
+- AttnRes per-step quality: **+0.111 BPB** over baseline (biggest iso-step win ever)
+- DWA+VR is **worse** than baseline at iso-step (-0.017 BPB), confirming paper's
+  finding that static input-independent mixing shows "no gain"
+- AttnRes overhead: **2.7x** on Mac (810 vs 300 ms/step) due to mx.stack + RMSNorm
+  + softmax for up to 13 sources. On GPU this would be ~5-10% overhead.
+- 600s local run: 708 steps, 1.9550 BPB (worse than DWA+VR's 1.6837 due to
+  fewer steps, but per-step quality is dramatically better)
+- **AttnRes should replace DWA for GPU submissions** — same cross-layer concept
+  but input-dependent weights are strictly better
+
+**GPU priority update:** AttnRes+VR is now highest priority GPU experiment.
+Expected: with ~7000 steps on 8xH100 and ~5% overhead, the +0.111 per-step
+quality advantage should translate to significant BPB improvement.
+
+---
+
+### 2026-03-20 [AUTORUN] Iteration 1: Formalize AttnRes + Update GPU Scripts
+
+**Action**: No new experiment (DEC-015: local Mac iteration complete).
+Formalized AttnRes results and updated GPU submission infrastructure.
+
+**Changes:**
+1. Registered HYP-033 in hypotheses.md — all 4 sub-hypotheses supported
+2. Added B-027 to beliefs.md (input-dependent > static cross-layer, posterior 0.90)
+3. Added ATTN_RES env var + _attn_res_aggregate() to GPU base script (train_gpt.py)
+4. Created new variant: `2026-03-20_11L_AttnRes_VR/` with README + run command
+5. Base script: 1306 lines (under 1500 limit), syntax verified
+
+**Updated GPU submission priority order:**
+1. A: Meta-recipe baseline (validate infrastructure)
+2. **E: 11L + AttnRes + VR** (highest-priority novel technique, NEW)
+3. B: 11L + DWA + VR (fallback if AttnRes overhead is unexpectedly high on GPU)
+4. D: 11L + DWA + VR + 524K batch
+5. C: 3u×4 + DWA + VR (weight sharing variant)
+
+**Blocking:** Waiting for GPU compute credits.

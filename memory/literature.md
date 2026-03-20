@@ -2459,3 +2459,424 @@ AI agent to compose changes. Meta-approach: let the agent pick which
 techniques to combine and in what order.
 
 **Cited in:** Competition peer review (2026-03-19)
+
+---
+
+## LIT-109: PolyCom — Polynomial Composition Activations (ICLR 2025)
+
+**Title:** Polynomial Composition Activations: Unleashing the Dynamics
+of Large Language Models
+**Authors:** Zhuo et al.
+**Venue:** ICLR 2025 — **Grade B**
+**arXiv:** https://arxiv.org/abs/2411.03884
+**Code:** https://github.com/BryceZhuo/PolyCom
+
+**Key finding:** PolyReLU = sum(a_i * ReLU^i(x), i=0..r) with r=3.
+PolyNorm = sum(a_i * x^i / ||x^i||_2). Initialized a_i = 1/3 for
+i=1,2,3. At 1B scale: PolyNorm beats SwiGLU by 1.21% average on 6
+downstream tasks. Training loss 2.17 vs 2.19. With gradient
+checkpointing, overhead is negligible vs SwiGLU.
+
+**Relevance:** Drop-in activation replacement for relu^2 in FFN.
+Iso-step since polynomial ops are trivial vs matmul cost.
+LOCAL-TESTABLE: yes (same model size, ~0 throughput change).
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-110: DyT — Dynamic Tanh Replacing Normalization (CVPR 2025)
+
+**Title:** Transformers without Normalization
+**Authors:** Zhu, Chen, He, LeCun, Liu
+**Venue:** arXiv 2503.10622, CVPR 2025 — **Grade B**
+**URL:** https://arxiv.org/abs/2503.10622
+
+**Key finding:** DyT(x) = tanh(alpha * x) as drop-in replacement for
+LayerNorm/RMSNorm. Inspired by S-shaped input-output mappings observed
+in trained LayerNorm. Matches or exceeds normalized counterparts.
+Single learnable scalar alpha per layer. Derf variant (erf-based)
+outperforms in later work (arXiv 2512.10938).
+
+**Relevance:** Replaces RMSNorm with simpler/faster function. Could
+free ~0.5-2% throughput by removing mean/variance computation.
+LOCAL-TESTABLE: yes (same arch, same params, slightly faster).
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-111: Sigmoid Attention (ICLR 2025)
+
+**Title:** Theory, Analysis, and Best Practices for Sigmoid
+Self-Attention
+**Authors:** Ramapuram et al.
+**Venue:** ICLR 2025 — **Grade B**
+**arXiv:** https://arxiv.org/abs/2409.04431
+
+**Key finding:** Sigmoid attention matches softmax across scales.
+FlashSigmoid gives 17% kernel speedup on H100. Removes row-wise
+normalization (no token competition). QKNorm stabilizes sigmoid.
+Lower sample complexity from MoE perspective.
+
+**Relevance:** Eliminates softmax overhead. May be iso-step or faster.
+LOCAL-TESTABLE: yes (same arch, same params).
+**Caveat:** MLX may not have FlashSigmoid; manual sigmoid may be
+slower than MLX's optimized softmax.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-112: Learnable Activation Functions (RAF/RAFT)
+
+**Title:** Transformers with Learnable Activation Functions
+**Authors:** Gholami et al.
+**Venue:** EACL 2023 Findings — **Grade B**
+**arXiv:** https://arxiv.org/abs/2208.14111
+
+**Key finding:** Rational Activation Functions (RAF) are p(x)/q(x)
+polynomial ratios that learn optimal activation from data.
+RAFT +5.71 points on GLUE with 100 examples, +2.05 on SQuAD.
+Small number of additional params (polynomial coefficients).
+
+**Relevance:** Could replace relu^2 with learned rational function.
+Adds ~20-50 params per layer. Iso-step (polynomial eval is cheap).
+LOCAL-TESTABLE: yes.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-113: SmearGate (Competition Technique)
+
+**Source:** openai/parameter-golf PRs #162, #194, #206 — **Grade D**
+
+**Key finding:** Learned gate blending each token embedding with
+previous token's embedding. Per-dim variant: sigmoid(Parameter(dim))
+gate per embedding dimension, zero-initialized. ~512 params total.
+Present in all top-10 submissions. Per-dim SmearGate in PR #194
+(1.1480 BPB) and PR #206 (1.1507 BPB).
+
+**Relevance:** Trivial overhead (~512 params), provides bigram context
+to embedding layer before attention. LOCAL-TESTABLE: yes (zero
+throughput cost). Already known from competition review.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-114: BigramHash Embedding (Competition Technique)
+
+**Source:** openai/parameter-golf PRs #162, #186, #208 — **Grade D**
+
+**Key finding:** 4096-bucket hash table (dim=128, projected to 512)
+for token-pair context. ~524K additional params. Hash of (prev_token,
+curr_token) indexes into embedding table, added to token embedding.
+Combined with SmearGate in all SOTA submissions. PR #198 uses 2048
+buckets to save 300KB with negligible BPB cost.
+
+**Relevance:** Adds bigram awareness. Moderate param cost but fits in
+artifact budget. LOCAL-TESTABLE: yes (small overhead per step).
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-115: OrthoInit + muP Scaling (Competition Technique)
+
+**Source:** openai/parameter-golf PRs #162, #164, #206 — **Grade D**
+
+**Key finding:** Orthogonal weight initialization on all non-zero-init
+linear layers + muP-style output scaling (1/sqrt(2*num_layers)).
+Used by all top-5 submissions. Theoretical justification: preserves
+gradient norms across depth, enables stable training without warmup.
+
+**Relevance:** Zero throughput cost, zero param cost. Pure init change.
+LOCAL-TESTABLE: yes (same arch, same speed).
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-116: Overtone Spectral Init (Competition Technique)
+
+**Source:** openai/parameter-golf PR #155 — **Grade D**
+
+**Key finding:** SVD-based spectral shaping of embedding initialization
+with power=0.5. "Overtone spectral embedding initialization."
+Combined with phase-transition residual mixing. Used in PR #155
+(1.1876 BPB) and carried forward in PR #175 (TTT + OvertoneInit).
+
+**Relevance:** Zero throughput cost. Potentially better than OrthoInit
+for embeddings specifically. LOCAL-TESTABLE: yes.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-117: TTT-LoRA Eval-Time Adaptation
+
+**Source:** openai/parameter-golf PRs #152, #175, #183 — **Grade D**
+**Related:** Sun et al. 2024, arXiv 2407.04620
+
+**Key finding:** Per-document LoRA adaptation (rank=8 on Q/V + LM head)
+with Adam lr=0.01 during evaluation. Document-isolated chunked eval.
+PR #183: -0.003 BPB improvement on weak baseline. PR #175: expects
+~0.037 BPB improvement stacked on SOTA. Full-model SGD (PR #152)
+gives 3.0% BPB improvement. LoRA is cheaper than full SGD.
+
+**Relevance:** Pure eval-time technique, zero training change.
+LOCAL-TESTABLE: yes (eval-only, no throughput impact on training).
+**Caveat:** Increases eval time significantly. Must fit in 10-min
+total (train + eval) for competition.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-118: Curriculum Learning for LLM Pretraining
+
+**Title:** Curriculum Learning for LLM Pretraining: An Analysis of
+Learning Dynamics
+**Source:** arXiv 2601.21698 — **Grade C**
+
+**Key finding:** Curriculum learning consistently accelerates
+convergence by 18-45% in early/mid training. Best difficulty metrics:
+compression ratio, lexical diversity (MTLD), Flesch readability.
+As warmup strategy: sustained 3.5% improvement. Combining with weight
+averaging is "particularly effective."
+
+**Relevance:** Data ordering change. Zero model change, zero per-step
+cost if data is pre-sorted. LOCAL-TESTABLE: partially (need to
+pre-sort FineWeb shards by difficulty; data loader must support
+ordered iteration). Implementation: moderate.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-119: Learnable Attention Temperature (Per-Head)
+
+**Source:** Ryan 2024, blog post — **Grade D**
+**URL:** https://nickcdryan.com/2024/08/02/introducing-a-learnable-temperature-value-into-the-self-attention-scores/
+
+**Key finding:** Per-head learned scalar temperature on QK attention
+scores. Different heads benefit from different sharpness. ~8 params
+for 8 heads. Slight improvement reported.
+
+**Relevance:** Trivial param cost, zero throughput impact.
+LOCAL-TESTABLE: yes (add 1 scalar per head).
+**Note:** Competition already uses logit softcapping (30.0) which
+partially serves the same purpose. May interact.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-120: Label Smoothing in LMs
+
+**Title:** Towards Understanding Why Label Smoothing Degrades
+Selectivity
+**Source:** ICLR 2025 — **Grade B**
+
+**Key finding:** Label smoothing (alpha=0.1) improves BLEU despite
+worse perplexity. Degrades model's selectivity (ability to reject
+misclassifications). For BPB evaluation (perplexity-based), label
+smoothing likely HURTS.
+
+**Relevance:** NEGATIVE for our use case. BPB measures cross-entropy,
+and label smoothing distorts the loss landscape in ways that increase
+cross-entropy even when downstream task metrics improve.
+LOCAL-TESTABLE: yes but EXPECTED NEGATIVE.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-121: QK-Norm + Softcap Combination
+
+**Source:** arXiv 2410.16682 (Methods of Improving LLM Training
+Stability) — **Grade C**
+
+**Key finding:** QK layer normalization + softmax capping enables 1.5x
+higher learning rate without divergence. OLMoE: QKNorm increases
+stability at cost of 10% throughput. Combined QK_norm_cap addresses
+both input-magnitude and output-range instabilities.
+
+**Relevance:** Our baseline already has logit softcapping (30.0).
+Adding QK-norm would cost ~10% throughput (BAD for local testing due
+to B-022). Only test if we suspect training instability.
+LOCAL-TESTABLE: marginally (10% throughput hit = ~200 fewer steps).
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-122: Factored Embedding (ALBERT-style)
+
+**Title:** ALBERT: A Lite BERT for Self-supervised Learning
+**Authors:** Lan et al. (Google)
+**Venue:** ICLR 2020 — **Grade A**
+
+**Key finding:** Decompose V x H embedding into V x E and E x H.
+10x+ param reduction with little performance loss. Critical for
+large-vocab small-model settings.
+
+**Relevance:** If we increase vocab (sp2048/4096), factored embedding
+saves massive params. LOCAL-TESTABLE: yes (adds one small matmul
+per token, negligible overhead). But we already use tied embeddings
+at V=1024 which is relatively small.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-123: Peri-LN (Peri-Layer Normalization)
+
+**Title:** Peri-LN: Revisiting Layer Normalization in the Transformer
+Architecture
+**Source:** arXiv 2502.02732 — **Grade C**
+
+**Key finding:** Apply LayerNorm both before AND after each sub-layer.
+Constrains residual spikes from Pre-LN while maintaining stronger
+gradient pathway than Post-LN. Normalizes input and final output
+embeddings.
+
+**Relevance:** Double-norm per sublayer. ~2x norm cost. Likely a
+wash locally due to throughput cost, but worth noting if we observe
+training instability. LOCAL-TESTABLE: marginally.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-124: Scaling Embeddings Outperforms Scaling Experts
+
+**Title:** Scaling Embeddings Outperforms Scaling Experts in Language
+Models
+**Source:** arXiv 2601.21204 — **Grade C**
+
+**Key finding:** SCONE: n-gram embeddings (precomputed, off-accelerator)
+boost LM quality more than adding MoE experts. 1B SCONE model
+outperforms 1.9B baseline. N-gram embeddings are essentially free
+at inference (precomputed lookup).
+
+**Relevance:** BigramHash in competition is a simplified version of
+this idea. Validates the approach. LOCAL-TESTABLE: BigramHash already
+tested; expanding to trigram hash would be iso-step if hash table
+fits in memory.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-125: U-muP (Unit-Scaled Maximal Update Parametrization)
+
+**Title:** U-muP: The Unit-Scaled Maximal Update Parametrization
+**Source:** ICLR 2025 — **Grade B**
+
+**Key finding:** Combines muP with Unit Scaling for practical HP
+transfer. Addresses gap between muP theory and practice: efficient
+HP search, transfer, interpretability, low-precision training.
+
+**Relevance:** Proper muP would make our local LR experiments more
+transferable to GPU. But implementing muP is non-trivial.
+LOCAL-TESTABLE: yes (zero throughput cost, just different scaling
+factors), but complex implementation.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+---
+
+## LIT-126: Mixed Int5/Int6 Quantization (Competition Technique)
+
+**Source:** openai/parameter-golf PR #180, #219 — **Grade D**
+
+**Key finding:** Int5 [-16,15] for MLP weights, int6 [-32,31] for
+attention. Int5 has 3 zero high bits per byte; zstd-22 compresses
+at 1.88x vs int6's 1.51x. Saves 1.86MB, funding an extra
+transformer layer. PR #180: 1.1453 BPB with 10 layers.
+PR #219: 12L mixed int5-MLP + int6-Attn, 1.1541 BPB.
+
+**Relevance:** Compression technique for artifact budget. Not directly
+local-testable (quantization interacts with batch size), but the
+artifact savings enable architectural changes that ARE testable.
+
+**Cited in:** Local-testable lit review (2026-03-20)
+
+## LIT-127: MoonshotAI 2026 (Attention Residuals)
+
+**Title:** Attention Residuals
+**Authors:** Kimi Team, MoonshotAI
+**Venue:** arXiv preprint 2603.15031, March 2026 — **Grade C**
+**URL:** https://github.com/MoonshotAI/Attention-Residuals
+**arXiv:** https://arxiv.org/abs/2603.15031
+
+**Key finding:** Replaces fixed residual connections with learned,
+input-dependent attention over depth. Each layer computes softmax
+attention over all preceding layer outputs using a learned pseudo-query
+w_l in R^d. Block AttnRes variant partitions layers into ~8 blocks,
+applies attention only across block boundaries. Reports **1.25x compute
+efficiency** (same BPB at 80% compute). Validated on Kimi Linear (48B/3B
+activated, 1.4T tokens): +7.5 pts GPQA-Diamond, +3.1 pts HumanEval.
+
+**Relationship to our work:**
+- Very similar to our DenseFormer DWA (NeurIPS 2024): both use
+  softmax-weighted cross-layer averaging
+- Key difference: AttnRes is **input-dependent** (dynamic), DWA is static
+- Complementary to Value Residual (which operates on V projections, not
+  hidden states)
+- Our DWA + Value Residual: super-additive +0.074 BPB locally
+
+**Relevance to pgolf:** High. Could replace or augment DWA for
+input-dependent cross-layer routing. Block AttnRes overhead is minimal
+(~d params per block boundary). Best tested on GPU first — overhead may
+hurt local Mac iteration (B-022 confound). Novel in competition context
+(March 2026, no submissions use it yet).
+
+**Priority:** Medium-high for GPU experiments. Test variants:
+(A) replace DWA with Block AttnRes, (B) DWA + AttnRes together,
+(C) AttnRes + Value Residual without DWA.
+
+**Cited in:** Research backlog (2026-03-20), HYP-033 (2026-03-20)
+
+---
+
+## LIT-128: Ziming Liu — When Does Attention Residuals Work?
+
+**Title:** When does Kimi's "Attention Residuals" work?
+**Source:** Blog post, kindxiaoming.github.io/blog/2026/attention-residual/ — **Grade D**
+**Author:** Ziming Liu (MIT)
+
+**Key finding:** Identifies a **stability-expressivity tradeoff** for AttnRes.
+AttnRes excels on structured/linear data but struggles on complex memorization
+tasks. When attention weights fail to learn, they default to uniform distribution
+("uniform bias"), causing representation collapse via over-averaging.
+
+**Empirical evidence:** As datasets interpolate from random (alpha=0) to
+structured (alpha=1), AttnRes progressively outperforms standard residuals.
+Neither method universally dominates.
+
+**Relevance to pgolf:** Language modeling is structured data (alpha>>0), so
+AttnRes should perform well. Our iso-step results (+0.111 BPB) confirm this.
+The uniform bias risk is low with zero-init (which we use) and natural language
+data. The main risk would be if the model needs to memorize rare tokens.
+
+**Cited in:** HYP-033 literature check (2026-03-20)
+
+---
+
+## LIT-129: DeepCrossAttention (DCA)
+
+**Title:** DeepCrossAttention: Supercharging Transformer Residual Connections
+**Source:** arXiv 2502.06785 — **Grade C**
+
+**Key finding:** Another cross-layer aggregation method. Uses cross-attention
+between layers to achieve lower perplexity for given parameter/training budgets.
+A competitor to AttnRes in the cross-layer connection space.
+
+**Relevance:** Alternative to AttnRes. Not yet tested in our context.
+Lower priority than AttnRes given our strong iso-step results.
+
+**Cited in:** HYP-033 literature check (2026-03-20)

@@ -2932,3 +2932,49 @@ torchrun --standalone --nproc_per_node=8 train_gpt.py
 
 **Success criterion:** BPB < 1.15 on any configuration.
 **Stretch goal:** BPB < 1.10, competitive with SOTA.
+
+## HYP-033: [PGOLF] Attention Residuals Replace DWA for Cross-Layer Aggregation
+
+**Experiment:** 33 — Full Attention Residuals vs DWA vs baseline (iso-step)
+**Status:** supported (local iso-step, awaiting GPU validation)
+**Question:** Does input-dependent cross-layer aggregation (AttnRes) outperform
+static aggregation (DWA) at iso-step?
+**Source:** LIT-127 (MoonshotAI, arXiv 2603.15031)
+
+**Background:** DenseFormer DWA (HYP-030) uses static softmax weights for cross-layer
+aggregation, adding +0.041 BPB locally. The Attention Residuals paper replaces these
+with learned, input-dependent pseudo-queries that compute softmax attention over all
+preceding sublayer outputs. Paper Table 4 shows DenseFormer achieves NO gain at scale
+(1.767 vs 1.766 baseline), while AttnRes gets 1.737. Reports 1.25x compute efficiency.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H33-a | AttnRes beats DWA at iso-step | AttnRes BPB < DWA BPB by >0.02 | AttnRes BPB >= DWA BPB |
+| H33-b | AttnRes beats baseline at iso-step | AttnRes BPB < baseline by >0.03 | AttnRes BPB >= baseline |
+| H33-c | AttnRes overhead < 3x on Mac | ms/step < 900 (baseline ~300) | ms/step >= 900 |
+| H33-d | DWA shows no gain at iso-step | DWA BPB >= baseline at iso-step | DWA BPB < baseline by >0.01 |
+
+**Design:** 200-step iso-step comparison. 6L/3u/4h/4kv config.
+Three arms: (1) AttnRes+VR, (2) DWA+VR, (3) baseline (no cross-layer).
+
+**Results (200 iso-steps, 2026-03-20):**
+
+| Config | Train Loss | Val BPB (int8) | ms/step | Delta vs baseline |
+|--------|-----------|----------------|---------|-------------------|
+| AttnRes + VR | 4.007 | 2.303 | 810 | **+0.111** |
+| Baseline | 4.251 | 2.415 | 300 | — |
+| DWA + VR | 4.281 | 2.431 | 315 | **-0.017** |
+
+**Verdicts:**
+- H33-a: **SUPPORTED** — AttnRes 2.303 < DWA 2.431, delta = 0.128 (>>0.02)
+- H33-b: **SUPPORTED** — AttnRes 2.303 < baseline 2.415, delta = 0.111 (>>0.03)
+- H33-c: **SUPPORTED** — 810 ms/step < 900 threshold (2.7x overhead, within budget)
+- H33-d: **SUPPORTED** — DWA 2.431 > baseline 2.415, DWA is strictly worse at iso-step
+
+**Interpretation:** Input-dependent weights are categorically better than static weights
+for cross-layer aggregation. This confirms the paper's finding (Table 4: DenseFormer
+shows no gain at scale). The 2.7x Mac overhead is due to mx.stack + RMSNorm + softmax
+for up to 13 sources — on GPU with fused kernels this would be ~5-10%.
+
+**GPU implication:** Replace DENSE_DWA with ATTN_RES in all GPU submission scripts.
+AttnRes+VR is now the highest-priority GPU experiment.

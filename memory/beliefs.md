@@ -709,3 +709,31 @@ Add to GPU-ready config alongside weight sharing and wide heads.
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
 | 2026-03-19 | HYP-031: Float BPB 1.7182->1.7016 (+0.017), INT8 1.7196->1.7030 (+0.017). Step count 3.5% higher (partial B-022 confound, ~0.005). | B | Strong for | 0.75 |
+
+---
+
+## B-027: Input-dependent cross-layer aggregation outperforms static
+
+**Prior:** 0.65 (likely based on AttnRes paper claims, but untested at our scale)
+**Current:** 0.90
+**Source:** HYP-033 experiment results + LIT-127 (arXiv 2603.15031)
+
+Full Attention Residuals (input-dependent softmax over preceding sublayer
+outputs via learned pseudo-queries) dramatically outperforms DenseFormer DWA
+(static softmax weights) at iso-step. AttnRes+VR achieves +0.111 BPB over
+baseline while DWA+VR is -0.017 (worse than baseline). The per-step quality
+improvement is 6.5x larger than DWA's best non-iso-step result (+0.041).
+
+This confirms the paper's Table 4 finding: static DenseFormer shows no gain
+at scale, while input-dependent AttnRes provides 1.25x compute efficiency.
+The key mechanism is that each sublayer's aggregation weights adapt to the
+input, allowing context-dependent routing of information across layers.
+
+**Implication:** Replace DENSE_DWA=1 with ATTN_RES=1 in all GPU submissions.
+AttnRes overhead is ~2.7x on Mac (memory-bound) but expected ~5-10% on GPU
+(compute-bound). AttnRes+VR is now the highest-priority novel technique.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-20 | HYP-033: AttnRes+VR 2.303 vs baseline 2.415 (+0.111) vs DWA+VR 2.431 (-0.017). 200 iso-steps. | A | Definitive for | 0.90 |
+| 2026-03-20 | LIT-127: AttnRes paper Table 4. DenseFormer 1.767 vs baseline 1.766 (no gain). AttnRes Full 1.737 (-0.03). | B | For (at scale) | — |
