@@ -3969,4 +3969,39 @@ but may take hours. Not blocking GPU submission.
   Embed weight → tok optimizer; scale+proj → scalar optimizer.
 
 **Estimated artifact size with additions:** ~2MB (massive headroom under 16MB).
-**Next:** GPU validation of full submission, then iterative improvement.
+
+---
+
+### Full Competition Technique Integration (2026-03-19)
+
+**Category:** engineering
+**Context:** Studied PR #162 (reproducible SOTA at 1.1483 BPB) and ported
+remaining high-value techniques to our submission script.
+
+**Additions to submission script (now 1361 lines, under 1500):**
+
+1. **OrthoInit**: Orthogonal initialization for all large Linear matrices.
+   Output projections (attn.proj, mlp.proj) scaled by `1/sqrt(2*num_layers)`.
+   Non-output matrices get standard orthogonal init.
+
+2. **Int6 Mixed Quantization**: New `mixed_quantize_int6()` and
+   `dequantize_mixed_int6()` functions. Per-row symmetric int6 [-32,31]
+   for MLP+attention weights. fp16 passthrough for embeddings.
+   Replaces INT8-only pipeline. ~33% more effective params at same artifact size.
+
+3. **zstd-22 Compression**: Optional (USE_ZSTD=1, default on). Falls back
+   to zlib-9 if zstandard not installed. Better compression for restricted-range
+   int6 data.
+
+4. **Muon Weight Decay**: Added `weight_decay` parameter to Muon optimizer.
+   Applied as decoupled WD: `p *= (1 - lr * wd)` before gradient update.
+   Default MUON_WEIGHT_DECAY=0.02. AdamW WD=0.01 for embeddings/scalars.
+
+5. **SWA (Stochastic Weight Averaging)**: Collect model state during warmdown
+   (when lr_scale < swa_start_frac) every swa_every steps. Average accumulated
+   states after training. SWA_ENABLED=1, SWA_START_FRAC=0.5, SWA_EVERY=200.
+
+**All techniques from PR #162 now integrated. Script ready for GPU validation.**
+
+**Next:** Obtain GPU access, run initial validation, then sweep MLP_MULT=3 and
+NUM_LAYERS=9 as the two highest-value knobs remaining.
