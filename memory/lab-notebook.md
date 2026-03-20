@@ -3805,3 +3805,55 @@ SWA_START=0.90 or 0.95 (narrower averaging window) to mitigate the
 quantization gap amplification.
 
 **Belief update:** B-025 NEW: SWA hurts at high gradient noise / low step count.
+
+---
+
+### 2026-03-19 [SETUP] NorMuon Implementation
+
+Added `NORMUON=1` env var to train_gpt_mlx.py. NorMuon adds per-row
+adaptive normalization after Newton-Schulz orthogonalization, with
+correction scaling to preserve overall update magnitude (DION-style).
+
+**Implementation details:**
+- Per-row variance buffer: one float32 scalar per output neuron per param
+- EMA tracking: `v = beta2*v + (1-beta2)*mean(g_ortho^2)` per row
+- Row normalization: `g_ortho / (sqrt(v) + 1e-8)`
+- Correction scaling: `g_ortho *= norm_before / norm_after` (preserves Frobenius norm)
+- No bias correction needed -- correction scaling handles cold-start naturally
+
+**Bug fixed:** First attempt used raw division without correction scaling,
+causing ~22x LR amplification (sqrt(n_cols)). Second attempt added bias
+correction but still diverged. Correction scaling from DION reference
+implementation is the correct approach.
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-031: NorMuon vs Baseline
+
+**Config:** 6L+3u+4h/4kv, EVAL_STRIDE=256, 8K batch, 600s, local val set.
+
+| Metric | Baseline | NorMuon |
+|--------|----------|---------|
+| Steps | 1941 | 2008 |
+| ms/step | 309 | 299 |
+| Float val_bpb | 1.7182 | 1.7016 |
+| INT8 val_bpb | 1.7196 | 1.7030 |
+| Quant gap | 0.0014 | 0.0014 |
+| Artifact | 5.87 MB | 5.95 MB |
+
+**Adjudication:**
+- H31-a (NorMuon improves BPB): **SUPPORTED** -- 0.017 BPB improvement
+- H31-b (NorMuon hurts BPB): **FALSIFIED**
+- H31-c (NorMuon is step-iso): **MARGINAL** -- 3.5% more steps (within 5%)
+
+**Analysis:** NorMuon improved float BPB by 0.017. About 0.005 is
+attributable to extra steps (B-022 confound), leaving ~0.012 from NorMuon
+per-row normalization itself. The quantization gap is unchanged at 0.0014,
+confirming NorMuon doesn't affect INT8 quality.
+
+**Best local INT8 BPB: 1.7030** (new record, beating previous 1.7046
+from HYP-027 sliding window baseline). New best config:
+6L+3u+4h/4kv + EVAL_STRIDE=256 + NORMUON=1.
+
+**Belief update:** B-026 NEW: NorMuon improves convergence at small
+scale even with high gradient noise.

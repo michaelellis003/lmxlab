@@ -2847,3 +2847,29 @@ total training time. B-022 caveat: SWA adds minimal per-step overhead
 - Treatment: Same config + SWA_START=0.75 (average last 25%)
 - Config: 6L+3u+4h/4kv, EVAL_STRIDE=256, 8K batch, 600s
 - Key metric: float val_bpb, int8 val_bpb, step count (must be iso)
+
+---
+
+## HYP-031: [PGOLF] NorMuon Improves BPB Over Standard Muon
+
+**Experiment:** 31 — NorMuon per-row adaptive normalization
+**Status:** supported (+0.017 BPB, best local INT8: 1.7030)
+**Question:** Does NorMuon's per-row variance normalization improve
+convergence over standard Muon at small scale with 8K batch?
+
+**Background:** NorMuon (arxiv 2510.05491) adds per-neuron adaptive
+normalization after Newton-Schulz orthogonalization. Reports 11-22%
+faster convergence on 1.1B models. Competition SOTA (PR #122) uses
+NorMuon. Minimal overhead (~m scalars per parameter), so step count
+should be iso (avoiding B-022 confound).
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H31-a | NorMuon improves BPB | Float BPB improves >0.005 | BPB same or worse |
+| H31-b | NorMuon hurts BPB | Float BPB degrades >0.005 | BPB same or better |
+| H31-c | NorMuon is step-iso | Step count within 5% of baseline | >10% difference |
+
+**Design:**
+- Control: HYP-030 baseline (1.7182 float BPB, 1941 steps, local val)
+- Treatment: Same config + NORMUON=1, NORMUON_BETA2=0.999
+- Config: 6L+3u+4h/4kv, EVAL_STRIDE=256, 8K batch, 600s, local val

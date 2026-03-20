@@ -689,3 +689,23 @@ quantization gap amplification.
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
 | 2026-03-19 | HYP-030: SWA hurt float BPB by 0.005 and INT8 BPB by 0.015. INT8 gap 8x worse. 503 checkpoints averaged. | A | Strong for | 0.75 |
+
+---
+
+## B-026: NorMuon improves convergence at small scale
+
+**Prior:** 0.60 (likely based on paper, but untested at our scale)
+**Current:** 0.75
+**Source:** HYP-031 experiment results
+
+NorMuon per-row adaptive normalization with correction scaling improves
+BPB by ~0.012 (after B-022 step count adjustment) over standard Muon.
+The improvement comes from equalizing per-neuron update magnitudes while
+preserving overall gradient scale. No impact on INT8 quantization gap.
+
+**Implication:** Use NORMUON=1 as default for competition submission.
+Add to GPU-ready config alongside weight sharing and wide heads.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-19 | HYP-031: Float BPB 1.7182->1.7016 (+0.017), INT8 1.7196->1.7030 (+0.017). Step count 3.5% higher (partial B-022 confound, ~0.005). | B | Strong for | 0.75 |
