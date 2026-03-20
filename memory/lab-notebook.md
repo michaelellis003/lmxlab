@@ -4171,3 +4171,79 @@ Key papers supporting weight sharing strategy:
 - **Subformer** (2021): Sandwich sharing: -3.6 perplexity, -37% params in LM
 - **Train Large, Then Compress** (2020): Wider converges faster, sharing has negligible degradation
 - Caution: ALBERT found sharing hurts more at wider dims (but they used M=1, not M=3)
+
+### Spatial Statistics → Parameter Golf Synthesis (2026-03-20)
+
+**Research question**: What tricks from GP scalability (Vecchia, SPDE, HODLR, Kronecker,
+butterfly factorization, inducing points) can improve parameter golf submissions?
+
+**Key connections identified**:
+
+1. **Kronecker-factored MLP layers** (from Vecchia/HODLR covariance structure)
+   - `W ≈ Σ (A_k ⊗ B_k)`, forward: `out = B @ X.reshape(...) @ A.T`
+   - KroneckerBERT: 26-205x compression on BERT, Krony-PT: GPT-2 at 81M params
+   - MLP is 66% of block params → highest leverage compression point
+   - Combined with weight sharing: 3 unique Kronecker-factored blocks
+
+2. **Monarch matrices for attention** (from butterfly/sparse GP factorization)
+   - Dao et al. ICML 2022: 11x compression, validated on GPT-2
+   - Block-diagonal + permutation structure, O(n^1.5) params for n×n matrix
+   - Combined with int6 quantization for extreme compression
+
+3. **Hourglass + weight sharing** (from multi-resolution GP / inducing points)
+   - Middle layers process 4x fewer tokens (256 vs 1024) → 4x faster attention
+   - Same 3 shared blocks at different resolutions → "free" depth
+   - Mirrors sparse GP inducing point approximation
+
+4. **Turbo-Muon** (from AOL preconditioning)
+   - Reduce Newton-Schulz iterations 5→4 with equivalent quality
+   - ~3% throughput gain → ~30 more steps locally
+
+5. **LAWA (earlier weight averaging)** (from GP posterior mean)
+   - Start averaging at 10-15% of training instead of warmdown only
+   - Kaddour et al.: sliding window of K recent checkpoints
+   - Mousse optimizer (March 2026): curvature-aware Muon, 12% fewer steps
+
+**Priority for local experiments**: Kronecker MLP > LAWA > Turbo-Muon > Hourglass
+
+### Kronecker MLP Experiment (2026-03-20)
+
+**HYP**: Kronecker-factored MLP (`W ≈ Σ_r A_r ⊗ B_r`) reduces artifact size, freeing
+budget for wider/deeper models.
+
+**Implementation**: Added `KroneckerLinear`, `KroneckerMLP` classes and `KRON_RANK` env var.
+Forward: `Σ_r A_r @ X @ B_r^T` via loop (vectorized version 2.4x slower due to memory).
+`_kron_factors(n)` finds factor closest to sqrt(n) for balanced decomposition.
+Optimizer routing: 3D Kronecker tensors → adam_scalar (not Muon).
+
+| Config | Params | Steps | ms/step | val_bpb (int8) | Artifact |
+|--------|--------|-------|---------|----------------|----------|
+| Dense baseline (3u) | 6.82M | 2001 | 300 | **1.7108** | 5.97MB |
+| Kronecker r=8 (3u) | 3.75M | 1313 | 457 | 1.9959 | 3.02MB |
+
+Iso-step comparison at step 1200: train_loss 3.37 (Kron) vs 3.14 (Dense) = **-0.23 per step**.
+
+**Conclusion**: Kronecker MLP achieves 2x artifact compression but -0.285 BPB quality loss.
+The structural constraint limits expressiveness too much. On GPU, overhead would be worse
+(H100 tensor cores optimized for large dense matmuls, not small Kronecker factors).
+**Verdict: NOT worth pursuing for pgolf.** Artifact budget isn't the bottleneck — quality is.
+
+Note: Vectorized version (broadcast over rank dim) was 2.4x SLOWER (1046ms vs 442ms)
+due to large intermediate tensors [rank, batch, seq, p, q] blowing memory bandwidth.
+
+### SWA/EMA/LAWA Experiments (2026-03-20)
+
+**HYP**: Earlier weight averaging (LAWA-style) or EMA improves generalization.
+
+| Config | Steps | ms/step | val_bpb (int8) | Checkpoints |
+|--------|-------|---------|----------------|-------------|
+| Baseline (no SWA) | 2001 | 300 | **1.7108** | — |
+| SWA start=0.1 (Polyak) | 1955 | 307 | 1.8683 | 1759 |
+| SWA start=0.9 (Polyak) | 1802 | 333 | 1.7636 | 186 |
+| EMA=0.999, start=0.75 | 1952 | 307 | 1.7872 | 492 |
+
+**Conclusion**: ALL averaging variants hurt locally. Root cause: batch-size dependent.
+At 8K batch (local Mac), gradient noise is 64x higher than GPU (524K batch).
+Individual checkpoints are noisy, so averaging them doesn't smooth — it blurs.
+**Verdict: Skip for local testing; keep for GPU submission where it may help.**
+Added `EMA_DECAY` env var for GPU experiments (EMA > Polyak for noisy regimes).
