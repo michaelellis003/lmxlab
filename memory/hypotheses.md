@@ -2873,3 +2873,62 @@ should be iso (avoiding B-022 confound).
 - Control: HYP-030 baseline (1.7182 float BPB, 1941 steps, local val)
 - Treatment: Same config + NORMUON=1, NORMUON_BETA2=0.999
 - Config: 6L+3u+4h/4kv, EVAL_STRIDE=256, 8K batch, 600s, local val
+
+---
+
+## HYP-032: [PGOLF] GPU Validation and MLP/Depth Sweep
+
+**Experiment:** 32 — GPU validation of full technique stack + arch sweep
+**Status:** active (pre-registered, requires 8xH100)
+**Question:** What is the optimal MLP_MULT x NUM_LAYERS x UNIQUE_BLOCKS
+configuration on GPU with all competition techniques integrated?
+
+**Background:** Our submission script integrates all techniques from PR #162
+(reproducible SOTA 1.1483 BPB) plus NorMuon and weight sharing (which PR #162
+does not use). PR #162 uses 9L+MLP3x without sharing at ~12MB artifact. With
+weight sharing (3u), we can fit MLP3x at only ~4.4MB — massive headroom.
+The key unknown: does cyclic weight sharing maintain quality at 524K batch?
+
+Weight sharing was validated locally at +0.029 BPB over no-sharing (HYP-018),
+but at 8K batch (B-022 confound). At 524K batch, deeper models may benefit
+more from unique blocks since gradient noise is 64x lower.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H32-a | Weight sharing helps on GPU | 3u beats 9u (no sharing) at same MLP3x | 3u BPB > 9u BPB by >0.01 |
+| H32-b | MLP3x is highest-value knob | MLP3x improves >0.02 BPB over MLP2x | MLP3x improvement < 0.01 |
+| H32-c | 9L beats 6L on GPU | 9L improves >0.01 BPB over 6L (same 3u blocks) | 9L same or worse |
+| H32-d | Our stack beats PR #162 baseline | Our BPB < 1.1483 (PR #162 mean) | BPB >= 1.15 |
+
+**Design — ordered sweep (7 runs, 600s each):**
+
+| Run | Config | Purpose | Est. artifact |
+|-----|--------|---------|---------------|
+| 1 | 6L+3u+MLP2x (defaults) | Baseline validation | ~3.6 MB |
+| 2 | 9L+3u+MLP2x | Test depth with sharing | ~3.6 MB |
+| 3 | 6L+3u+MLP3x | Test MLP width | ~4.4 MB |
+| 4 | 9L+3u+MLP3x | Best combo with sharing | ~4.4 MB |
+| 5 | 9L+9u+MLP3x (no sharing) | PR #162 equivalent | ~12.1 MB |
+| 6 | 9L+4u+MLP3x | More unique blocks | ~5.7 MB |
+| 7 | 9L+5u+MLP3x | Even more unique blocks | ~6.9 MB |
+
+Additional hyperparameter changes from PR #162 to test (as env vars):
+- `MUON_MOMENTUM=0.99` (expected to help at 524K batch)
+- `MATRIX_LR=0.02` (lower than current 0.04)
+- `WARMDOWN_ITERS=3000` (longer warmdown)
+- `GRAD_CLIP_NORM=0.3` (gradient clipping)
+
+**Command template:**
+```bash
+pip install zstandard  # for zstd-22 compression
+NCCL_IB_DISABLE=1 MLP_MULT=3 NUM_LAYERS=9 UNIQUE_BLOCKS=3 \
+MUON_MOMENTUM=0.99 MATRIX_LR=0.02 WARMDOWN_ITERS=3000 \
+GRAD_CLIP_NORM=0.3 \
+DATA_PATH=/root/code/parameter-golf/data/datasets/fineweb10B_sp1024 \
+TOKENIZER_PATH=/root/code/parameter-golf/data/tokenizers/fineweb_1024_bpe.model \
+MAX_WALLCLOCK_SECONDS=600 TRAIN_LOG_EVERY=50 VAL_LOSS_EVERY=200 \
+torchrun --standalone --nproc_per_node=8 train_gpt.py
+```
+
+**Success criterion:** BPB < 1.15 on any configuration.
+**Stretch goal:** BPB < 1.10, competitive with SOTA.

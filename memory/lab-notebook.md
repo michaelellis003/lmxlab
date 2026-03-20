@@ -4005,3 +4005,70 @@ remaining high-value techniques to our submission script.
 
 **Next:** Obtain GPU access, run initial validation, then sweep MLP_MULT=3 and
 NUM_LAYERS=9 as the two highest-value knobs remaining.
+
+---
+
+### 2026-03-19 — [HYPOTHESIS] HYP-032: GPU Validation + Arch Sweep
+
+Pre-registered GPU experiment plan. 7-run sweep over MLP_MULT (2x vs 3x),
+NUM_LAYERS (6 vs 9), and UNIQUE_BLOCKS (3u vs 4u vs 5u vs 9u).
+
+**Key insight:** With weight sharing (3u), MLP3x+9L only uses ~4.4MB
+(vs ~12MB without sharing). This gives massive headroom under the 16MB limit
+and potentially allows combining more techniques.
+
+**Competing hypotheses:**
+- H32-a: Weight sharing still helps on GPU (not just a local artifact)
+- H32-b: MLP3x is the highest-value single knob
+- H32-c: 9 effective layers beats 6 (free with sharing, same params)
+- H32-d: Our full stack beats PR #162's 1.1483 BPB
+
+**Also to test at runtime (no code changes):** MUON_MOMENTUM=0.99,
+MATRIX_LR=0.02, WARMDOWN_ITERS=3000, GRAD_CLIP_NORM=0.3.
+
+**Script location:**
+`parameter-golf/records/track_10min_16mb/2026-03-19_WeightSharing_WideHeads_NorMuon/train_gpt.py`
+(1361 lines, syntax verified, all competition techniques integrated)
+
+---
+
+### 2026-03-19 — [PLAN] Competition Analysis: Paid Prefix (PR #168)
+
+Reviewed PR #168 (SOTA 1.0238 BPB). The technique stores 12.9M validation
+target tokens (8.75MB compressed) in the artifact and predicts them with
+probability 1 at eval time. The model itself is only 7.12MB (7L, 384d).
+
+This is an information allocation trick, not a training improvement. The
+model trains exclusively on train data — the prefix just memorizes val targets.
+Controversial but technically within the rules (the artifact is self-contained,
+no external data at eval time).
+
+**Decision:** Do not pursue Paid Prefix. Focus on legitimate training improvements.
+If we achieve <1.10 BPB with real training, that's a more meaningful result.
+
+---
+
+### 2026-03-19 — [SETUP] Autorun iteration complete: all local work done
+
+**Status:** The autorun loop has exhausted all productive local work:
+- 60+ local experiments (HYP-017 through HYP-031) completed
+- GPU submission script fully loaded with all competition techniques
+- HYP-032 pre-registered for GPU validation
+- docs_selected.jsonl download in progress (for future sp2048 data)
+
+**Blocking:** GPU access (8xH100) required for all remaining experiments.
+
+**Summary of the full submission technique stack:**
+1. Weight sharing (UNIQUE_BLOCKS=3, cyclic block indexing)
+2. Wide MHA (NUM_HEADS=4, head_dim=128)
+3. NorMuon (per-row adaptive normalization with DION correction)
+4. Sliding window eval (EVAL_STRIDE=256)
+5. SmearGate (learned bigram gate, ~512 params)
+6. BigramHash (XOR hash embedding, 4096x128, ~524K params)
+7. OrthoInit (orthogonal init, output projs scaled 1/sqrt(2*layers))
+8. Int6 mixed quantization (per-row [-32,31] for MLP+attn, fp16 embed)
+9. Muon weight decay (0.02) + AdamW WD (0.01)
+10. SWA (checkpoint averaging during warmdown)
+11. zstd-22 compression (with zlib-9 fallback)
+12. FP16 embedding passthrough
+13. Momentum warmup (0.85->0.95 over 500 steps)
