@@ -3863,3 +3863,33 @@ from HYP-027 sliding window baseline). New best config:
 
 **Belief update:** B-026 NEW: NorMuon improves convergence at small
 scale even with high gradient noise.
+
+---
+
+### 2026-03-19 [DECISION] Autorun Local Iteration FINAL STOP
+
+**DEC-015 updated to FINAL.** 60+ experiments (HYP-017 through HYP-031)
+exhausted all productive local experiments. Stopping conditions met:
+- All iso-step architectural comparisons done
+- All code-level techniques implemented and validated (or shown unhelpful)
+- NorMuon was the last productive experiment (+0.012 BPB)
+- No open anomalies, no queued local ideas
+
+**Final local research summary:**
+
+| Technique | BPB Effect | Status |
+|-----------|-----------|--------|
+| Wide heads (4h/4kv, hd=128) | +0.072 | Tier 1 (validated) |
+| Weight sharing (3 unique blocks) | +0.029 | Tier 1 (validated) |
+| Sliding window eval (stride=256) | +0.032 | Tier 1 (validated) |
+| NorMuon | +0.012 | Tier 2.5 (validated) |
+| relu^2 over SwiGLU | +0.015 est | Tier 1 (validated) |
+| Skip connections with wide heads | +0.034 | Tier 1 (validated) |
+| INT8 QAT | unnecessary | Gap is only 0.001 |
+| SWA (0.75) | -0.005 | Hurts locally (B-022) |
+| Schedule tuning | confounded | Unreliable locally |
+
+**Best local INT8 BPB: 1.7030**
+**Estimated GPU BPB with Tier 1+2.5: 1.10-1.20** (competition SOTA: 1.1585)
+
+**Next action:** Obtain GPU access (8xH100) and run the GPU experiment plan.

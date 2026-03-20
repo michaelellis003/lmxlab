@@ -304,19 +304,23 @@ fool us?" post (2026-03)
 
 ## DEC-015: Local Mac Iteration Complete, Move to GPU
 
-**Date:** 2026-03-19
-**Status:** accepted
-**Context:** 50+ experiments across HYP-017 through HYP-026. B-022
+**Date:** 2026-03-19 (updated after HYP-031)
+**Status:** accepted (FINAL)
+**Context:** 60+ experiments across HYP-017 through HYP-031. B-022
 (step count dominates local BPB) means local Mac experiments are
 unreliable for: depth/width tradeoffs, LR/momentum tuning, and any
-config that changes per-step time. Three consecutive hypotheses
-(HYP-024/025/026) confirmed diminishing returns.
-**Decision:** Stop local Mac experiments for parameter golf. Focus on:
-(1) preparing GPU configs with reliable architectural findings,
-(2) implementing code-level techniques for GPU runs,
-(3) documenting what to test on GPU vs what's already validated.
+config that changes per-step time. After initial DEC-015, continued
+with code-level/iso-step experiments (HYP-029 QAT, HYP-030 SWA,
+HYP-031 NorMuon) which were productive. Now exhausted.
+**Decision:** Stop ALL local Mac experiments for parameter golf.
+All productive iso-step comparisons are done. GPU is required for
+remaining work (mom=0.99, softcap, MLP 3x, sp2048 vocab, SWA).
+**Best local INT8 BPB:** 1.7030 (6L+3u+4h/4kv+EVAL_STRIDE=256+NORMUON=1)
+**GPU-ready config:** UNIQUE_BLOCKS=3, NUM_HEADS=4, NUM_KV_HEADS=4,
+EVAL_STRIDE=256, MLP_TYPE=relu2, USE_SKIP=1, MUON_BACKEND_STEPS=5,
+NORMUON=1, FP16_EMBED=1 (untested but free).
 **Rationale:** Reliable local findings (wide heads, weight sharing,
-skip connections, relu^2) are all iso-step comparisons. Everything
-else is confounded by the 64x batch size mismatch. Further local
-experiments would be wheel-spinning.
-**Source:** B-022, HYP-024/025/026 results
+skip connections, relu^2, NorMuon) are all iso-step comparisons.
+SWA and QAT(INT8) tested and found unhelpful locally. Everything
+else is confounded by the 64x batch size mismatch.
+**Source:** B-022, HYP-024 through HYP-031 results
