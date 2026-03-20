@@ -3559,22 +3559,28 @@ window + fp16 embeddings + SWA + NorMuon + FA3). Our estimated range was
 13. ~~**LAWA/SWA weight averaging**~~ — DONE: SWA_START env var
 14. ~~**QAT (int6/int8 with STE)**~~ — DONE: QAT_BITS env var
 
+**Tier 2.5: Validated locally, add to GPU config**
+11b. NORMUON=1 (NorMuon, +0.012 BPB locally, HYP-031)
+12b. FP16_EMBED=1 (untested locally, but INT8 gap is only 0.001)
+13b. SWA_START=0.90 (SWA hurts at 8K batch; try narrow window on GPU)
+
 **Tier 4: Research (uncertain impact)**
 15. Per-loop LoRA adapters for weight-shared blocks
 16. Iteration embeddings for recurrence differentiation
-17. NorMuon optimizer
+17. ~~NorMuon optimizer~~ — DONE: NORMUON=1 env var (HYP-031 supported)
 18. Longer training sequences (2048 or 4096 during training)
+19. QAT_BITS=4 with INT4 serialization (2x param budget, needs new serialization)
 
-**Recommended GPU run order:**
-- Run A: Tier 1 config as baseline (est. 1.15-1.25 BPB)
+**Recommended GPU run order (updated 2026-03-19):**
+- Run A: Tier 1 config + NORMUON=1 as baseline (est. 1.10-1.20 BPB)
 - Run B: + mom=0.99 + softcap=50 + MLP 3x (test B-022 confounds)
 - Run C: + sp2048 vocab + fp16 embeddings (biggest unknown lever)
-- Run D: + LAWA + QAT (artifact optimization)
-- Run E: + NTK RoPE eval (stacks with sliding window)
+- Run D: + SWA_START=0.90 + NTK RoPE eval (stacking techniques)
+- Run E: + QAT_BITS=4 with INT4 serialization (2x param budget if gap is manageable)
 
-**Autorun local iteration: STOPPED.** All productive local experiments
-exhausted. 56+ experiments across HYP-017 through HYP-028. Best local
-BPB: 1.7046. Move to GPU for remaining work.
+**Autorun local iteration: STOPPED.** 60+ experiments across HYP-017
+through HYP-031. Best local BPB: 1.7030 (NorMuon + all Tier 1).
+Move to GPU for remaining work.
 
 ---
 
