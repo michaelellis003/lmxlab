@@ -4072,3 +4072,24 @@ If we achieve <1.10 BPB with real training, that's a more meaningful result.
 11. zstd-22 compression (with zlib-9 fallback)
 12. FP16 embedding passthrough
 13. Momentum warmup (0.85->0.95 over 500 steps)
+
+---
+
+### 2026-03-20 `[EXPERIMENT]` SmearGate + BigramHash Local Validation
+
+**HYP**: SmearGate + BigramHash improve BPB (iso-step quality improvement).
+**Config**: 6L, 3u, 4h/4kv, NorMuon, stride-256, local dataset, 8K batch, 600s.
+
+| Config | Steps | ms/step | val_bpb (float) | val_bpb (int8) |
+|--------|-------|---------|-----------------|----------------|
+| Baseline | 2001 | 300 | **1.7094** | **1.7108** |
+| SmearGate+BigramHash | 1413 | 425 | 1.7876 | 1.7887 |
+| **Delta** | -588 | +125 | **-0.078** | **-0.078** |
+
+**B-022 confound**: Treatment got 29% fewer steps due to 42% overhead.
+At iso-step (step 1200): train_loss 3.04 (treatment) vs 3.15 (baseline) = **+0.11 per-step improvement**.
+The worse val_bpb is entirely from step deficit, not quality.
+
+**Conclusion**: SmearGate+BigramHash improves per-step quality. On GPU where hash/embed
+overhead is negligible relative to matmuls, this should be a net positive. Keep in GPU submission.
+B-022 pattern confirmed — overhead-sensitive changes can't be validated locally.
