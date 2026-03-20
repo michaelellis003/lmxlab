@@ -3893,3 +3893,47 @@ exhausted all productive local experiments. Stopping conditions met:
 **Estimated GPU BPB with Tier 1+2.5: 1.10-1.20** (competition SOTA: 1.1585)
 
 **Next action:** Obtain GPU access (8xH100) and run the GPU experiment plan.
+
+---
+
+### GPU Submission Script Created (2026-03-19)
+
+**Category:** engineering
+**Context:** Ported all confirmed local findings to the PyTorch GPU training script.
+
+Created submission at:
+`records/track_10min_16mb/2026-03-19_WeightSharing_WideHeads_NorMuon/train_gpt.py`
+
+**Changes from baseline `train_gpt.py`:**
+
+1. **Weight sharing (UNIQUE_BLOCKS)**: GPT.__init__ creates `n_blocks` unique blocks
+   (not `num_layers`). Forward pass uses `self.blocks[i % self.n_blocks]` for cyclic
+   weight sharing. Default: UNIQUE_BLOCKS=3.
+
+2. **Wide MHA defaults**: NUM_HEADS=4, NUM_KV_HEADS=4 (head_dim=128). Changed from
+   8/4 baseline.
+
+3. **NorMuon in Muon optimizer**: Added `normuon` and `normuon_beta2` parameters.
+   Per-row variance tracking + DION correction scaling (preserve Frobenius norm
+   before/after normalization). Default: NORMUON=1.
+
+4. **Sliding window eval**: New `_eval_val_sliding()` function. Generates overlapping
+   windows with `stride` spacing, scores only last `stride` positions per window.
+   Added `forward_logits()` method to GPT for logit-level access. Properly unwraps
+   DDP/compile via `_orig_mod`. Default: EVAL_STRIDE=256.
+
+5. **FP16 embedding passthrough**: Modified `quantize_state_dict_int8()` to accept
+   `fp16_embed` flag. Embedding weights stored as fp16 instead of INT8+scale.
+   Default: FP16_EMBED=1.
+
+6. **NUM_LAYERS=6 default**: 3 unique x 2 cycles = 6 effective layers.
+
+**Script size:** 1152 lines (under 1500 limit).
+**Syntax verified:** OK.
+
+**Stale hypothesis cleanup:** Closed HYP-018 (supported), HYP-021 (falsified),
+HYP-022 (supported), HYP-023 (supported), HYP-025 (tested).
+
+**sp2048 investigation:** Manifest only contains sp1024. Retokenization requires
+48GB `docs_selected.jsonl` download + SentencePiece training. Download attempted
+but may take hours. Not blocking GPU submission.

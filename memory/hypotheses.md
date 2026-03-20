@@ -2279,7 +2279,7 @@ warmdown helps) likely transfers, but magnitude does not.
 ## HYP-018: [PGOLF] Depth Recurrence / Weight Sharing
 
 **Experiment:** 18 — Parameter Golf Depth Recurrence
-**Status:** active
+**Status:** supported (3u optimal, sharing helps +0.029 BPB)
 **Question:** Can weight sharing across transformer blocks maintain
 quality while freeing parameter budget for a wider model, ultimately
 improving BPB within the 16MB artifact constraint?
@@ -2471,7 +2471,7 @@ independent result. Keep relu² for competition.
 ## HYP-021: [PGOLF] Throughput Optimization via Muon Steps + Microbatch
 
 **Experiment:** 21 — Step-Time Reduction for Higher Throughput
-**Status:** active
+**Status:** falsified (5 NS steps load-bearing, no throughput gains)
 **Question:** Can we reduce per-step computation time without hurting
 BPB, effectively trading compute quality for more training steps
 within the 600s wallclock budget?
@@ -2526,7 +2526,7 @@ gains available from optimizer tuning.
 ## HYP-022: [PGOLF] Attention Configuration + Skip Connection Ablation
 
 **Experiment:** 22 — GQA Configuration and Skip Ablation
-**Status:** active
+**Status:** supported (4h/4kv +0.072 BPB, biggest single win)
 **Question:** Do the default attention configuration (8 heads, 4 KV
 heads) and encoder-decoder skip connections contribute positively to
 BPB under weight sharing?
@@ -2590,7 +2590,7 @@ At this scale, expressiveness per head > number of patterns.
 ## HYP-023: [PGOLF] Sharing Depth Re-optimization with Wide Heads
 
 **Experiment:** 23 — Block Count × Head Config Interaction
-**Status:** active
+**Status:** supported (3u still optimal with wide heads)
 **Question:** Does the optimal number of unique blocks (3, found with
 8 heads) change when using 4 wide heads (head_dim=128)?
 
@@ -2688,7 +2688,7 @@ quality holds at 524K batch size with 20K steps.
 ## HYP-025: [PGOLF] Optuna TPE Numeric Hyperparameter Search
 
 **Experiment:** 25 — Optuna TPE over numeric hyperparameters
-**Status:** active
+**Status:** tested (near-optimal, +0.005 max improvement)
 **Question:** Can Bayesian hyperparameter optimization (Optuna TPE)
 find numeric parameter settings that improve BPB beyond manual tuning?
 
