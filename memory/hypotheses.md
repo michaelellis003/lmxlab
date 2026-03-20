@@ -2778,7 +2778,7 @@ _ntk_restore_rope() in train_gpt_mlx.py. Cannot test on Mac (OOM at
 ## HYP-029: [PGOLF] QAT Reduces INT8 Quantization Gap
 
 **Experiment:** 29 — Quantization-Aware Training with STE
-**Status:** active (implementation phase)
+**Status:** tested (INT8 gap already negligible at 0.001 BPB; QAT unnecessary for INT8)
 **Question:** Does training with fake-quantized weights (INT8 STE)
 reduce the float-to-INT8 BPB gap compared to post-training quantization?
 

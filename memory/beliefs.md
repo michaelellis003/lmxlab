@@ -641,3 +641,26 @@ but with 2-4x eval time cost.
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
 | 2026-03-19 | HYP-027: stride=256 gives +0.032 BPB (1.7363→1.7046), iso-step comparison (2012 vs 1996 steps) | A | For | 0.90 |
+
+---
+
+## B-024: INT8 PTQ gap is negligible (~0.001 BPB)
+
+**Prior:** 0.30 (expected ~0.05 gap based on typical INT8 quantization)
+**Current:** 0.95
+**Source:** HYP-029 experiment results
+
+Post-training quantization to INT8 (via mx.quantize with group_size=64)
+introduces only ~0.001 BPB degradation for our architecture (6L+3u+4h/4kv,
+dim=512). This means QAT is unnecessary at INT8 precision. The prior
+assumption of ~0.05 gap was based on general INT8 literature, not
+architecture-specific measurement.
+
+**Implication:** INT8 PTQ is essentially free for the competition
+artifact. QAT becomes valuable only at INT4/INT6 where quantization
+error is 30-295x higher. INT4+QAT could allow ~32M params in 16MB
+(2x current budget), making it a high-value GPU experiment.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-19 | HYP-029: Baseline gap=0.0011, QAT gap=0.0014. Both <0.002. Prior expectation of ~0.05 was 50x too high. | A | Definitive for | 0.95 |

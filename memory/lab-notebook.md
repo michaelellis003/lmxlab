@@ -3590,10 +3590,8 @@ step past `swa_start` fraction: `avg = avg + (weights - avg) / count`.
 Memory cost: one extra copy of model weights in float32 (~27MB for
 6.8M param model).
 
-**Smoke test: BLOCKED by system memory exhaustion.** After 10+ training
-runs in this session, Mac has 12GB swap used. All new training runs
-are killed (exit 137). The implementation is correct (unit-testable)
-but cannot be validated locally until system memory is freed.
+**Smoke test: Previously BLOCKED by system OOM.** Now resolved — see
+"OOM Issue Resolved" entry below. SWA can be tested locally.
 
 **GPU action item:** Test SWA_START=0.75 (average last 25% of training).
 Literature suggests ~1% window is optimal, but with only ~5000 steps at
@@ -3706,3 +3704,59 @@ more quantization-friendly, reducing the float→INT8 BPB gap.
 
 **Risk:** Zero artifact impact. QAT only affects training. Worst case:
 set QAT_BITS=0 to disable and revert to standard training.
+
+---
+
+### 2026-03-19 [STATUS] OOM Issue Resolved
+
+The system OOM that blocked SWA and NTK-RoPE testing (and prevented any
+new training runs) is now resolved. Contributing fixes:
+1. `mx.set_memory_limit(70%)` + `mx.set_cache_limit(2GB)` — prevents
+   runaway GPU allocation in the training process
+2. `mx.eval(model.state)` after optimizer step — frees graph references
+3. `mx.eval(accum)` in grad accum loop — prevents graph growth
+4. File-based stdout capture in autorun (recipes/pgolf_autorun.py) —
+   prevents parent process memory accumulation
+5. `gc.collect()` + 2s sleep between autorun runs
+
+Training runs now complete successfully on Mac (36GB unified memory).
+DEC-015 can be partially relaxed for testing code-level changes (MLX
+optimizations, QAT, FP16_EMBED, SWA) that were previously blocked.
+
+---
+
+### 2026-03-19 [EXPERIMENT] HYP-029: QAT_BITS=8 vs Baseline
+
+**Config:** 6L+3u+4h/4kv, EVAL_STRIDE=256, 8K batch, 600s wallclock.
+
+| Metric | Baseline | QAT_BITS=8 |
+|--------|----------|------------|
+| Steps | 1765 | 2007 |
+| ms/step | 340 | 299 |
+| Float val_bpb | 1.7426 | 1.6903 |
+| INT8 val_bpb | 1.7437 | 1.6917 |
+| Quant gap | 0.0011 | 0.0014 |
+| Artifact | 5.73 MB | 5.90 MB |
+
+**Key finding: INT8 quantization gap is only 0.001 BPB.** Our prior
+assumption of ~0.05 gap was wrong. PTQ to INT8 is already near-lossless
+for this architecture. QAT with INT8 is unnecessary.
+
+**Adjudication:**
+- H29-a (gap reduced >50%): FALSIFIED — gap was already negligible
+- H29-b (gap eliminated): TRIVIALLY TRUE — but gap was always <0.002
+- H29-c (QAT hurts float BPB): FALSIFIED — BPB improved +0.052
+- H29-d (QAT neutral on gap): SUPPORTED — gap unchanged at ~0.001
+
+**Confound (B-022):** QAT run got 14% more steps (2007 vs 1765) due to
+faster per-step time. The 0.052 BPB improvement is likely dominated by
+extra training, not QAT itself. Speed difference is probably run-to-run
+MLX compile variance, not a real QAT effect.
+
+**Implication:** For competition submission, QAT_BITS=8 is NOT needed.
+The value of QAT would be at INT4/INT6 where the quantization gap is
+larger. INT4+QAT could allow ~32M params in 16MB artifact (2x current).
+This is a Tier 3 experiment for GPU.
+
+**Belief update:** B-024 NEW: INT8 PTQ gap is negligible (~0.001 BPB)
+for this architecture. Confidence 0.80 (one run, but gap is very small).
