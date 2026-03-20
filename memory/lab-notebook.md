@@ -3937,3 +3937,36 @@ HYP-022 (supported), HYP-023 (supported), HYP-025 (tested).
 **sp2048 investigation:** Manifest only contains sp1024. Retokenization requires
 48GB `docs_selected.jsonl` download + SentencePiece training. Download attempted
 but may take hours. Not blocking GPU submission.
+
+---
+
+### Competition Intelligence Update (2026-03-19)
+
+**Category:** research
+**Context:** Analyzed top PRs (#122-#168) on the parameter-golf leaderboard.
+
+**SOTA moved to 1.0238 BPB** (PR #168 "Paid Prefix"). Competitive range: 1.14-1.17.
+
+**Newly identified techniques (not yet in our submission):**
+
+| Technique | Source PR | Description | Status |
+|-----------|-----------|-------------|--------|
+| SmearGate | #142, #168 | Learned gate blending current+previous token embedding | **Added to script** |
+| BigramHash | #168 | XOR hash table mapping token pairs to learned embeddings | **Added to script** |
+| Int6 quantization | #122, #168 | 33% more params at same artifact size | TODO (GPU) |
+| Seq2048 + NTK RoPE | #168 | Train on 2048-token sequences with NTK scaling | TODO (GPU) |
+| MLP 3x | #168 | 3x intermediate size (was 2x) | TODO (GPU) |
+| zstd-22 compression | #168 | Better compression than zlib | TODO (GPU) |
+| OrthoInit + muP | #168 | Orthogonal init with maximal update param | TODO (GPU) |
+| Muon mom 0.99 | #122 | Higher momentum at 524K batch | TODO (GPU) |
+
+**SmearGate + BigramHash added to submission script** (1209 lines, still under 1500):
+
+- SmearGate: `gate = sigmoid(learned_param)`, output = `(1-g)*x + g*x_prev`
+  ~512 parameters. Gate param → scalar optimizer.
+- BigramHash: XOR hash `(36313*curr ^ 27191*prev) % (vocab_size-1)` → 4096×128
+  embedding table → project to dim. ~524K parameters.
+  Embed weight → tok optimizer; scale+proj → scalar optimizer.
+
+**Estimated artifact size with additions:** ~2MB (massive headroom under 16MB).
+**Next:** GPU validation of full submission, then iterative improvement.
