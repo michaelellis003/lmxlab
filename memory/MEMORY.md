@@ -95,10 +95,11 @@ literature:
 - Literature favors H1b-d (null/scale, prior 0.65) and H1b-a
   (LR mismatch, prior 0.70)
 
-## Current State (2026-03-20)
-- **Parameter Golf competition**: 39 hypotheses tested, best local BPB 1.6758
-- **Best config**: 6L+3u+4h/4kv + XSA + Value Residual + NorMuon + stride=256
-- **XSA+VR super-additive** (HYP-039): +0.073 BPB combined vs +0.035 expected
+## Current State (2026-03-21)
+- **Parameter Golf competition**: 42 hypotheses tested, best local BPB **1.6679**
+- **Best config**: 6L+3u+4h/4kv + XSA_START_LAYER=4 + VR + NorMuon + stride=256
+  + FP16_EMBED=1 + Z_LOSS=1e-4
+- **Session findings**: XSA+VR super-additive (+0.073), z-loss +0.005, fp16 +0.001
 - **DEC-015**: Local Mac iteration complete, GPU needed for remaining work
 - **5 GPU submission variants** ready in `parameter-golf/records/track_10min_16mb/`
 - Competition SOTA: ~1.13 BPB (PR #287: XSA+EMA+Int6)
