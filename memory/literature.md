@@ -2948,3 +2948,23 @@ MUDDFormer approach (separate dynamic weights per stream) could be stronger
 than AttnRes's single-query mechanism.
 
 **Cited in:** HYP-034/035 literature check (2026-03-20)
+
+## LIT-134: Diversity of Transformer Layers
+
+**Title:** On the Diversity of Transformer Layers
+**Source:** arXiv 2505.24009 — **Grade C**
+
+**Key finding:** Performance improves when individual layers make predictions
+close to the correct answer AND remain mutually diverse. Performance
+improvement achieved by reusing (sharing) layers is limited — shared layers
+lack the diversity needed for optimal cross-layer interaction. Proposes
+diversity-aware training objectives.
+
+**Relevance:** Directly validates our B-028 finding that AttnRes requires
+unique (non-shared) layers. Weight sharing reduces layer diversity, which is
+exactly the mechanism AttnRes relies on (cross-layer aggregation via learned
+queries). This explains why AttnRes fails at 9L/3u (-0.028 BPB) but succeeds
+at 9L/9u (+0.111 BPB) — the 3 unique blocks lack sufficient diversity for
+the attention-based aggregation to find complementary information.
+
+**Cited in:** HYP-036 literature check (2026-03-20)
