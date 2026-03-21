@@ -4693,3 +4693,32 @@ But our weight-sharing configs (3u, 4u) are incompatible with AttnRes.
 - Verify on GPU: AttnRes + 11 unique layers (variant E) should still work
 - Do NOT combine AttnRes with weight sharing in any submission
 - Block AttnRes S=3 is marginally useful but not worth the complexity
+
+---
+
+### 2026-03-20 — [INTERPRET] HYP-035: AttnRes Needs Depth, Not Just Unique Layers
+
+**Follow-up to HYP-034.** Ran 4 additional arms to disambiguate the root cause
+of AttnRes failure with 6L configs.
+
+**Results (200 iso-steps):**
+
+| Config | AttnRes Off | AttnRes On | Delta |
+|--------|-------------|------------|-------|
+| 9L/9u/8h/4kv (HYP-033) | 2.415 | **2.303** | **+0.111** |
+| 6L/6u/8h/4kv (new) | 2.405 | 2.457 | -0.052 |
+| 6L/6u/4h/4kv (new) | 2.408 | 2.507 | -0.099 |
+| 6L/3u/4h/4kv (HYP-034) | 2.407 | 2.496 | -0.088 |
+
+**Verdict:** Both H35-a and H35-b FALSIFIED. AttnRes fails at 6L regardless of
+sharing or heads. Root cause is **depth**: 6-layer models don't generate enough
+representation diversity for attention-over-depth to help.
+
+**Key corrections to previous beliefs:**
+- B-028 REVISED: "AttnRes requires unique layers" → "AttnRes requires depth (>=9 layers)"
+- ANO-018 RESOLVED: Not a weight-sharing interaction; it's a depth threshold effect
+- Weight sharing variant C (3u × 4 = 12L + AttnRes) might actually work if depth > 9
+
+**GPU strategy unchanged:** Variant E (11L + AttnRes) remains highest priority.
+Expected per-step gain may be even larger at 11L (more diversity). The 5-10%
+GPU overhead (vs 2.5x Mac overhead) makes AttnRes essentially free on H100.

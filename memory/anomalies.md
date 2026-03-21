@@ -691,28 +691,38 @@ and others don't?"
 
 ---
 
-## ANO-018: AttnRes × Weight Sharing Interaction
+## ANO-018: AttnRes Requires Depth (>=9 Layers), Not Just Unique Layers
 
 **Date:** 2026-03-20
-**Source:** HYP-034 Block AttnRes experiment
+**Source:** HYP-034 + HYP-035
 **Severity:** high
-**Status:** open (hypothesis formed)
+**Status:** resolved — root cause is depth, not weight sharing
 
-**Observation:** Full AttnRes showed +0.111 BPB gain on 9L/8h/4kv (no sharing)
-but -0.088 BPB on 6L/3u/4h/4kv (3 unique blocks cycled). A 0.199 BPB swing.
+**Observation:** Full AttnRes showed +0.111 BPB gain on 9L/8h/4kv but fails on
+ALL 6-layer configs regardless of sharing or head count.
 
-**Current explanation:** With weight sharing (3 unique blocks × 2 cycles),
-AttnRes queries attend over structurally redundant outputs. Block0's output
-at position 0 and position 3 use identical weights, producing correlated
-representations that waste the attention mechanism's capacity.
+**Evidence (all 200 iso-steps):**
 
-**Evidence:**
-- Full AttnRes (13 queries, 13 sources): worst arm at 2.4955 BPB (most redundancy)
-- Block S=3 (3 queries, 3 sources): 2.4222 (least redundancy, aggregates at cycle boundary)
-- Block S=2 (4 queries, 4 sources): 2.4309 (intermediate)
-- Monotonic: fewer sources → better, which is the opposite of the paper's finding
+| Config | AttnRes Off | AttnRes On | Delta |
+|--------|-------------|------------|-------|
+| 9L/9u/8h/4kv | 2.415 | 2.303 | **+0.111** |
+| 6L/6u/8h/4kv | 2.405 | 2.457 | -0.052 |
+| 6L/6u/4h/4kv | 2.408 | 2.507 | -0.099 |
+| 6L/3u/4h/4kv | 2.407 | 2.496 | -0.088 |
 
-**Prediction:** AttnRes with 11 unique layers (GPU variant E) should recover
-the +0.111 per-step gain. If not, the interaction is with model scale, not sharing.
+**Root cause:** Depth, not weight sharing. With 6 layers, sublayer outputs
+haven't diverged enough for the attention-over-depth mechanism to be useful.
+The overhead of computing attention over 13 correlated sources overwhelms
+any quality gain. With 9+ layers, representations diverge enough for
+selective aggregation to help.
 
-**Follow-up:** (a) Run GPU variant E, (b) test AttnRes with unique_blocks=6 locally
+Head count is a secondary factor: 8h is less bad (-0.052) than 4h (-0.099)
+at 6L, likely because more diverse attention patterns create more distinct
+per-sublayer outputs.
+
+**Revised prediction:** AttnRes with 11L (GPU variant E) should give even
+larger per-step gain than +0.111. Extrapolating: the gain is monotonically
+increasing with depth.
+
+**Follow-up:** (a) GPU variant E validation, (b) consider AttnRes as
+depth-efficiency technique only for deep models

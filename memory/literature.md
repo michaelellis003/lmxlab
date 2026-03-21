@@ -2880,3 +2880,71 @@ A competitor to AttnRes in the cross-layer connection space.
 Lower priority than AttnRes given our strong iso-step results.
 
 **Cited in:** HYP-033 literature check (2026-03-20)
+
+---
+
+## LIT-130: Transformer Layers as Painters
+
+**Title:** Transformer Layers as Painters
+**Source:** arXiv 2407.09298, AAAI 2025 — **Grade B**
+
+**Key finding:** Middle transformer layers share a "semantic palette" (high
+cosine similarity) but are NOT interchangeable. Repeating a middle layer
+pushes input out of the shared representation space and is worse than
+skipping it. Subtle per-layer specialization matters.
+
+**Relevance:** Explains why weight sharing + AttnRes fails (HYP-034/035).
+AttnRes exploits subtle per-layer differences; weight sharing eliminates them.
+
+**Cited in:** HYP-034/035 literature check (2026-03-20)
+
+---
+
+## LIT-131: Relaxed Recursive Transformers
+
+**Title:** Relaxed Recursive Transformers
+**Source:** arXiv 2410.20672 — **Grade B**
+
+**Key finding:** Strict weight sharing forces each block to serve multiple
+depth-specific roles. Solution: add per-depth LoRA modules to restore
+differentiation. Without per-layer residuals, shared blocks produce
+homogenized outputs.
+
+**Relevance:** If combining AttnRes with weight sharing, would need
+per-depth LoRA-like differentiation to restore the diversity AttnRes needs.
+
+**Cited in:** HYP-034/035 literature check (2026-03-20)
+
+---
+
+## LIT-132: MoEUT — Mixture-of-Experts Universal Transformers
+
+**Title:** MoEUT: Mixture-of-Experts Universal Transformers
+**Source:** arXiv 2405.16039 — **Grade B**
+
+**Key finding:** Different MoE experts activate at different depths even
+with shared weights, restoring functional diversity. Demonstrates that
+weight-shared models need an explicit diversity mechanism.
+
+**Relevance:** MoE routing could potentially rescue AttnRes + weight sharing
+by ensuring different expert activations at each depth.
+
+**Cited in:** HYP-034/035 literature check (2026-03-20)
+
+---
+
+## LIT-133: MUDDFormer — Multiway Dynamic Dense Connections
+
+**Title:** MUDDFormer: Multiway Dynamic Dense Connections
+**Source:** arXiv 2502.12170, ICML 2025 — **Grade B**
+
+**Key finding:** Static/shared connection weights insufficient for cross-layer
+aggregation. Dynamic, input-dependent weights needed for Q/K/V/residual
+streams independently. Shows stream-specific patterns differ. Validates that
+cross-layer aggregation benefits from layer diversity.
+
+**Relevance:** More evidence that AttnRes-like mechanisms need diverse layers.
+MUDDFormer approach (separate dynamic weights per stream) could be stronger
+than AttnRes's single-query mechanism.
+
+**Cited in:** HYP-034/035 literature check (2026-03-20)

@@ -3026,3 +3026,44 @@ with standard residuals within block and AttnRes at block boundaries.
 
 **Verdicts:** H34-a FALSIFIED, H34-b SUPPORTED, H34-c SUPPORTED (marginal), H34-d FALSIFIED.
 **Key finding:** AttnRes fails with weight sharing (3 unique blocks). See ANO-018.
+
+---
+
+## HYP-035: [PGOLF] AttnRes Failure — Weight Sharing vs Head Count vs Depth
+
+**Experiment:** 35 — AttnRes with unique layers but few heads
+**Status:** tested (both falsified — root cause is depth)
+**Question:** Did AttnRes fail in HYP-034 because of weight sharing or head count?
+
+**Background:** HYP-033 (AttnRes +0.111) used 9L/8h/4kv (unique layers, 8 heads).
+HYP-034 (AttnRes -0.088) used 6L/3u/4h/4kv (weight sharing, 4 heads). Two
+variables changed. This experiment isolates weight sharing and head count.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H35-a | Weight sharing causes AttnRes failure | AttnRes+VR BPB < Baseline with 6u (gain > 0) | AttnRes+VR BPB >= Baseline with 6u |
+| H35-b | AttnRes per-step gain scales with unique layers | Gain with 6u > 0 but < 0.111 | Gain >= 0.111 or gain <= 0 |
+
+**Design:** 200-step iso-step, 4 arms total:
+- Arm 1: Baseline (6L/6u/4h/4kv, VR=1) — 2.4083 BPB, ~310 ms/step
+- Arm 2: Full AttnRes + VR (6L/6u/4h/4kv) — 2.5072 BPB, ~813 ms/step
+- Arm 3: Baseline (6L/6u/8h/4kv, VR=1) — 2.4046 BPB, ~310 ms/step
+- Arm 4: Full AttnRes + VR (6L/6u/8h/4kv) — 2.4565 BPB, ~885 ms/step
+
+**Full comparison across HYP-033/034/035:**
+
+| Config | AttnRes Off | AttnRes On | Delta |
+|--------|-------------|------------|-------|
+| 9L/9u/8h/4kv | 2.415 | 2.303 | **+0.111** |
+| 6L/6u/8h/4kv | 2.405 | 2.457 | -0.052 |
+| 6L/6u/4h/4kv | 2.408 | 2.507 | -0.099 |
+| 6L/3u/4h/4kv | 2.407 | 2.496 | -0.088 |
+
+**Verdicts:**
+- H35-a: **FALSIFIED** — AttnRes fails even with 6 unique layers. -0.099 (4h) and -0.052 (8h).
+- H35-b: **FALSIFIED** — Gain is negative with 6u, not positive.
+
+**Key finding:** The root cause is **depth** (6L vs 9L), not weight sharing.
+At 6 layers, sublayer outputs haven't diverged enough for attention-over-depth
+to outperform simple residual connections. Head count is secondary (8h is
+less bad than 4h). ANO-018 updated accordingly.
