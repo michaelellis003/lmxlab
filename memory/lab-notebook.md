@@ -5571,3 +5571,46 @@ confidently beneficial. The tuning choices (z-loss, softcap 50, FP16)
 should be tested on GPU with 3 seeds to confirm.
 
 **Best local BPB (mean): 1.6685 ± 0.007** (4 seeds).
+
+### 2026-03-21 [PLAN] HYP-049: Training sequence length (512 vs 1024)
+
+**What:** Test TRAIN_SEQ_LEN=512 vs 1024 (default). At 8K batch tokens:
+- 512: 16 sequences per step, shorter context, 2x batch diversity
+- 1024: 8 sequences per step, full context, standard
+
+**Why:** Effect size should be large (>0.007 noise floor). Shorter sequences
+fundamentally change learning dynamics:
+- More independent samples → lower gradient noise (sqrt(2) reduction)
+- Lose dependencies >512 tokens → may hurt on long-range patterns
+- Changes positional encoding distribution (RoPE sees 0-511 vs 0-1023)
+
+**Exception to DEC-015:** Iso-step (same tokens per step), batch-independent.
+Changes WHAT is learned, not HOW MUCH is processed per step.
+
+**Risk:** Eval uses sliding window at stride=256 with 1024 context. Models
+trained at 512 may struggle with 1024-token eval context. But RoPE
+extrapolates well to 2x training length.
+
+**Also test 2048** (fewer but longer sequences):
+- 4 sequences per step, richer context, more gradient noise
+- Might help with long-range patterns in FineWeb
+
+### 2026-03-21 [INTERPRET] HYP-049: Sequence length — 1024 is optimal
+
+| SEQ_LEN | BPB | Steps | ms/step |
+|---------|-----|-------|---------|
+| 512 | 1.6883 | ~2200 | ~270 |
+| **1024** | **1.6685** | **~1900** | **~310** |
+| 2048 | 1.6831 | ~1400 | ~430 |
+
+**512 hurts (-0.020):** Context truncation at 512 tokens prevents learning
+medium-range dependencies. The 2x batch diversity gain doesn't compensate.
+Effect is well above noise floor (2.7σ), likely real.
+
+**2048 hurts (-0.015):** Partially confounded by B-022 — 32% fewer steps
+(430ms vs 310ms). Per-step quality may be better but throughput penalty
+dominates at 600s wallclock. The 2048 result is ~2σ above noise floor,
+marginal significance.
+
+**Verdict:** 1024 confirmed as default. On GPU where step count is equalized,
+2048 might be worth retesting.

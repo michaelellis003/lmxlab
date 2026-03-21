@@ -432,6 +432,30 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-049: Training sequence length
+    hyp049_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-049")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp049_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_cap50, "TRAIN_SEQ_LEN": "512"},
+            "description": "Train seq_len 512 (2x batch diversity, shorter context)",
+            "hypothesis": "HYP-049-seq512",
+        },
+        {
+            "env_overrides": {**best_cap50, "TRAIN_SEQ_LEN": "2048"},
+            "description": "Train seq_len 2048 (0.5x diversity, longer context)",
+            "hypothesis": "HYP-049-seq2048",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
