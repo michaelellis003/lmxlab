@@ -5887,3 +5887,46 @@ work better because the embedding is a smaller fraction of total params.
 Worth testing on GPU.
 
 **Best local BPB unchanged: 1.6344 (sp2048).**
+
+### 2026-03-21 [PLAN] HYP-057: Causal convolution hybrid layers
+
+**What:** Replace some attention layers with causal 1D convolution layers.
+Unlike minGRU (sequential scan), convolutions are fully parallel on MLX.
+They capture local patterns (n-gram style) without the O(n²) attention cost.
+
+**Why:** minGRU showed +0.08 BPB per-step quality advantage but was 8x slower
+due to sequential scan. Causal convolutions provide similar local pattern
+matching with zero throughput penalty. Mamba/S4 use causal convolutions
+as a core component. Hyena uses long implicit convolutions.
+
+**Implementation:** 
+- Depthwise 1D convolution with kernel_size=4 (captures 4-gram patterns)
+- Causal: left-pad input by kernel_size-1, then take first seq_len outputs
+- Followed by gated activation: conv(x) * sigmoid(gate(x))
+- ~dim*kernel_size params per layer (tiny, <1% of attention layer)
+
+**Design:** Test with sp2048, replacing block 0 (layers 0,3) with CausalConv.
+Same interface as MinGRUBlock.
+
+### 2026-03-21 [INTERPRET] HYP-057: CausalConv hybrid — throughput-limited locally
+
+**CausalConv block 0 (sp2048, 600s):**
+
+| Config | BPB | Steps | ms/step |
+|--------|-----|-------|---------|
+| Pure attention | 1.6344 | ~1900 | ~310 |
+| CausalConv block 0 | 1.6998 | 1381 | 536 |
+
+**Per-step quality (200 iso-steps):** CausalConv 2.3045 vs attention 2.3565
+→ +0.05 BPB per-step advantage. But 73% throughput penalty (expand=2 doubles
+hidden dim of conv layer) results in 27% fewer steps → net negative.
+
+**Root cause:** expand=2 creates a 1024-dim intermediate for the conv layer,
+adding significant FLOP cost. The unrolled conv loop (4 iterations for k=4)
+is also slow on MLX vs vectorized attention.
+
+**GPU potential:** On GPU with optimized conv kernels, the overhead would be
+much smaller. The per-step advantage (+0.05 at 200 steps) could translate
+to a real win if throughput is within 10% of attention.
+
+**Not testing arm 2 (conv01) — if single conv layer hurts, more will hurt worse.**

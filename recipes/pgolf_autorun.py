@@ -683,6 +683,30 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-057: Causal convolution hybrid layers
+    hyp057_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-057")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp057_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "CONV_LAYERS": "0"},
+            "description": "CausalConv block 0 (layers 0,3 = conv, rest = attention)",
+            "hypothesis": "HYP-057-conv0",
+        },
+        {
+            "env_overrides": {**best_sp2048, "CONV_LAYERS": "0,1"},
+            "description": "CausalConv blocks 0,1 (layers 0,1,3,4 = conv, 2,5 = attention)",
+            "hypothesis": "HYP-057-conv01",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
