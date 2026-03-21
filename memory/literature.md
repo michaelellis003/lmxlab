@@ -3187,3 +3187,43 @@ with LIT-145 NLM theory), spherical constraints would damp them.
 
 **Cited in:** HYP-038 literature check (2026-03-20)
 
+
+---
+
+## LIT-148: Exclusive Self Attention (XSA)
+
+**Source:** Zhai, "Exclusive Self Attention," arXiv 2603.09078, March 2026
+**Grade:** B (peer-reviewed quality preprint, Apple)
+**Relevance:** Direct — used in all top 3 pgolf submissions
+
+Removes self-value component from attention output via orthogonal projection.
+Forces attention to capture only contextual (cross-token) features. Point-wise
+features are already available via residual connection. Zero new params, ~2%
+overhead. Consistent gains across 0.7B-2.7B. Larger gains with longer sequences.
+
+**Applied in:** HYP-039 (XSA=1 env var in train_gpt_mlx.py)
+
+---
+
+## LIT-149: Cross-Layer Attention (CLA)
+
+**Source:** Brandon et al., "Reducing Transformer Key-Value Cache via Cross-Layer Attention," arXiv 2408.01890, 2024
+**Grade:** C (preprint)
+**Relevance:** Context — related work on cross-layer value sharing
+
+Documents that layer-wise attention patterns are "highly similar" and selective
+sharing improves both efficiency and performance. Related to Value Residual
+and DWA but via KV cache sharing rather than explicit residual.
+
+---
+
+## LIT-150: XSA + VR super-additivity (novel finding)
+
+**Source:** Our HYP-039 experiment, 2026-03-20
+**Grade:** E (single local experiment, n=1, no seeds)
+**Relevance:** Direct — novel combination
+
+No published work combines XSA with Value Residual Learning. Super-additive
+interaction (+0.073 vs +0.035 expected sum) likely driven by information
+factorization: XSA specializes attention in context, VR preserves token
+identity via first-layer V bypass. DWA is redundant when XSA is present.
