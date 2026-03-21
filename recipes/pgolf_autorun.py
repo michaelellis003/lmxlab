@@ -539,6 +539,25 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-053: Stochastic depth (drop layers during training)
+    hyp053_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-053")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp053_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_cap50, "STOCH_DEPTH": "0.1"},
+            "description": "Stochastic depth p=0.1 (10% layer drop rate)",
+            "hypothesis": "HYP-053-sd01",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

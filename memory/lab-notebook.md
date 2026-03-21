@@ -5686,3 +5686,25 @@ are different — they're followed by RoPE and dot product, where magnitude
 is redundant (q_gain handles scale).
 
 **Best local BPB unchanged: 1.6685 ± 0.007.**
+
+### 2026-03-21 [INTERPRET] HYP-052/053: V-norm neutral, stochastic depth catastrophic
+
+**HYP-052 (V_NORM=1):** 1.6642 BPP → neutral (0.6σ).
+**HYP-053 (STOCH_DEPTH=0.1):** 1.9743 BPP → catastrophic (-0.306).
+
+**Stochastic depth confirms the undertrained regime principle:** ANY technique
+that reduces effective per-step capacity or signal hurts:
+- Dropout (HYP-006): hurts
+- Label smoothing: -0.054
+- Focal loss: -0.001 to -0.004
+- MiLe loss: -0.077 to -0.437
+- Stochastic depth: **-0.306** (worst of all)
+
+The model needs EVERY bit of capacity at every step when training for only
+~2000 steps. Regularization is counterproductive because there's no risk
+of overfitting — the model is severely undertrained.
+
+**Session principle consolidation (B-031):**
+"In the undertrained regime, maximize per-step signal and capacity.
+Only additive auxiliary losses (z-loss) help. All forms of regularization,
+capacity reduction, or signal dilution are harmful."
