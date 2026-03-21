@@ -5958,3 +5958,31 @@ Must test on GPU where:
 1. minGRU hybrid (block 0 = minGRU, rest = attention) — best per-step
 2. Pre-conv k=4 inside all attention layers — minimal GPU overhead
 3. CausalConv block for early layers — medium overhead, good quality
+
+### 2026-03-21 [INTERPRET] HYP-059: Vectorized non-attention layers
+
+**Conv1d k=32 (nn.Conv1d, no for-loop):** 1.7024 BPB, ~530ms/step
+**gMLP SGU (causal spatial mixing):** 1.7377 BPB, ~500ms/step
+
+Both are better than the for-loop Conv1d from HYP-057 but still significantly
+slower than attention (~310ms/step). The throughput gap remains the blocker.
+
+**Root cause analysis:** On MLX (Apple Silicon), FlashAttention via
+`mx.fast.scaled_dot_product_attention` is extremely well-optimized. Any
+alternative — even using MLX's own nn.Conv1d — is slower because:
+1. Attention uses a fused Metal kernel (SDPA)
+2. Conv1d and einsum use general-purpose kernels
+3. The overhead from additional projections (up, gate, proj) adds up
+
+**Definitive conclusion for non-attention layers on MLX:**
+ALL alternatives are throughput-limited locally. The fused SDPA kernel
+is too fast to beat with any general-purpose operation. This is an
+**implementation bottleneck, not an algorithmic one** — on GPU with
+optimized CUDA kernels, the story would be different.
+
+**GPU recommendations:**
+1. minGRU + Mamba parallel scan kernel: +0.08 per-step advantage
+2. Conv1d k=4 + cuDNN depthwise: minimal overhead on GPU
+3. Pre-conv k=4 inside attention: likely <5% GPU overhead
+
+**No more local non-attention experiments.** The SDPA bottleneck is definitive.

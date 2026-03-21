@@ -726,6 +726,30 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-059: Vectorized non-attention layers (no Python loops)
+    hyp059_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-059")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp059_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "CONV_LAYERS": "0"},
+            "description": "Conv1d k=32 block 0 (nn.Conv1d, no loop, layers 0,3)",
+            "hypothesis": "HYP-059-conv32",
+        },
+        {
+            "env_overrides": {**best_sp2048, "SGU_LAYERS": "0"},
+            "description": "gMLP SGU block 0 (causal spatial mixing, layers 0,3)",
+            "hypothesis": "HYP-059-sgu0",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
