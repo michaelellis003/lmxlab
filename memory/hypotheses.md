@@ -3117,7 +3117,7 @@ GPU variant C (12L/3u) should NOT use AttnRes — keep DWA or nothing.
 
 ### HYP-037: Commutator Defect Predicts Grokking Onset Across Seeds
 
-**Status:** active
+**Status:** tested (H37-a falsified, H37-b inconclusive, H37-c partial)
 
 **Background:**
 HYP-016 showed that NO aggregate metric (pass@64, val_loss, val_acc) at step

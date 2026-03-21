@@ -4903,3 +4903,30 @@ is fundamentally impossible at fixed hyperparameters.
 
 **Verdict:** HYP-037 literature check confirms our finding is novel and well-supported
 by emerging theory. B-015 (grokking stochasticity) is now one of our strongest beliefs.
+
+### 2026-03-20 [REVIEW] Autorun stopping assessment
+
+**All local research lines have converged.** Assessed each candidate direction:
+
+1. **PGolf** — blocked by DEC-015. 5 GPU variants ready, need 8xH100.
+2. **Grokking seed dependence** — definitively answered. B-015 at 0.97,
+   4 metric types, 10 seeds, 4 supporting papers. No more experiments needed.
+3. **ANOM-021** (seed 50 grok without curvature) — fails Gate 4. n=1 observation,
+   would be a fishing expedition.
+4. **Mechanistic interpretability of hybrids** (roadmap B) — literature review
+   found the broad question is answered at large scale (2510.26912, Hymba ICLR 2025,
+   Jamba ICLR 2025). SSMs compress sequences; attention retrieves. Small-scale
+   replication fails Gate 4 (outcome predictable).
+5. **TTC cross-task** — already answered by HYP-012 + HYP-013.
+
+**Stopping conditions met:**
+- No active hypotheses ready to run locally
+- All queued ideas either completed, blocked (GPU), or fail quality gates
+- Research state is mature: 37 hypotheses tested, 15 beliefs, 21 anomalies tracked
+- Two publishable stories ready (TTC + grokking seed dependence)
+
+**Recommended next steps (all non-autorun):**
+1. Write up TTC findings (roadmap priority #1)
+2. Write up grokking seed dependence (B-015 + LIT-140/141/142)
+3. GPU validation of pgolf submissions when compute is available
+4. Consider Hymba-style head-level mixing if returning to hybrids research
