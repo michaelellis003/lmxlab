@@ -378,6 +378,30 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-047: Embedding init std with softcap 50 + z-loss
+    hyp047_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-047")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp047_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_cap50, "TIED_EMBED_INIT_STD": "0.01"},
+            "description": "Embed init std 0.01 (2x default, warmer logits)",
+            "hypothesis": "HYP-047-std01",
+        },
+        {
+            "env_overrides": {**best_cap50, "TIED_EMBED_INIT_STD": "0.002"},
+            "description": "Embed init std 0.002 (0.4x default, cooler logits)",
+            "hypothesis": "HYP-047-std002",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

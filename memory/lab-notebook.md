@@ -5489,3 +5489,32 @@ and adjusts during training. Init value has minimal impact at 2000 steps.
 Default 1.5 is fine. No further tuning needed.
 
 **Best local BPB unchanged: 1.6624.**
+
+### 2026-03-21 [INTERPRET] HYP-047: Embed init std — 0.005 default confirmed
+
+| TIED_EMBED_INIT_STD | BPB | Delta |
+|--------------------|-----|-------|
+| 0.002 | 1.6650 | -0.003 |
+| **0.005** | **1.6624** | **—** |
+| 0.01 | 1.6660 | -0.004 |
+
+**Verdict:** INCONCLUSIVE. All within noise (~0.004). Default 0.005 is fine.
+Like QK_GAIN_INIT, embedding init is rapidly overwritten by training.
+
+**Best local BPB unchanged: 1.6624.**
+
+### 2026-03-21 [REVIEW] Autorun stopping — scalar params exhausted
+
+**Tested in this session and found at noise floor:**
+- QK_GAIN_INIT: 1.0/1.5/2.0 → ±0.002 (HYP-046)
+- TIED_EMBED_INIT_STD: 0.002/0.005/0.01 → ±0.004 (HYP-047)
+
+**Remaining untested scalars are all batch-dependent:**
+- MATRIX_LR, SCALAR_LR, TIED_EMBED_LR (optimizer LRs)
+- MUON_MOMENTUM, MUON_MOMENTUM_WARMUP_* (momentum schedule)
+- WARMUP_STEPS, WARMDOWN_ITERS (schedule)
+- BETA1, BETA2, ADAM_EPS (Adam params)
+- GRAD_CLIP_NORM (gradient magnitude depends on batch)
+
+**All stopping conditions met again.** No more iso-step,
+batch-independent, non-trivial experiments remain.
