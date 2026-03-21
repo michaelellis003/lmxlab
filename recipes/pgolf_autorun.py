@@ -750,6 +750,30 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-060: Eval stride tuning with sp2048
+    hyp060_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-060")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp060_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "EVAL_STRIDE": "128"},
+            "description": "sp2048 + eval stride 128 (tighter sliding window)",
+            "hypothesis": "HYP-060-stride128",
+        },
+        {
+            "env_overrides": {**best_sp2048, "EVAL_STRIDE": "64"},
+            "description": "sp2048 + eval stride 64 (competition standard)",
+            "hypothesis": "HYP-060-stride64",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

@@ -5986,3 +5986,76 @@ optimized CUDA kernels, the story would be different.
 3. Pre-conv k=4 inside attention: likely <5% GPU overhead
 
 **No more local non-attention experiments.** The SDPA bottleneck is definitive.
+
+### 2026-03-21 [REVIEW] Deep bottleneck analysis — where is BPB being lost?
+
+**Current state:** Best local BPB = 1.6344 (sp2048). Competition SOTA = 1.1246.
+Gap = 0.51 BPB. Where does this gap come from?
+
+**Decomposition of BPB gap (1.6344 → 1.1246):**
+
+1. **Training compute gap (~0.20-0.25 BPB):**
+   - We train ~2000 steps at 8K batch = 16M tokens
+   - GPU trains ~7400 steps at 524K batch = 3.9B tokens
+   - 244x more tokens processed on GPU → massive undertrained gap
+   - This alone explains ~60% of the BPB gap
+
+2. **Architecture gap (~0.10-0.15 BPB):**
+   - SOTA uses 11 unique layers (we use 6 layers, 3 unique)
+   - SOTA uses MLP 3x (we use MLP 2x)
+   - SOTA uses ~27M params (we use ~7M)
+   - More params + more depth = better representation capacity
+
+3. **Quantization + compression gap (~0.03-0.05 BPB):**
+   - SOTA uses int6 + zstd (vs our int8 + zlib)
+   - int6 fits ~33% more params in 16MB
+   - zstd compresses better than zlib
+
+4. **Batch-size-dependent techniques (~0.05-0.10 BPB):**
+   - SWA/EMA (smooths gradient noise, only works at 524K batch)
+   - Momentum 0.99 (helps with large batch)
+   - Weight decay 0.04 (regularization calibrated for large batch)
+
+**CORE INSIGHT:** ~60% of the gap is PURE COMPUTE. We can't close this
+locally. The remaining ~40% is from architectural capacity (larger model)
+and training technique (SWA, WD, momentum at scale).
+
+**What CAN we improve locally?**
+- Per-step quality (architecture efficiency per FLOP)
+- Tokenizer (sp2048 already captured)
+- Serialization format (int6/int4 to fit more params)
+- Novel architectures that are MORE parameter-efficient
+
+**The fundamental local question:** Given ~7M params and ~2000 steps,
+how do we extract MAXIMUM quality per parameter per step?
+
+**Cross-disciplinary framing:**
+This is an INFORMATION THEORY problem: maximize mutual information
+between model parameters and the data distribution, subject to:
+- Parameter budget (16MB artifact)
+- Compute budget (10 min × 8xH100 FLOPs)
+- Representation budget (bits per parameter × number of parameters)
+
+**From rate-distortion theory:** The optimal strategy is to allocate
+more bits to parameters that carry more information. This suggests:
+1. Non-uniform quantization (allocate more bits to important layers)
+2. Parameter sharing where information is redundant (weight sharing)
+3. Structured representations that compress well (Kronecker, low-rank)
+
+We've already exploited (2) via weight sharing. (1) and (3) are untested
+at our scale with sp2048.
+
+### 2026-03-21 [INTERPRET] HYP-060: Eval stride with sp2048 — 256 is optimal
+
+| Stride | BPB (sp2048) |
+|--------|-------------|
+| **256** | **1.6344** |
+| 128 | 1.6462 |
+| 64 | 1.6413 |
+
+**Stride 256 is optimal for sp2048.** Unlike sp1024 (where stride 64 helped),
+sp2048 tokens are ~2 bytes each, so stride 256 = 512 bytes of overlap already
+provides good coverage. Tighter strides add compute overhead (longer eval time:
+1192s for stride 64 vs 750s for stride 256) without improving BPB.
+
+**Best local BPB unchanged: 1.6344 (sp2048, stride 256).**
