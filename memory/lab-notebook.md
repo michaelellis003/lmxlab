@@ -4622,3 +4622,74 @@ Formalized AttnRes results and updated GPU submission infrastructure.
 5. C: 3u×4 + DWA + VR (weight sharing variant)
 
 **Blocking:** Waiting for GPU compute credits.
+
+---
+
+### 2026-03-20 [PLAN] HYP-034 — Block AttnRes iso-step comparison
+
+**Intent:** Implement Block AttnRes (paper's practical variant) and compare
+against Full AttnRes at iso-step. If Block retains >50% of Full's gain with
+<2x overhead (vs Full's 2.7x), it becomes viable locally AND reduces GPU cost.
+
+**Changes to train_gpt_mlx.py:**
+- Add `ATTN_RES_BLOCK_SIZE` env var (0=Full, N=N sublayers per block)
+- Modify `_attn_res` path in GPT.__call__ to accumulate within blocks via
+  standard residuals and apply AttnRes only at block boundaries
+- Block boundaries trigger AttnRes aggregate; within-block uses simple residual
+
+**Expected outcome:** Block S=4 (2 sublayers/block, paper default) achieves
+~400-500 ms/step (vs 810 Full, 300 baseline) and ~2.35-2.38 BPB.
+
+**Risk:** With only 6 layers (12 sublayers), there are very few blocks. S=4
+gives 3 blocks, S=6 gives 2 blocks. May not have enough granularity.
+
+**Artifact size impact:** Fewer queries (7 vs 13 for S=4), saves ~3K params. Negligible.
+
+---
+
+### 2026-03-20 — [INTERPRET] HYP-034: Block AttnRes — Weight Sharing Kills AttnRes
+
+**Results (200 iso-steps, 6L/3u/4h/4kv, VR=1):**
+
+| Arm | Config | Val BPB | ms/step | Overhead | Train Loss |
+|-----|--------|---------|---------|----------|------------|
+| Baseline (VR only) | No AttnRes | **2.4073** | 305 | 1.0x | 3.894 |
+| Full AttnRes + VR | S=0 (every sublayer) | 2.4955 | 779 | 2.55x | 4.090 |
+| Block AttnRes S=2 + VR | Every 2 layers | 2.4309 | 409 | 1.34x | 3.953 |
+| Block AttnRes S=3 + VR | Every 3 layers | 2.4222 | 377 | 1.24x | 3.909 |
+
+**Adjudication:**
+- H34-a (Block retains >50% of Full's gain): **FALSIFIED** — Block is worse than baseline, not better.
+- H34-b (Block overhead < 2x): **SUPPORTED** — S=2: 1.34x, S=3: 1.24x.
+- H34-c (Block beats DWA+VR): **SUPPORTED** (marginal) — 2.422 < 2.431.
+- H34-d (Full is better per-step): **FALSIFIED** — Full is WORST arm.
+
+**MAJOR ANOMALY (ANO-018): AttnRes × Weight Sharing interaction.**
+Full AttnRes went from +0.111 BPB on 9L/8h/4kv (HYP-033) to -0.088 BPB on
+6L/3u/4h/4kv (this experiment). That's a 0.199 BPB swing.
+
+**Root cause hypothesis:** With 3 unique blocks cycled over 6 layers, the
+model sees block0-block1-block2-block0-block1-block2. AttnRes queries attend
+over outputs of *shared* weights, creating degenerate attention patterns.
+The queries can't distinguish layer 0 (first pass) from layer 3 (second pass
+through block0) because they produce similar representations. Full AttnRes
+has 13 queries for 13 sources, but with sharing, these sources are
+structurally redundant.
+
+Block AttnRes S=3 is closest to baseline because it aggregates only at the
+halfway point (block_outputs = [emb, x_3, x_6]), avoiding the degenerate
+within-cycle redundancy.
+
+**Key insight:** AttnRes requires unique layers. On GPU with 11 unique layers
+(no weight sharing), AttnRes should still deliver the +0.111 per-step gain.
+But our weight-sharing configs (3u, 4u) are incompatible with AttnRes.
+
+**Belief updates:**
+- B-027 (input-dependent > static cross-layer): downgrade from 0.90 to 0.70
+  (architecture-dependent, not universal)
+- NEW B-028: AttnRes requires unique layers (no weight sharing), posterior 0.85
+
+**Next steps:**
+- Verify on GPU: AttnRes + 11 unique layers (variant E) should still work
+- Do NOT combine AttnRes with weight sharing in any submission
+- Block AttnRes S=3 is marginally useful but not worth the complexity

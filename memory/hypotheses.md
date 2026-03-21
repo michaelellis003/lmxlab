@@ -2978,3 +2978,51 @@ for up to 13 sources — on GPU with fused kernels this would be ~5-10%.
 
 **GPU implication:** Replace DENSE_DWA with ATTN_RES in all GPU submission scripts.
 AttnRes+VR is now the highest-priority GPU experiment.
+
+## HYP-034: [PGOLF] Block AttnRes Reduces Overhead While Preserving Quality
+
+**Experiment:** 34 — Block AttnRes vs Full AttnRes at iso-step
+**Status:** tested (mixed — overhead reduced but quality worse than baseline)
+**Question:** Can Block AttnRes (attention at block boundaries only) match Full
+AttnRes quality while reducing the 2.7x Mac overhead?
+
+**Background:** Full AttnRes (HYP-033) showed +0.111 BPB at iso-step but has
+2.7x overhead on Mac (810 vs 300 ms/step). The paper's Block AttnRes partitions
+layers into N blocks, uses standard residuals within blocks and AttnRes only at
+block boundaries. This reduces sources from O(2L+1) to O(2N+1). With 6 layers
+and block_size=2 (3 blocks), sources drop from 13 to 7, potentially 2x speedup.
+
+However, with only 3 unique blocks (weight sharing), block boundaries interact
+with the sharing pattern. The optimal block partition is unknown at small scale.
+
+The paper reports Block AttnRes with S=4 (2 sublayers/block) gets loss 1.746 vs
+Full AttnRes 1.737 and baseline 1.766 — recovering ~75% of the Full gain.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H34-a | Block AttnRes retains >50% of Full's iso-step gain | Block BPB < baseline by >0.055 | Block BPB >= baseline - 0.055 |
+| H34-b | Block AttnRes has <2x overhead vs baseline | Block ms/step < 600 (vs 300 baseline) | ms/step >= 600 |
+| H34-c | Block AttnRes beats DWA+VR at iso-step | Block BPB < DWA+VR BPB (2.431) | Block BPB >= 2.431 |
+| H34-d | Full AttnRes is still better per-step | Full BPB < Block BPP by >0.02 | Full BPB >= Block BPB |
+
+**Design:** 200-step iso-step comparison. 6L/3u/4h/4kv config.
+- Arm 1: Full AttnRes + VR (reference from HYP-033: 2.303 BPB, 810 ms/step)
+- Arm 2: Block AttnRes + VR, block_size=4 (= 2 sublayers/block, paper's S=4)
+- Arm 3: Block AttnRes + VR, block_size=6 (= 3 sublayers/block, fewer blocks)
+- Arm 4: Baseline (no cross-layer, reference from HYP-033: 2.415 BPB, 300 ms/step)
+
+**Implementation needed:** Add ATTN_RES_BLOCK_SIZE env var to train_gpt_mlx.py.
+block_size=0 means Full AttnRes (current). block_size=N means N layers per block,
+with standard residuals within block and AttnRes at block boundaries.
+
+**Results (200 iso-steps, 6L/3u/4h/4kv, VR=1):**
+
+| Arm | Config | Val BPB | ms/step | Train Loss |
+|-----|--------|---------|---------|------------|
+| Baseline (VR only) | ATTN_RES=0 | **2.4073** | 305 | 3.894 |
+| Full AttnRes + VR | BLOCK_SIZE=0 | 2.4955 | 779 | 4.090 |
+| Block AttnRes S=2 | BLOCK_SIZE=2 | 2.4309 | 409 | 3.953 |
+| Block AttnRes S=3 | BLOCK_SIZE=3 | 2.4222 | 377 | 3.909 |
+
+**Verdicts:** H34-a FALSIFIED, H34-b SUPPORTED, H34-c SUPPORTED (marginal), H34-d FALSIFIED.
+**Key finding:** AttnRes fails with weight sharing (3 unique blocks). See ANO-018.

@@ -688,3 +688,31 @@ oscillate?" but "why do some seeds eventually break through
 and others don't?"
 
 **Follow-up:** (a) still relevant, (b) still relevant.
+
+---
+
+## ANO-018: AttnRes × Weight Sharing Interaction
+
+**Date:** 2026-03-20
+**Source:** HYP-034 Block AttnRes experiment
+**Severity:** high
+**Status:** open (hypothesis formed)
+
+**Observation:** Full AttnRes showed +0.111 BPB gain on 9L/8h/4kv (no sharing)
+but -0.088 BPB on 6L/3u/4h/4kv (3 unique blocks cycled). A 0.199 BPB swing.
+
+**Current explanation:** With weight sharing (3 unique blocks × 2 cycles),
+AttnRes queries attend over structurally redundant outputs. Block0's output
+at position 0 and position 3 use identical weights, producing correlated
+representations that waste the attention mechanism's capacity.
+
+**Evidence:**
+- Full AttnRes (13 queries, 13 sources): worst arm at 2.4955 BPB (most redundancy)
+- Block S=3 (3 queries, 3 sources): 2.4222 (least redundancy, aggregates at cycle boundary)
+- Block S=2 (4 queries, 4 sources): 2.4309 (intermediate)
+- Monotonic: fewer sources → better, which is the opposite of the paper's finding
+
+**Prediction:** AttnRes with 11 unique layers (GPU variant E) should recover
+the +0.111 per-step gain. If not, the interaction is with model scale, not sharing.
+
+**Follow-up:** (a) Run GPU variant E, (b) test AttnRes with unique_blocks=6 locally

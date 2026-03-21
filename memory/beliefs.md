@@ -735,5 +735,27 @@ AttnRes overhead is ~2.7x on Mac (memory-bound) but expected ~5-10% on GPU
 
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
-| 2026-03-20 | HYP-033: AttnRes+VR 2.303 vs baseline 2.415 (+0.111) vs DWA+VR 2.431 (-0.017). 200 iso-steps. | A | Definitive for | 0.90 |
+| 2026-03-20 | HYP-033: AttnRes+VR 2.303 vs baseline 2.415 (+0.111) vs DWA+VR 2.431 (-0.017). 200 iso-steps, 9L/8h/4kv (no sharing). | A | Definitive for | 0.90 |
 | 2026-03-20 | LIT-127: AttnRes paper Table 4. DenseFormer 1.767 vs baseline 1.766 (no gain). AttnRes Full 1.737 (-0.03). | B | For (at scale) | — |
+| 2026-03-20 | HYP-034: AttnRes FAILS with weight sharing. Full AttnRes -0.088 BPB on 6L/3u/4h/4kv vs +0.111 on 9L/8h/4kv. 0.199 BPB swing. | A | Against (with sharing) | 0.70 |
+
+---
+
+### B-028: AttnRes Requires Unique Layers (No Weight Sharing)
+
+**Prior:** 0.50 (no prior expectation)
+**Current posterior:** 0.85
+**Direction:** Architecture-dependent
+
+AttnRes fundamentally requires diverse layer representations. With weight
+sharing (3 unique blocks cycled), the pseudo-queries attend over structurally
+redundant outputs, degrading performance below baseline. Monotonic relationship:
+fewer AttnRes sources → better BPB with weight sharing (opposite of paper's
+finding with unique layers).
+
+**Implication:** GPU variant E (11 unique layers + AttnRes) should work.
+Do NOT combine AttnRes with weight sharing (variant C).
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-20 | HYP-034: Full AttnRes -0.088 with 3u sharing vs +0.111 without sharing. Block S=3 (least redundancy) is closest to baseline. | A | Definitive for | 0.85 |
