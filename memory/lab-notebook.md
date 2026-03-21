@@ -5346,3 +5346,37 @@ logit magnitudes, may synergize with softcap. Need to implement.
 - Do NOT use label smoothing at parameter-golf scale
 - Z-loss may interact differently at 524K batch (more stable gradients already)
   but is unlikely to hurt. Low risk, positive EV.
+
+### 2026-03-21 [PLAN] HYP-042: Z-loss coefficient sweep
+
+**What:** Sweep z-loss weight: {1e-5, 1e-4 (known good), 5e-4, 1e-3}.
+1e-4 gave +0.0027 BPB. Stronger z-loss might help more or start hurting.
+
+**Why:** Z-loss is the best new technique found this session (+0.006 combined
+with FP16). The coefficient was set to 1e-4 following PaLM's default. The
+optimal value for our scale/architecture may differ.
+
+**Base config:** Best local with FP16_EMBED=1 (no z-loss). Reference: 1.6730.
+
+### 2026-03-21 [INTERPRET] HYP-042: Z-loss sweep — 1e-4 confirmed optimal
+
+**Z-loss coefficient sweep (all with FP16_EMBED=1, best local config):**
+
+| Z-loss | BPB | Delta vs no z-loss |
+|--------|-----|-------------------|
+| 0 | 1.6730 | — |
+| 1e-5 | 1.6714 | +0.0016 |
+| **1e-4** | **1.6679** | **+0.0051** |
+| 5e-4 | 1.6734 | -0.0004 |
+| 1e-3 | 1.6744 | -0.0014 |
+
+**Finding:** Inverted-U curve. 1e-4 is the sweet spot (matches PaLM's default).
+Too weak (1e-5): insufficient stabilization. Too strong (5e-4+): over-penalizes
+logit magnitudes, conflicting with learning. The softcap at 30.0 already clips
+extreme logits; z-loss adds a smooth gradient penalty below the clip threshold.
+
+**Conclusion:** Z_LOSS=1e-4 is confirmed optimal. No further tuning needed.
+
+**Final best local config:**
+6L+3u+4h/4kv + XSA_START_LAYER=4 + VALUE_RESID=1 + NORMUON=1 +
+EVAL_STRIDE=256 + FP16_EMBED=1 + Z_LOSS=1e-4 → **1.6679 BPB**

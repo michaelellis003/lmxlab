@@ -230,6 +230,43 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-042: Z-loss coefficient sweep + softcap interaction
+    hyp042_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-042")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp042_runs)
+
+    best_full = {
+        **best_local_base,
+        "XSA": "1",
+        "XSA_START_LAYER": "4",
+        "VALUE_RESID": "1",
+        "FP16_EMBED": "1",
+    }
+
+    configs = [
+        {
+            "env_overrides": {**best_full, "Z_LOSS": "1e-3"},
+            "description": "Z-loss 1e-3 (10x stronger than 1e-4)",
+            "hypothesis": "HYP-042-zloss-1e3",
+        },
+        {
+            "env_overrides": {**best_full, "Z_LOSS": "1e-5"},
+            "description": "Z-loss 1e-5 (10x weaker than 1e-4)",
+            "hypothesis": "HYP-042-zloss-1e5",
+        },
+        {
+            "env_overrides": {**best_full, "Z_LOSS": "5e-4"},
+            "description": "Z-loss 5e-4 (5x stronger than 1e-4)",
+            "hypothesis": "HYP-042-zloss-5e4",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
