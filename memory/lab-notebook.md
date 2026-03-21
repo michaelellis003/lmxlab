@@ -5380,3 +5380,29 @@ extreme logits; z-loss adds a smooth gradient penalty below the clip threshold.
 **Final best local config:**
 6L+3u+4h/4kv + XSA_START_LAYER=4 + VALUE_RESID=1 + NORMUON=1 +
 EVAL_STRIDE=256 + FP16_EMBED=1 + Z_LOSS=1e-4 → **1.6679 BPB**
+
+### 2026-03-21 [INTERPRET] HYP-043: Focal loss — not helpful
+
+**Results (all with z-loss=1e-4 + FP16_EMBED=1):**
+
+| Config | BPB | Delta |
+|--------|-----|-------|
+| No focal | 1.6679 | — |
+| Focal γ=0.5 | 1.6690 | -0.0011 |
+| Focal γ=1.0 | 1.6718 | -0.0039 |
+
+**Verdict:** FALSIFIED. Focal loss hurts at every tested gamma. Like label
+smoothing, it reduces effective per-token learning signal in the undertrained
+regime. Higher gamma = more signal reduction = worse performance.
+
+**Pattern emerging:** In the undertrained regime (~2000 steps), ANY modification
+that reduces per-token CE signal hurts:
+- Label smoothing 0.1: -0.054
+- Focal γ=1.0: -0.004
+- Focal γ=0.5: -0.001
+
+The ONLY loss modification that helps is z-loss, which adds a penalty
+(MORE signal) without reducing CE signal. This is a clean principle:
+add auxiliary objectives, don't modify the primary CE.
+
+**Best local BPB unchanged: 1.6679** (z-loss=1e-4 + FP16_EMBED=1).

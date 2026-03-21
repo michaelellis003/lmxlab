@@ -267,6 +267,32 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-043: Focal loss — downweight easy tokens
+    hyp043_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-043")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp043_runs)
+
+    best_zloss = {**best_full, "Z_LOSS": "1e-4"}
+
+    configs = [
+        {
+            "env_overrides": {**best_zloss, "FOCAL_GAMMA": "0.5"},
+            "description": "Focal loss gamma=0.5 (mild hard-token focus)",
+            "hypothesis": "HYP-043-focal05",
+        },
+        {
+            "env_overrides": {**best_zloss, "FOCAL_GAMMA": "1.0"},
+            "description": "Focal loss gamma=1.0 (moderate hard-token focus)",
+            "hypothesis": "HYP-043-focal10",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
