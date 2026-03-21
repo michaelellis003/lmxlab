@@ -5142,3 +5142,36 @@ of DWA+VR. This saves ~N×dim learnable params and ~2% compute.
 
 **Belief update:** B-030 (XSA+VR super-additive) strengthened. DWA is now
 redundant with XSA, simplifying the GPU recipe.
+
+### 2026-03-20 [DECISION] GPU submission update: XSA replaces DWA
+
+**Context:** HYP-039 showed XSA+VR (1.6758) beats DWA+VR (1.6837) and
+DWA is redundant when XSA is present. XSA is also simpler (0 learnable
+params) and faster (~2% less overhead than DWA).
+
+**Decision:** Update GPU submission priority to:
+1. **A: Meta-recipe baseline** (PR #198 reproduction) — unchanged
+2. **E: 11L + AttnRes + XSA + VR** — NEW highest priority, replaces DWA+VR
+3. **F: 11L + XSA + VR** — simpler fallback if AttnRes hurts at 11L
+4. **B: 11L + DWA + VR** — DEMOTED, keep as fallback only
+5. **C: 3u×4 + XSA + VR** — weight sharing variant
+
+**Training script already has XSA support** (env var `XSA=1`).
+GPU scripts need update to add XSA=1 to env vars.
+
+### 2026-03-20 [REVIEW] Autorun stopping assessment (post-HYP-039)
+
+**New findings this session:**
+- XSA (arXiv 2603.09078): +0.008 BPP alone, +0.073 with VR (super-additive)
+- DWA redundant with XSA (zero marginal gain)
+- New best local BPP: 1.6758
+
+**Remaining local experiments assessed:**
+1. XSA at 9L — changes step count, unreliable locally (DEC-015)
+2. XSA+AttnRes+VR at 9L/9u — same, must be GPU
+3. XSA+EMA — EMA is batch-size dependent (HYP-030), unreliable locally
+4. XSA+competition techniques (MLP 3x, mom 0.99, etc.) — all batch-dependent
+
+**Stopping conditions re-confirmed.** All productive iso-step experiments
+done. XSA was the last testable technique from competition updates.
+GPU validation is the only remaining path forward.
