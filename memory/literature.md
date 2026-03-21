@@ -3055,3 +3055,73 @@ prior sharing methods. 100M-700M scale, drop-in replacement.
 stack for even smaller pgolf artifacts. Reserved for future GPU experiments.
 
 **Cited in:** Autorun lit review (2026-03-20)
+
+## LIT-140: SLT Competing Basins — Grokking as Phase Transition (2026)
+
+**Title:** Grokking as a Phase Transition between Competing Basins
+**Source:** arXiv preprint — **Grade C**
+**arXiv:** 2603.01192
+
+**Key finding:** Uses Singular Learning Theory to interpret grokking as a
+thermodynamic phase transition between competing near-zero-loss basins with
+different local learning coefficients (LLC). Lower-LLC basins have higher
+posterior mass and better generalization. Derives closed-form LLC for quadratic
+networks on modular arithmetic.
+
+**Relevance:** Strongest theoretical support for stochastic grokking onset.
+Barrier-crossing dynamics (Kramers escape) predict exponentially variable
+transition times — exactly what we observe (rho ~0.1 across seeds). The barrier
+height is architecture-determined but crossing time is noise-determined.
+
+**Cited in:** HYP-037 post-experiment literature check (2026-03-20)
+
+## LIT-141: 500-Model SLT Study of Grokking (2025)
+
+**Title:** Using Physics-Inspired SLT to Understand Grokking
+**Source:** arXiv preprint — **Grade C**
+**arXiv:** 2512.00686
+
+**Key finding:** Trained 500 models on mod arithmetic; only 168 (33.6%) grokked.
+Tests Arrhenius-style rate hypothesis for grokking. LLC values measured pre- and
+post-grok.
+
+**Relevance:** Strongest indirect support for stochastic onset. If only 33.6%
+of models grok under fixed hyperparameters, grokking occurrence itself (not just
+timing) is stochastic. The Arrhenius analogy explicitly models grokking as a
+stochastic barrier-crossing event.
+
+**Cited in:** HYP-037 post-experiment literature check (2026-03-20)
+
+## LIT-142: Low-Dimensional Grokking Dynamics — Metastable Escape (2026)
+
+**Title:** Low-Dimensional and Transversely Curved Optimization Dynamics in Grokking
+**Source:** arXiv preprint — **Grade C**
+**arXiv:** 2602.16746
+
+**Key finding:** Training evolves on low-dimensional execution subspace (PC1
+captures 68-83% of trajectory variance). Transverse curvature accumulates until
+trajectory "escapes" into generalizing solution (600-1600 step lead time).
+Explicitly describes grokking as "escape from a metastable regime."
+
+**Relevance:** Consistent with stochastic onset — metastable escape is
+inherently stochastic. Only tested 3 seeds (qualitative confirmation). Our
+10-seed rho=0.111 fills the quantitative gap they left open.
+
+**Cited in:** HYP-037 post-experiment literature check (2026-03-20)
+
+## LIT-143: The Complexity Dynamics of Grokking (Physica D 2025)
+
+**Title:** The Complexity Dynamics of Grokking
+**Source:** Physica D: Nonlinear Phenomena — **Grade B** (peer-reviewed)
+**arXiv:** 2412.09810
+
+**Key finding:** Grokking exhibits a complexity phase transition measurable via
+rate-distortion / Kolmogorov complexity. Complexity rises during memorization,
+falls during generalization. Results show mean over 3-6 seeds with SE shading.
+
+**Relevance:** The SE bars in their figures imply onset timing variance, but they
+don't analyze it. Their rate-distortion complexity measure is another candidate
+for cross-seed prediction testing.
+
+**Cited in:** HYP-037 post-experiment literature check (2026-03-20)
+

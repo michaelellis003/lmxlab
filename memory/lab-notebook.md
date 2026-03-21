@@ -4865,3 +4865,41 @@ it's a property of grokking itself.
 
 **Verdict:** H37-a FALSIFIED, H37-b INCONCLUSIVE, H37-c PARTIALLY SUPPORTED.
 **Next:** Post-experiment literature check, then assess stopping conditions.
+
+### 2026-03-20 [INTERPRET] HYP-037 — Literature check complete
+
+Post-experiment literature search found 10 new papers, 4 added (LIT-140 to LIT-143).
+
+**Key synthesis:** No paper directly tests cross-seed rank correlation of grokking
+onset predictors. Our rho ~0.1 finding is novel. The theoretical consensus is
+converging toward grokking as a **stochastic barrier-crossing event** (metastable
+escape / phase transition):
+
+- **LIT-140** (2603.01192): SLT competing basins — barrier height is deterministic
+  (architecture), crossing time is stochastic (SGD noise). Strongest theoretical support.
+- **LIT-141** (2512.00686): 500 models, only 33.6% grok — stochasticity extends to
+  occurrence, not just timing.
+- **LIT-142** (2602.16746): Metastable escape framing — explicitly predicts exponentially
+  variable transition times.
+- **LIT-143** (2412.09810): Peer-reviewed complexity dynamics — SE bars imply variance
+  but don't analyze it.
+
+**Theoretical explanation:** Early-time metrics (loss, defect, curvature) measure the
+barrier height, which is the same across seeds at fixed hyperparameters. The noise
+realization that determines crossing time is orthogonal to these metrics. This explains
+why ALL metric types yield rho ~0.1 — it's not a measurement failure, it's a fundamental
+property of stochastic barrier-crossing.
+
+**Alternative predictors suggested by literature:**
+1. Loss landscape flatness (Hessian trace) — 2509.17738
+2. Local Learning Coefficient (LLC) — 2603.01192
+3. Within-class variance (distance to neural collapse manifold) — 2509.20829
+4. Rate-distortion complexity — 2412.09810
+
+**Assessment:** These alternatives would likely also fail for the same reason — they
+measure barrier properties (deterministic), not noise realization (stochastic). The
+theoretical framework strongly suggests that cross-seed prediction of onset timing
+is fundamentally impossible at fixed hyperparameters.
+
+**Verdict:** HYP-037 literature check confirms our finding is novel and well-supported
+by emerging theory. B-015 (grokking stochasticity) is now one of our strongest beliefs.

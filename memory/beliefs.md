@@ -467,6 +467,12 @@ all yield rho ~0.1. The geometric/curvature approach was the
 strongest remaining candidate; its failure is definitive.
 Held from 1.0 because single architecture at 10-seed scale.
 
+**Literature support (2026-03-20):** Emerging theoretical consensus
+frames grokking as stochastic barrier-crossing (LIT-140: SLT
+competing basins, LIT-142: metastable escape). LIT-141 finds only
+33.6% of 500 models grok — stochasticity extends to occurrence.
+No paper reports cross-seed rank correlation; our finding is novel.
+
 ---
 
 ## B-016: MoE capacity helps grokking (more params → easier grokking)
