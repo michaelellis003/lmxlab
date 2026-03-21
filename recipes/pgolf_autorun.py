@@ -293,6 +293,30 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-044: MiLe loss — entropy-weighted (upweights uncertain tokens)
+    hyp044_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-044")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp044_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_zloss, "MILE_GAMMA": "1.0"},
+            "description": "MiLe loss gamma=1.0 (entropy-weighted, arXiv 2310.19531)",
+            "hypothesis": "HYP-044-mile10",
+        },
+        {
+            "env_overrides": {**best_zloss, "MILE_GAMMA": "0.5"},
+            "description": "MiLe loss gamma=0.5 (mild entropy weighting)",
+            "hypothesis": "HYP-044-mile05",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

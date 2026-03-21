@@ -5406,3 +5406,30 @@ The ONLY loss modification that helps is z-loss, which adds a penalty
 add auxiliary objectives, don't modify the primary CE.
 
 **Best local BPB unchanged: 1.6679** (z-loss=1e-4 + FP16_EMBED=1).
+
+### 2026-03-21 [INTERPRET] HYP-044: MiLe loss — catastrophically bad
+
+**Results (all with z-loss=1e-4 + FP16_EMBED=1):**
+
+| Config | BPB | Delta |
+|--------|-----|-------|
+| No MiLe | 1.6679 | — |
+| MiLe γ=0.5 | 1.7450 | -0.077 |
+| MiLe γ=1.0 | 2.1050 | -0.437 |
+
+**Verdict:** FALSIFIED. MiLe loss catastrophically hurts, worse than focal loss.
+Even with normalized weights (unit mean), entropy-based reweighting disrupts
+learning. The reweighting creates implicit curriculum effects that conflict
+with the uniform token distribution in web text.
+
+**Strengthened principle (B-031 NEW):** In the undertrained regime (~2000 steps),
+the ONLY loss modification that helps is pure auxiliary penalty (z-loss). ANY
+modification to per-token CE weights hurts:
+- Label smoothing: -0.054 (reduces signal on correct token)
+- MiLe γ=1.0: -0.437 (reweights by entropy, changes gradient distribution)
+- MiLe γ=0.5: -0.077
+- Focal γ=1.0: -0.004
+- Focal γ=0.5: -0.001 (nearly neutral, smallest distortion)
+
+This is a monotonic relationship: more distortion of the uniform CE = worse BPP.
+Z-loss works because it adds a separate gradient signal without modifying CE at all.
