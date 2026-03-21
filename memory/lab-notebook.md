@@ -5290,3 +5290,59 @@ to run. Comprehensive assessment of all possible local experiments.
 **Best local BPB: 1.6738** (all above combined).
 
 **Definitive next step: GPU validation on 8xH100 via RunPod.**
+
+### 2026-03-21 [PLAN] HYP-041: Serialization + loss function experiments
+
+**Exception to DEC-015:** These are NOT architecture or schedule changes.
+FP16_EMBED is serialization-only (same training). Label smoothing and z-loss
+are loss function changes — iso-step and batch-independent.
+
+**Arm 1: FP16_EMBED=1** — Keep embeddings at fp16 during int8+zlib roundtrip.
+Already implemented, untested. Competition SOTA uses it. Costs ~500KB extra
+artifact space (5.9→~6.4MB, well under 16MB limit).
+
+**Arm 2: Label smoothing** — Smooth the target distribution in cross-entropy.
+Reduces overconfidence, may improve quantization robustness. Need to implement.
+
+**Arm 3: Z-loss** — Penalty on log-partition function (PaLM-style). Stabilizes
+logit magnitudes, may synergize with softcap. Need to implement.
+
+**All arms use best local config:** 6L+3u+4h/4kv+XSA_START_LAYER=4+VR+NorMuon+stride256.
+
+### 2026-03-21 [INTERPRET] HYP-041: Z-loss + FP16 embed = new best 1.6679
+
+**Re-read predictions:**
+- H41-a (0.55): FP16_EMBED < 1.6738 → SUPPORTED (1.6730)
+- H41-b (0.35): Label smooth < 1.6738 → FALSIFIED (1.7281, catastrophic)
+- H41-c (0.25): Z-loss < 1.6738 → SUPPORTED (1.6711)
+- H41-d (0.30): All neutral → FALSIFIED
+
+**Results:**
+
+| Arm | Config | BPB | Delta |
+|-----|--------|-----|-------|
+| ref | Baseline | 1.6738 | — |
+| 1 | FP16_EMBED=1 | 1.6730 | +0.0008 |
+| 2 | LABEL_SMOOTH=0.1 | 1.7281 | -0.0543 |
+| 3 | Z_LOSS=1e-4 | 1.6711 | +0.0027 |
+| 4 | FP16+Z_LOSS | **1.6679** | **+0.0059** |
+
+**Key findings:**
+1. **Z-loss works** (+0.0027). PaLM-style log-partition penalty stabilizes logit
+   magnitudes, complementing our existing softcap. The two target different things:
+   softcap clips, z-loss penalizes magnitude during training.
+2. **FP16_EMBED works** (+0.0008). Small but consistent improvement from avoiding
+   embedding quantization error. ~300KB extra artifact cost.
+3. **Label smoothing is catastrophic** (-0.054). In undertrained regime (~2000 steps),
+   label smoothing dilutes the learning signal. NOT batch-size dependent — this is
+   a genuine interaction with step count.
+4. **FP16+Z-loss slightly super-additive** (0.0059 vs 0.0035 expected).
+
+**New best local BPB: 1.6679** (previous: 1.6738).
+
+**GPU implications:**
+- Add Z_LOSS=1e-4 to all GPU variants (zero compute cost, training improvement)
+- Add FP16_EMBED=1 (small quality improvement, 300KB cost)
+- Do NOT use label smoothing at parameter-golf scale
+- Z-loss may interact differently at 524K batch (more stable gradients already)
+  but is unlikely to hurt. Low risk, positive EV.

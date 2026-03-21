@@ -3452,3 +3452,37 @@ use_xsa=True for layers >= start, None (use block default) otherwise.
 - **H40-c: SUPPORTED (strongest).** Last-2 improves +0.0020.
 
 **Caution:** Delta (+0.002) is small and n=1. Suggestive, not definitive.
+
+---
+
+## HYP-041: [PGOLF] Serialization + Loss Function Experiments (TESTED)
+
+**Experiment:** 41 — FP16 embeddings, label smoothing, z-loss
+**Status:** supported (H41-a, H41-c; z-loss+fp16 = 1.6679 new best)
+**Question:** Can serialization/loss changes improve BPB without architectural changes?
+
+**Background:** FP16_EMBED is implemented but untested — competition SOTA uses it.
+Label smoothing and z-loss are loss function changes: iso-step, batch-independent,
+zero overhead. Both may improve quantization robustness (smoother logit distribution).
+
+**Exception to DEC-015:** These are NOT architecture or schedule changes.
+FP16_EMBED is serialization-only. Label smoothing/z-loss are loss function
+changes — iso-step and batch-independent.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H41-a | FP16_EMBED improves BPB | BPB < 1.6738 (avoids embedding quant error) | BPB >= 1.6738 |
+| H41-b | Label smoothing improves BPB | BPB < 1.6738 (smoother logits, better quant) | BPB >= 1.6738 |
+| H41-c | Z-loss improves BPB | BPB < 1.6738 (stabilized logits) | BPB >= 1.6738 |
+| H41-d | All neutral or harmful | No individual arm beats 1.6738 | Any arm < 1.6738 |
+
+**Prior:** H41-a at 0.55 (competition uses it), H41-b at 0.35, H41-c at 0.25,
+H41-d at 0.30.
+
+**Design:** 600s wall-clock, best local config (6L+3u+4h/4kv+XSA_START_LAYER=4+VR+NorMuon+stride256).
+- Arm 1: FP16_EMBED=1
+- Arm 2: LABEL_SMOOTH=0.1
+- Arm 3: Z_LOSS=1e-4
+- Arm 4: FP16_EMBED=1 + LABEL_SMOOTH=0.1 (best combo)
+
+Reference: 1.6738 BPB from HYP-040 (same config without these changes).

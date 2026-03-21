@@ -187,6 +187,49 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-041: Serialization + loss function experiments
+    # FP16_EMBED is serialization-only (same training, different quantization).
+    # Label smoothing and z-loss are loss function changes (iso-step, batch-independent).
+    hyp041_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-041")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp041_runs)
+
+    best_with_xsa = {
+        **best_local_base,
+        "XSA": "1",
+        "XSA_START_LAYER": "4",
+        "VALUE_RESID": "1",
+    }
+
+    configs = [
+        {
+            "env_overrides": {**best_with_xsa, "FP16_EMBED": "1"},
+            "description": "FP16 embeddings (skip int8 quant on tok_emb)",
+            "hypothesis": "HYP-041-fp16embed",
+        },
+        {
+            "env_overrides": {**best_with_xsa, "LABEL_SMOOTH": "0.1"},
+            "description": "Label smoothing 0.1 (reduce overconfidence)",
+            "hypothesis": "HYP-041-labelsmooth",
+        },
+        {
+            "env_overrides": {**best_with_xsa, "Z_LOSS": "1e-4"},
+            "description": "Z-loss 1e-4 (PaLM-style logit stabilization)",
+            "hypothesis": "HYP-041-zloss",
+        },
+        {
+            "env_overrides": {**best_with_xsa, "FP16_EMBED": "1", "Z_LOSS": "1e-4"},
+            "description": "FP16 embed + z-loss (best combo test)",
+            "hypothesis": "HYP-041-combined",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
