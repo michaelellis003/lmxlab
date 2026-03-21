@@ -5518,3 +5518,56 @@ Like QK_GAIN_INIT, embedding init is rapidly overwritten by training.
 
 **All stopping conditions met again.** No more iso-step,
 batch-independent, non-trivial experiments remain.
+
+### 2026-03-21 [PLAN] HYP-048: Multi-seed validation of best config
+
+**What:** Run best local config with 3 different seeds (42, 43, 44) to measure
+seed variance. All prior pgolf results are seed 1337 (n=1).
+
+**Why:** Our session improvements range from +0.002 to +0.006 per technique.
+If seed variance is ~0.005, these improvements are noise. If variance is
+~0.001, they're real. This is the most important experiment we can run
+because it validates or invalidates the entire session's findings.
+
+**Config:** 6L+3u+4h/4kv + XSA_START_LAYER=4 + VR + NorMuon + stride256
++ FP16_EMBED=1 + Z_LOSS=1e-4 + LOGIT_SOFTCAP=50 (our best: 1.6624 at seed 1337)
+
+**Expected:** If improvements are real, all seeds should be ~1.66. If noise,
+seeds will scatter across 1.65-1.69 range.
+
+### 2026-03-21 [INTERPRET] HYP-048: Multi-seed validation — σ = 0.007 BPB
+
+**4-seed results (best local config):**
+
+| Seed | BPB |
+|------|-----|
+| 1337 | 1.6624 |
+| 42 | 1.6789 |
+| 43 | 1.6633 |
+| 44 | 1.6695 |
+| **Mean** | **1.6685** |
+| **Std** | **0.0073** |
+
+**Key insight:** Seed variance at 2000 steps with 8K batch is ±0.007 BPB.
+This calibrates ALL our local results:
+
+| Finding | Delta | Significance |
+|---------|-------|-------------|
+| XSA+VR (iso-step 200) | +0.073 | 10σ — REAL |
+| Session total (1.6837→1.6624) | +0.021 | 2.9σ — MARGINAL |
+| Softcap 50 vs 30 | +0.006 | 0.8σ — NOISE |
+| Z-loss 1e-4 | +0.005 | 0.7σ — NOISE |
+| FP16_EMBED | +0.001 | 0.1σ — NOISE |
+| Partial XSA | +0.002 | 0.3σ — NOISE |
+
+**Revised assessment:** Only the large architecture changes (XSA, VR, head
+count, block count) are reliably above noise. The loss/serialization/scalar
+tuning improvements (z-loss, softcap, FP16, partial XSA) are individually
+within seed variance. However, their CUMULATIVE effect (+0.021 total) is
+~3σ, suggesting they're collectively real even if individually noisy.
+
+**Implication for GPU:** The architecture choices (XSA+VR, 4h, 3u) are
+confidently beneficial. The tuning choices (z-loss, softcap 50, FP16)
+should be tested on GPU with 3 seeds to confirm.
+
+**Best local BPB (mean): 1.6685 ± 0.007** (4 seeds).

@@ -402,6 +402,36 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-048: Multi-seed validation of best config
+    # All prior results are seed 1337 (n=1). Validate with seeds 42, 43, 44.
+    hyp048_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-048")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp048_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_cap50, "SEED": "42"},
+            "description": "Best config seed 42 (multi-seed validation)",
+            "hypothesis": "HYP-048-seed42",
+        },
+        {
+            "env_overrides": {**best_cap50, "SEED": "43"},
+            "description": "Best config seed 43 (multi-seed validation)",
+            "hypothesis": "HYP-048-seed43",
+        },
+        {
+            "env_overrides": {**best_cap50, "SEED": "44"},
+            "description": "Best config seed 44 (multi-seed validation)",
+            "hypothesis": "HYP-048-seed44",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
