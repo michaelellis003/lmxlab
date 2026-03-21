@@ -4782,3 +4782,27 @@ per-layer specialization that AttnRes exploits.
 **This is the definitive AttnRes characterization for pgolf:**
 AttnRes = +0.111 per-step if (depth >= 9 AND unique layers), else negative.
 No further local experiments needed on this topic.
+
+### [STOP] Autorun loop terminated — 2026-03-20
+
+**Stopping conditions:**
+1. All active pgolf hypotheses tested (HYP-034/035/036 complete)
+2. DEC-015 (FINAL): no more local Mac pgolf experiments
+3. AttnRes characterization definitive (B-028 @ 0.92, validated by LIT-134)
+4. All remaining value is GPU-only (RunPod 8xH100)
+
+**Session summary (HYP-033 through HYP-036):**
+- HYP-033: AttnRes +0.111 BPB iso-step at 9L/9u/8h/4kv (the reference)
+- HYP-034: Block AttnRes fails at 6L/3u — all variants worse than baseline
+- HYP-035: AttnRes fails at ALL 6L configs (6u, 8h) — root cause is depth
+- HYP-036: AttnRes fails at 9L/3u — sharing is independent second factor
+
+**Definitive finding:** AttnRes = +0.111 per-step if (depth >= 9 AND unique
+layers), else negative. Both factors contribute ~0.1 BPB independently.
+
+**Literature validation:** LIT-134 (arXiv 2505.24009) confirms shared layers
+lack diversity needed for cross-layer aggregation mechanisms.
+
+**GPU submission status:** 5 variants ready in records/track_10min_16mb/.
+Priority: A (meta baseline) → E (AttnRes+VR, highest priority) → B/D/C.
+Variant E uses 11L unique + AttnRes + VR — both depth and uniqueness met.
