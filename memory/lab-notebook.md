@@ -5475,3 +5475,17 @@ With z-loss, softcap 50 gives 1.6624. The combination is super-additive:
 z-loss=1e-4 alone gives +0.005, softcap 50 alone gives -0.025 (hurt!),
 but together they give +0.011. Z-loss enables higher softcap by providing
 the smooth scale control that the model needs when the hard cap is relaxed.
+
+### 2026-03-21 [INTERPRET] HYP-046: QK gain — neutral, 1.5 remains default
+
+| QK_GAIN_INIT | BPB | Delta |
+|-------------|-----|-------|
+| 1.0 | 1.6642 | -0.0018 |
+| **1.5** | **1.6624** | **—** |
+| 2.0 | 1.6638 | -0.0014 |
+
+**Verdict:** INCONCLUSIVE. All within noise (~0.002). QK gain is learnable
+and adjusts during training. Init value has minimal impact at 2000 steps.
+Default 1.5 is fine. No further tuning needed.
+
+**Best local BPB unchanged: 1.6624.**

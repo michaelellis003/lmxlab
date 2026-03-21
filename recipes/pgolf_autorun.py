@@ -352,6 +352,32 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-046: QK gain + embedding init with softcap 50 + z-loss
+    hyp046_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-046")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp046_runs)
+
+    best_cap50 = {**best_zloss, "LOGIT_SOFTCAP": "50.0"}
+
+    configs = [
+        {
+            "env_overrides": {**best_cap50, "QK_GAIN_INIT": "1.0"},
+            "description": "QK gain 1.0 + softcap 50 (less attention sharpening)",
+            "hypothesis": "HYP-046-qk10",
+        },
+        {
+            "env_overrides": {**best_cap50, "QK_GAIN_INIT": "2.0"},
+            "description": "QK gain 2.0 + softcap 50 (more attention sharpening)",
+            "hypothesis": "HYP-046-qk20",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
