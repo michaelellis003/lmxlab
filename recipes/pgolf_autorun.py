@@ -176,6 +176,12 @@ def propose(
             "description": "Partial XSA: last 2 of 6 layers only + VR",
             "hypothesis": "HYP-040-last2",
         },
+        {
+            "env_overrides": {**best_local_base, "XSA": "1", "VALUE_RESID": "1",
+                              "XSA_START_LAYER": "5"},
+            "description": "Partial XSA: last 1 of 6 layers only + VR",
+            "hypothesis": "HYP-040-last1",
+        },
     ]
 
     if n < len(configs):

@@ -5224,3 +5224,30 @@ artifact. The per-step improvement is genuine.
 
 **Caution:** The delta (+0.002) is within seed variance. Single seed, n=1.
 Treat as suggestive, not definitive. On GPU with 3 seeds this should resolve.
+
+### 2026-03-21 [INTERPRET] HYP-040 arm 3: XSA layer sweep complete — U-curve found
+
+**Full sweep results (6L+3u+4h/4kv+NorMuon+stride256+VR):**
+
+| XSA layers | XSA_START_LAYER | BPB | Steps |
+|-----------|-----------------|-----|-------|
+| 6/6 (all) | 0 | 1.6758 | 1902 |
+| 3/6 | 3 | 1.6753 | 1895 |
+| **2/6** | **4** | **1.6738** | **1895** |
+| 1/6 | 5 | 1.6754 | 1895 |
+| 0/6 (VR only) | — | 1.7211* | ~1970* |
+
+*VR-only from HYP-030 (different baseline, approximate).
+
+**Finding:** U-curve in XSA layer count. Last 2 of 6 is optimal.
+- Too much XSA: early layers lose useful self-value features
+- Too little XSA: not enough contextual specialization
+
+**GPU prediction:** For 11L, optimal XSA_START_LAYER is probably 8-9
+(last 2-3 layers, proportional to 2/6 = 33%).
+
+**Final best local BPB: 1.6738** (XSA_START_LAYER=4, VALUE_RESID=1,
+6L+3u+4h/4kv, EVAL_STRIDE=256, NORMUON=1).
+
+**Caution:** All deltas are small (0.001-0.002) and n=1. The U-curve is
+suggestive but needs multi-seed GPU validation.
