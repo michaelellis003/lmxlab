@@ -5865,3 +5865,25 @@ Retrying with --tokenizer-train-docs 5000000 (5M docs, sufficient for BPE qualit
 sp4096 needs more memory for the larger merge table (4096 merges vs 2048).
 
 Running in background. Will create local truncated dataset and test when ready.
+
+### 2026-03-21 [INTERPRET] HYP-056: sp4096 — worse than sp2048
+
+| Vocab | BPB | Params | Artifact | Embedding params |
+|-------|-----|--------|----------|-----------------|
+| sp1024 | 1.6685 | 6.82M | 6.2MB | 524K |
+| **sp2048** | **1.6344** | 7.35M | 7.0MB | 1.05M |
+| sp4096 | 1.6961 | 8.40M | 8.3MB | 2.10M |
+
+**sp4096 hurts (-0.062 vs sp2048).** The larger embedding table (2.1M params,
+25% of total model) eats into the model's capacity for learning. At dim=512,
+the optimal vocab is around 2048 where the embedding overhead is manageable.
+
+**Theory:** NeurIPS 2024 scaling law paper says optimal vocab scales with
+model size. At ~7M effective params, 2K-4K vocab is the transition zone.
+Our result confirms sp2048 is optimal for this model size.
+
+**GPU note:** On GPU with 11L unique layers (~27M params), sp4096 might
+work better because the embedding is a smaller fraction of total params.
+Worth testing on GPU.
+
+**Best local BPB unchanged: 1.6344 (sp2048).**
