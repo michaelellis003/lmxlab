@@ -4806,3 +4806,28 @@ lack diversity needed for cross-layer aggregation mechanisms.
 **GPU submission status:** 5 variants ready in records/track_10min_16mb/.
 Priority: A (meta baseline) → E (AttnRes+VR, highest priority) → B/D/C.
 Variant E uses 11L unique + AttnRes + VR — both depth and uniqueness met.
+
+### [PLAN] HYP-037: Commutator Defect as Cross-Seed Grokking Predictor — 2026-03-20
+
+**Motivation:** HYP-016 showed no aggregate metric predicts grokking onset
+across seeds. New paper LIT-137 (arXiv 2602.16967) introduces the commutator
+defect — a geometric curvature measure from non-commuting gradient updates.
+It predicts grokking within runs. We test the novel question: does it predict
+ACROSS seeds?
+
+**What I'll build:**
+1. Commutator defect metric function (4 fwd-bwd per measurement, K=5 samples)
+2. Recipe that trains MoE-Jamba on mod97 for 10 seeds, computing defect at
+   steps 1K, 2K, 5K, 10K
+3. Analysis: Spearman correlation between defect@2K and known grok_step
+
+**Expected outcome:** H37-c most likely (0.40) — defect doesn't vary enough
+across seeds at a fixed early step. But if H37-a holds, it's a genuine
+contribution: a geometric grokking predictor where loss-based ones failed.
+
+**Risk check:**
+- Compute: ~4-6 hours (10 seeds × 10K steps + 20 extra fwd-bwd per seed)
+- Code: need new metric callback for commutator defect
+- Does this test ONE thing? YES — cross-seed prediction power of a geometric
+  metric, controlling architecture (single architecture, 10 seeds).
+- Could this violate constraints? No (separate from pgolf)

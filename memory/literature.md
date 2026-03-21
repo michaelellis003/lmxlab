@@ -3002,3 +3002,56 @@ weight sharing cannot maintain.
 is brittle when layer-specific patterns are destroyed by weight sharing.
 
 **Cited in:** HYP-036 literature check (2026-03-20)
+
+## LIT-137: Early-Warning Signals of Grokking via Loss-Landscape Geometry
+
+**Title:** Early-Warning Signals of Grokking via Loss-Landscape Geometry
+**Source:** arXiv 2602.16967 — **Grade C**
+
+**Key finding:** The commutator defect — a curvature measure from non-commuting
+gradient updates (||theta_AB - theta_BA|| / (||eta*g_A|| * ||eta*g_B||)) — rises
+well before generalization onset. Lead times follow superlinear power law
+(alpha ~1.27 for modular arithmetic). Amplifying non-commutativity accelerates
+grokking (32% SCAN, 50% Dyck). Requires 4 fwd-bwd passes per measurement.
+Tested on mod arithmetic (290K params), SCAN, and Dyck-1.
+
+**Relevance:** Directly addresses our ANOM-016 (seed-dependent grokking) and
+extends HYP-016's null finding. We test the novel question: does the defect
+predict grokking ACROSS seeds (not just within runs)?
+
+**Cited in:** HYP-037 (2026-03-20)
+
+## LIT-138: Grokking in LLM Pretraining (ICLR 2026)
+
+**Title:** Grokking in LLM Pretraining? Monitor Memorization-to-Generalization
+without Test
+**Authors:** Ziyue Li, Chenrui Fan, Tianyi Zhou
+**Source:** ICLR 2026 — **Grade A**
+**arXiv:** 2506.21551
+
+**Key finding:** First study of grokking during real LLM pretraining (MoE models,
+single-epoch, diverse corpora). Expert pathway patterns evolve from random to
+structured even while training loss has converged. Two zero-cost metrics
+(pathway similarity, expert consistency) can monitor downstream generalization.
+
+**Relevance:** Grade A evidence that grokking is not just an algorithmic-task
+curiosity. Pathway metrics could complement commutator defect for MoE models.
+
+**Cited in:** HYP-037 literature review (2026-03-20)
+
+## LIT-139: MASA — Matrix-based Attention Weight Sharing (AAAI 2026)
+
+**Title:** Share Your Attention: Transformer Weight Sharing via Matrix-based
+Dictionary Learning
+**Source:** AAAI 2026 — **Grade A**
+**arXiv:** 2508.04581
+
+**Key finding:** MASA decomposes Q/K/V/O projection matrices into shared
+dictionary atoms (matrix-level weight sharing via dictionary learning).
+66.7% attention parameter reduction while outperforming GQA, low-rank, and
+prior sharing methods. 100M-700M scale, drop-in replacement.
+
+**Relevance:** Complementary to our UNIQUE_BLOCKS=3 cyclic sharing. Could
+stack for even smaller pgolf artifacts. Reserved for future GPU experiments.
+
+**Cited in:** Autorun lit review (2026-03-20)

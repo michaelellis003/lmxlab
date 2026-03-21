@@ -3112,3 +3112,81 @@ an independent factor and variant C should keep DWA.
 **Key finding:** Weight sharing is an independent factor (0.139 BPB penalty at
 constant depth=9). AttnRes requires BOTH depth >=9 AND unique layers.
 GPU variant C (12L/3u) should NOT use AttnRes — keep DWA or nothing.
+
+---
+
+### HYP-037: Commutator Defect Predicts Grokking Onset Across Seeds
+
+**Status:** active
+
+**Background:**
+HYP-016 showed that NO aggregate metric (pass@64, val_loss, val_acc) at step
+2K predicts grokking onset within a single architecture (MoE-Jamba, 10 seeds).
+Grokking onset varies 12x (4K-48K) and appears random to these metrics.
+
+LIT-137 (arXiv 2602.16967, "Early-Warning Signals of Grokking via Loss-Landscape
+Geometry") introduces the **commutator defect** — a curvature measure from
+non-commuting gradient updates. It rises well before generalization, with
+superlinear power law lead times (alpha ~1.27 for modular arithmetic). The
+metric requires 4 forward-backward passes per measurement.
+
+**Novel angle:** The paper shows the defect works as an early-warning within
+a single run. We test whether it predicts grokking **across seeds** — a
+qualitatively different and stronger claim. If defect at step 2K correlates
+with grok_step across our 10 HYP-016 seeds, it explains ANOM-016 and provides
+a fundamentally new type of grokking predictor (geometric, not loss-based).
+
+**Quality Gates:**
+- Gate 1 (Importance): PASS. A geometric metric that predicts where
+  loss-based metrics fail would be a meaningful contribution.
+- Gate 2 (Scale): PASS. Grokking is small-scale. Commutator defect is
+  tractable at 7M params (4 fwd-bwd passes per measurement).
+- Gate 3 (Prior coverage): PASS. Paper tested 3 seeds per setting.
+  Nobody has tested cross-seed prediction with 10+ seeds.
+- Gate 4 (Predictability): PASS. Genuinely uncertain — the defect is
+  a within-run signal; it may not vary meaningfully across seeds at
+  a fixed early step.
+- Gate 5 (Methodology): PASS. We have 10 seeds with known grok times.
+  Can compute defect at step 2K and test Spearman correlation.
+- Gate 6 (Sunk cost): PASS. New metric type, not repeating HYP-016.
+
+**Prior Art (REA):**
+- [HYP-016] Own: No aggregate metric at step 2K predicts grokking
+  (rho = 0.111 for p@64, 0.062 for loss, 0.006 for val_acc).
+- [LIT-137] arXiv 2602.16967: Commutator defect predicts grokking
+  within runs. Alpha ~1.27 for modular arithmetic. 4 fwd-bwd per
+  measurement, K=5 samples, onset = 10x baseline + floor of 20.
+- [B-015] Own: Grokking onset varies 10x across seeds for identical
+  architecture.
+
+| ID | Hypothesis | Prediction | Falsification | Prior |
+|----|-----------|------------|---------------|-------|
+| H37-a | Defect predicts across seeds | Spearman \|rho\| >= 0.6 between commutator defect at step 2K and grok_step (10 seeds). | \|rho\| < 0.4. | 0.35 |
+| H37-b | Defect separates grokkers/non-grokkers | Mean defect at step 2K differs between eventual grokkers (n=9) and non-grokker (n=1) by Cohen's d > 0.5. | d < 0.3 or wrong direction. | 0.25 |
+| H37-c | Defect has no cross-seed signal | Both \|rho\| < 0.4 and d < 0.3. The defect is informative within runs but does not vary meaningfully across seeds at a fixed early step. | Either metric exceeds threshold. | 0.40 |
+
+**Why these priors:**
+- H37-a (0.35): The defect is designed as a within-run temporal signal.
+  At step 2K across seeds, all models may have similar curvature.
+  But HYP-016 showed p@64 has HIGH variance (0.44-1.00) yet no signal —
+  variance alone doesn't guarantee prediction. The defect being geometric
+  rather than loss-based gives it a real shot.
+- H37-b (0.25): Only 1 non-grokker makes separation hard to assess.
+  Small n weakens any conclusion.
+- H37-c (0.40): Highest prior because the defect is fundamentally a
+  temporal signal within a training trajectory, not a cross-sample
+  comparison metric.
+
+**Design:**
+- Reuse HYP-016 setup: MoE-Jamba 7M, mod 97, wd=0.1, lr=1e-3,
+  constant LR, 10 seeds (42..51)
+- Measure commutator defect at steps 1K, 2K, 5K, 10K (4 checkpoints)
+- K=5 mini-batch pairs per measurement, eta_comm=1e-3
+- Primary analysis: Spearman(defect@2K, grok_step) for 10 seeds
+- Secondary: defect trajectory shape vs grokking timing
+- Grok_step values from HYP-016 (known: 4K, 12K, 12K, 12K, 18K, 22K,
+  36K, 48K, 48K, >50K for seeds 48, 43, 47, 50, 42, 46, 51, 45, 49, 44)
+- Compute budget: ~10 runs × 10K steps × (normal training + 4 extra
+  fwd-bwd at 4 checkpoints) ≈ 4-6 hours on Mac
+
+**Recipe:** `recipes/hyp037_commutator_defect.py`
