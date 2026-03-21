@@ -5767,3 +5767,65 @@ Competition SOTA already uses sp2048 — this validates their approach.
 
 **Caution:** Single seed (n=1). Need multi-seed to confirm, but at 4.7σ
 this is very likely real.
+
+### 2026-03-21 [REVIEW] Literature review: attention-free + tokenizer optimization
+
+**Key findings from literature review (2 parallel agents):**
+
+**Tokenizer optimization:**
+- NeurIPS 2024 paper: optimal vocab scales with model size. At ~27M params,
+  sweet spot is 8K-16K tokens (we're at 1K-2K).
+- sp2048 already gave +0.034 BPB (HYP-054). sp4096 could give more.
+- Larger vocab costs embedding params: 4096×512=2M params (1.5M more than 1024×512)
+- BPB formula: BPB = CE_loss × ln(2) / bytes_per_token. More bytes/token → lower BPB
+  IF per-token CE doesn't degrade proportionally.
+- Unigram tokenizer could outperform BPE but risky (competition scrutiny)
+
+**Attention-free architectures (ranked for pgolf):**
+1. **minGRU/minLSTM** — 2.5x faster convergence than transformers, 87% fewer params,
+   fully parallelizable. October 2024 paper. UNTESTED at pgolf scale. (arXiv 2410.01201)
+2. **Hymba** — parallel attention+SSM heads, 3.49x throughput, 11.67x cache reduction.
+   ICLR 2025. Best hybrid for small scale. Complex implementation.
+3. **Griffin** — gated linear recurrence + local attention. Matches Llama-2 with 6x
+   fewer tokens. Hardware efficient. DeepMind Feb 2024.
+4. **GLA** — gated linear attention. Higher throughput than Mamba. Good on language.
+5. **Mamba/Mamba2** — good quality but slower training than optimized attention at
+   short context (1K). In-context learning weakness.
+
+**MLP+position ideas (user's interest):**
+- gMLP: spatial gating + dense projections. Matches transformers on LM but lags
+  on downstream. Simple architecture.
+- FNet: FFT mixing. Zero param mixing layer. Fast but less expressive.
+- Key insight: MLP with position encoding = simplified RNN. The user's idea of
+  "MLP + position + RNN" converges on minGRU/minLSTM conceptually.
+
+### 2026-03-21 [DECISION] Prioritized experiment plan
+
+**Priority 1: sp4096 tokenizer (HIGH confidence, LOW risk)**
+- sp2048 gave +0.034. sp4096 should give more.
+- Embedding cost: 4096×512 = 2M params → ~2MB artifact overhead.
+  Total artifact ~8-9MB, still under 16MB.
+- Implementation: just change tokenizer_specs.json and retrain.
+- TIME: ~90 min tokenization + 10 min training = 100 min
+
+**Priority 2: minGRU/minLSTM hybrid layers (HIGH risk, HIGH reward)**
+- Replace some attention layers with minGRU layers
+- minGRU is extremely simple: just a gated linear scan
+- 87% fewer params per layer → can afford more layers
+- Fully parallelizable during training
+- Implementation: ~50 lines for minGRU, plus Block variant
+- TIME: ~2 hours implementation + 10 min per experiment
+
+**Priority 3: Hymba-style parallel attention+GRU heads (MEDIUM risk)**
+- Within each attention layer, split heads: some use attention, some use GRU
+- Reduces compute while maintaining quality
+- More complex than pure minGRU replacement
+- TIME: ~3 hours implementation
+
+**Priority 4: GLA (gated linear attention) (MEDIUM risk)**
+- Replace softmax attention with gated linear attention in some layers
+- Higher throughput than Mamba, competitive quality
+- More complex implementation
+- TIME: ~4 hours
+
+**Starting with Priority 1 (sp4096) then Priority 2 (minGRU hybrid).**
