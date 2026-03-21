@@ -456,6 +456,32 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-050: Model dimension (384 vs 512)
+    # dim=384 is 56% fewer params → faster → more steps in 600s.
+    # But each step learns less. Net effect is unclear.
+    hyp050_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-050")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp050_runs)
+
+    configs = [
+        {
+            "env_overrides": {
+                **best_local_base,
+                "XSA": "1", "XSA_START_LAYER": "4", "VALUE_RESID": "1",
+                "FP16_EMBED": "1", "Z_LOSS": "1e-4", "LOGIT_SOFTCAP": "50.0",
+                "MODEL_DIM": "384", "NUM_HEADS": "4", "NUM_KV_HEADS": "4",
+            },
+            "description": "dim=384 + 4h (head_dim=96, smaller+faster model)",
+            "hypothesis": "HYP-050-dim384",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

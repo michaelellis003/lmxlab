@@ -5614,3 +5614,29 @@ marginal significance.
 
 **Verdict:** 1024 confirmed as default. On GPU where step count is equalized,
 2048 might be worth retesting.
+
+### 2026-03-21 [INTERPRET] HYP-050: dim=384 beats dim=512 locally
+
+| Dim | BPB | Steps | ms/step | Params | Artifact |
+|-----|-----|-------|---------|--------|----------|
+| **384** | **1.6565** | **2634** | **238** | **3.9M** | **3.9MB** |
+| 512 | 1.6685 | ~1900 | ~310 | 6.8M | 6.2MB |
+
+**Delta:** +0.012 BPB (1.6σ above noise floor, marginally significant).
+
+**B-022 confound:** dim=384 gets 39% more steps (2634 vs ~1900). The
+improvement is dominated by step count, not per-step quality. On GPU
+where steps equalize, dim=512 likely wins due to higher capacity.
+
+**But:** dim=384 at 3.9MB leaves 12.1MB of artifact budget unused.
+With int4 quantization, we could fit ~8M params (2x current). This opens
+a new direction: smaller dim × more layers × aggressive quantization.
+
+**Not actionable locally** — int4 training needs QAT at GPU-scale batch.
+But worth noting for GPU experiments.
+
+**Key insight confirmed:** At local 8K batch, smaller models win via
+throughput (more steps in 600s). This is B-022 in action. The result
+validates our prior DEC-015 assessment.
+
+**Best local BPB: 1.6565** (dim=384, but B-022-confounded).
