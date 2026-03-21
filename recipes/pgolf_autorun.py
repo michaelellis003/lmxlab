@@ -482,6 +482,44 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-051: dim=384 vs 512 iso-step (200 steps each)
+    hyp051_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-051")
+        and r.get("wall_time_s", 0) > 30  # smoke test threshold for iso-step
+    ]
+    n = len(hyp051_runs)
+
+    configs = [
+        {
+            "env_overrides": {
+                **best_local_base,
+                "XSA": "1", "XSA_START_LAYER": "4", "VALUE_RESID": "1",
+                "FP16_EMBED": "1", "Z_LOSS": "1e-4", "LOGIT_SOFTCAP": "50.0",
+                "MODEL_DIM": "512", "NUM_HEADS": "4", "NUM_KV_HEADS": "4",
+                "ITERATIONS": "200", "MAX_WALLCLOCK_SECONDS": "300",
+            },
+            "description": "dim=512 iso-step baseline (200 steps)",
+            "hypothesis": "HYP-051-dim512",
+            "smoke": True,
+        },
+        {
+            "env_overrides": {
+                **best_local_base,
+                "XSA": "1", "XSA_START_LAYER": "4", "VALUE_RESID": "1",
+                "FP16_EMBED": "1", "Z_LOSS": "1e-4", "LOGIT_SOFTCAP": "50.0",
+                "MODEL_DIM": "384", "NUM_HEADS": "4", "NUM_KV_HEADS": "4",
+                "ITERATIONS": "200", "MAX_WALLCLOCK_SECONDS": "300",
+            },
+            "description": "dim=384 iso-step comparison (200 steps)",
+            "hypothesis": "HYP-051-dim384",
+            "smoke": True,
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

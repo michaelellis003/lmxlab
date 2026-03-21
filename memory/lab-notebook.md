@@ -5640,3 +5640,37 @@ throughput (more steps in 600s). This is B-022 in action. The result
 validates our prior DEC-015 assessment.
 
 **Best local BPB: 1.6565** (dim=384, but B-022-confounded).
+
+### 2026-03-21 [PLAN] HYP-051: dim=384 iso-step comparison (200 steps)
+
+**What:** Run dim=384 vs dim=512 at EXACTLY 200 iso-steps to remove the
+B-022 throughput confound. At 200 steps both configs take ~48-62s,
+well within wallclock. This gives a clean per-step quality comparison.
+
+**Why:** HYP-050 showed dim=384 wins locally (+0.012) but with 39% more
+steps. We need to know if the per-step quality at dim=384 is actually
+worse (as expected from fewer params) or somehow comparable.
+
+**If dim=384 wins iso-step too:** That would mean the model is OVER-parameterized
+at dim=512 for this data/task. Revolutionary for the GPU recipe — we could use
+dim=384 + more layers or int4 to better allocate the param budget.
+
+**If dim=512 wins iso-step:** Expected. Confirms B-022 — dim=384 only wins
+locally via throughput, not quality. GPU should stay at dim=512.
+
+### 2026-03-21 [INTERPRET] HYP-051: dim=384 vs 512 iso-step — 512 wins decisively
+
+**200-step iso-step comparison:**
+
+| Dim | BPB@200 | Params |
+|-----|---------|--------|
+| **512** | **2.3769** | 6.8M |
+| 384 | 2.4132 | 3.9M |
+
+**Delta: +0.036 for dim=512 at iso-step** (4.9σ, highly significant).
+
+**Conclusion:** dim=384's full-run win (+0.012) was entirely B-022 (throughput).
+Per-step, dim=512 is decisively better. GPU recipe stays at dim=512.
+
+dim=384 + int4 quantization (fitting ~8M params) could still be interesting
+for GPU, but that's a GPU-only experiment.
