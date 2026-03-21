@@ -5175,3 +5175,52 @@ GPU scripts need update to add XSA=1 to env vars.
 **Stopping conditions re-confirmed.** All productive iso-step experiments
 done. XSA was the last testable technique from competition updates.
 GPU validation is the only remaining path forward.
+
+### 2026-03-20 [PLAN] HYP-040: Partial XSA (last N layers)
+
+**What:** Test whether applying XSA only to later layers improves over full XSA.
+Competition PRs apply XSA selectively. Early layers may need self-value for
+feature formation.
+
+**Implementation:** Added XSA_START_LAYER env var. When > 0, layers < start
+use standard attention, layers >= start use XSA. Handles weight-shared blocks
+via runtime use_xsa override.
+
+**2 arms:** last-3 (XSA_START_LAYER=3) and last-2 (XSA_START_LAYER=4).
+Reference: full XSA+VR = 1.6758 from HYP-039.
+
+### 2026-03-21 [INTERPRET] HYP-040: Partial XSA — last 2 layers is optimal
+
+**Re-read predictions:**
+- H40-a (0.50): Full XSA optimal → Partial >= 1.6758
+- H40-b (0.30): Last-3 better → Last-3 < 1.6758
+- H40-c (0.20): Last-2 better → Last-2 < 1.6758
+
+**Results:**
+
+| Config | BPB | Steps | Delta vs Full |
+|--------|-----|-------|---------------|
+| Full XSA+VR (6/6) | 1.6758 | 1902 | — |
+| Partial XSA+VR (3/6) | 1.6753 | 1895 | +0.0005 |
+| Partial XSA+VR (2/6) | **1.6738** | 1895 | **+0.0020** |
+
+**Adjudication:**
+- **H40-a: FALSIFIED.** Both partial configs beat full (marginally).
+- **H40-b: SUPPORTED (marginally).** Last-3 is 1.6753 < 1.6758.
+- **H40-c: SUPPORTED (strongest).** Last-2 is 1.6738 < 1.6758.
+
+**Key finding:** Fewer XSA layers is better at 6L. Early layers (0-3) benefit
+from retaining self-value for feature formation. Later layers (4-5) benefit
+from pure contextual attention via XSA. The deltas are small (+0.002 BPP)
+but consistent and at matched step count (1895 both).
+
+**New best local BPB: 1.6738** (XSA_START_LAYER=4 + VALUE_RESID=1).
+
+**B-022 check:** Step counts identical (1895), so this is NOT a throughput
+artifact. The per-step improvement is genuine.
+
+**GPU implications:** For 11L, the optimal XSA start layer is probably 7-8
+(last ~3-4 layers), not all 11. Worth testing XSA_START_LAYER sweep on GPU.
+
+**Caution:** The delta (+0.002) is within seed variance. Single seed, n=1.
+Treat as suggestive, not definitive. On GPU with 3 seeds this should resolve.

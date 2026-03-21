@@ -3407,3 +3407,48 @@ Added XSA env var to train_gpt_mlx.py. 6 lines in CausalSelfAttention.__call__.
 - **H39-c: FALSIFIED.** XSA does not hurt.
 
 **New best local BPB: 1.6758** (XSA+VR, beating prior DWA+VR 1.6837 by +0.0079).
+
+---
+
+## HYP-040: [PGOLF] Partial XSA (Last N Layers Only)
+
+**Experiment:** 40 — Partial vs full XSA application
+**Status:** supported (H40-c: last-2 is best, +0.002 vs full XSA)
+**Question:** Is XSA more effective when applied only to later layers?
+
+**Background:** Competition PRs (#287, #290) apply XSA selectively (e.g., last
+4 of 11 layers). Early layers may need self-value for initial feature formation,
+while later layers benefit more from pure contextual attention. With 6 layers
+(3u × 2), we test last-3 and last-2 vs our full XSA+VR baseline (1.6758).
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H40-a | Full XSA is optimal | Partial XSA BPB >= Full XSA BPB (1.6758) | Partial < 1.6758 |
+| H40-b | Partial XSA (last 3) is better | Last-3 BPB < 1.6758 | Last-3 >= 1.6758 |
+| H40-c | Partial XSA (last 2) is better | Last-2 BPB < 1.6758 | Last-2 >= 1.6758 |
+
+**Prior:** H40-a at 0.50 (full XSA worked well, but competition uses partial).
+H40-b at 0.30, H40-c at 0.20.
+
+**Design:** 600s wall-clock, best local config + XSA=1 + VR=1.
+- Arm 1 (reference): Full XSA+VR = 1.6758 (from HYP-039)
+- Arm 2: XSA_START_LAYER=3 (last 3 of 6 layers)
+- Arm 3: XSA_START_LAYER=4 (last 2 of 6 layers)
+
+**Implementation:** Added XSA_START_LAYER env var. GPT.__call__ passes
+use_xsa=True for layers >= start, None (use block default) otherwise.
+
+**Results (600s wall-clock, single seed):**
+
+| Config | BPB | Steps |
+|--------|-----|-------|
+| Full XSA+VR (6/6) | 1.6758 | 1902 |
+| Partial XSA+VR (3/6) | 1.6753 | 1895 |
+| Partial XSA+VR (2/6) | **1.6738** | 1895 |
+
+**Verdicts:**
+- **H40-a: FALSIFIED.** Full XSA is not optimal; partial is marginally better.
+- **H40-b: SUPPORTED (marginal).** Last-3 improves +0.0005.
+- **H40-c: SUPPORTED (strongest).** Last-2 improves +0.0020.
+
+**Caution:** Delta (+0.002) is small and n=1. Suggestive, not definitive.

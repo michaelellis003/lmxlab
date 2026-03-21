@@ -153,6 +153,34 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-040: Partial XSA — apply XSA only to last N layers
+    # Competition PRs apply XSA selectively. Test if early layers
+    # need self-value for feature formation.
+    hyp040_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-040")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp040_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_local_base, "XSA": "1", "VALUE_RESID": "1",
+                              "XSA_START_LAYER": "3"},
+            "description": "Partial XSA: last 3 of 6 layers only + VR",
+            "hypothesis": "HYP-040-last3",
+        },
+        {
+            "env_overrides": {**best_local_base, "XSA": "1", "VALUE_RESID": "1",
+                              "XSA_START_LAYER": "4"},
+            "description": "Partial XSA: last 2 of 6 layers only + VR",
+            "hypothesis": "HYP-040-last2",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
