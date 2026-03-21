@@ -707,6 +707,25 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-058: Pre-attention causal conv (inside attention, minimal overhead)
+    hyp058_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-058")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp058_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "PRE_CONV": "4"},
+            "description": "Pre-attention causal conv k=4 (local context mixing)",
+            "hypothesis": "HYP-058-preconv4",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

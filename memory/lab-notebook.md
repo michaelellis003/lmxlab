@@ -5930,3 +5930,31 @@ much smaller. The per-step advantage (+0.05 at 200 steps) could translate
 to a real win if throughput is within 10% of attention.
 
 **Not testing arm 2 (conv01) — if single conv layer hurts, more will hurt worse.**
+
+### 2026-03-21 [INTERPRET] HYP-057/058: Hybrid conv experiments — all throughput-limited
+
+**Summary of all attention-alternative experiments:**
+
+| Config | BPB | Steps | ms/step | Per-step quality | Verdict |
+|--------|-----|-------|---------|-----------------|---------|
+| Pure attention (sp2048) | **1.6344** | ~1900 | ~310 | Reference | **BEST** |
+| MinGRU block 0 | 2.27@200 | ~230 | 2580 | **+0.08** | 8x slower |
+| CausalConv block 0 | 1.6998 | 1381 | 536 | +0.05 | 73% slower |
+| CausalConv blocks 0,1 | 1.6843 | ~1100 | ~770 | — | 2.5x slower |
+| Pre-conv k=4 (inside attn) | 1.6777 | ~1700 | ~350 | ~neutral | 18% slower |
+
+**Universal finding:** Every attention alternative has better or comparable
+per-step quality but worse throughput on MLX. The Python for loop in conv
+and the sequential scan in minGRU are the bottlenecks. On GPU with optimized
+CUDA kernels (FlashConv, Mamba scan), these overheads disappear.
+
+**Conclusion for hybrid architectures:** Cannot be fairly evaluated on MLX.
+Must test on GPU where:
+- FlashAttention is the attention baseline (not MLX SDPA)
+- Causal conv uses depthwise_conv1d (fused kernel)
+- minGRU uses parallel scan (Mamba-style)
+
+**GPU experiment recommendation:**
+1. minGRU hybrid (block 0 = minGRU, rest = attention) — best per-step
+2. Pre-conv k=4 inside all attention layers — minimal GPU overhead
+3. CausalConv block for early layers — medium overhead, good quality
