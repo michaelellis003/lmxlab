@@ -317,6 +317,41 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-045: Softcap tuning with z-loss
+    # Now that z-loss handles logit stabilization, softcap 30 may be redundant.
+    hyp045_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-045")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp045_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_zloss, "LOGIT_SOFTCAP": "50.0"},
+            "description": "Softcap 50 + z-loss (less clipping, z-loss handles scale)",
+            "hypothesis": "HYP-045-cap50",
+        },
+        {
+            "env_overrides": {**best_zloss, "LOGIT_SOFTCAP": "20.0"},
+            "description": "Softcap 20 + z-loss (tighter clipping + smooth penalty)",
+            "hypothesis": "HYP-045-cap20",
+        },
+        {
+            "env_overrides": {**best_zloss, "LOGIT_SOFTCAP": "100.0"},
+            "description": "Softcap 100 + z-loss (near-disabled softcap, z-loss only)",
+            "hypothesis": "HYP-045-cap100",
+        },
+        {
+            "env_overrides": {**best_zloss, "LOGIT_SOFTCAP": "75.0"},
+            "description": "Softcap 75 + z-loss (between 50 and 100)",
+            "hypothesis": "HYP-045-cap75",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

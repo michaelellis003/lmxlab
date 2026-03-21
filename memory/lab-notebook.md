@@ -5433,3 +5433,45 @@ modification to per-token CE weights hurts:
 
 This is a monotonic relationship: more distortion of the uniform CE = worse BPP.
 Z-loss works because it adds a separate gradient signal without modifying CE at all.
+
+### 2026-03-21 [PLAN] HYP-045: Softcap tuning with z-loss
+
+**What:** Now that z-loss smoothly penalizes logit magnitude, the hard softcap
+at 30.0 may be redundant or suboptimal. Test softcap 50 (less clipping) and
+softcap 20 (tighter) with z-loss=1e-4.
+
+**Why:** Softcap and z-loss both constrain logit scale but differently:
+- Softcap: hard tanh clipping at the threshold, flattens gradients above it
+- Z-loss: smooth quadratic penalty on logsumexp, doesn't clip
+
+If z-loss already handles scale control, relaxing softcap (higher value)
+should let the model express more confident predictions. If z-loss is
+insufficient alone, tighter softcap might help.
+
+**Reference:** 1.6679 BPB (softcap=30 + z-loss=1e-4 + FP16_EMBED=1).
+
+### 2026-03-21 [INTERPRET] HYP-045: Softcap 50 is optimal with z-loss
+
+**Full sweep (all with z-loss=1e-4 + FP16_EMBED=1 + best local config):**
+
+| Softcap | BPB | Delta vs 30 |
+|---------|-----|-------------|
+| 20 | 1.6698 | -0.0019 |
+| 30 | 1.6679 | — |
+| **50** | **1.6624** | **+0.0055** |
+| 75 | 1.6829 | -0.0150 |
+| 100 | 1.6745 | -0.0066 |
+
+**Finding:** Softcap 50 is optimal with z-loss. Z-loss provides smooth
+logit scale control, making the hard softcap at 30 redundant-to-harmful.
+Raising to 50 lets the model express more confident predictions while
+z-loss prevents runaway logit magnitudes. Beyond 50, the model needs
+SOME hard constraint (z-loss alone is insufficient at 75+).
+
+**New best local BPB: 1.6624** (previous: 1.6679).
+
+**Interaction insight:** Softcap 50 without z-loss gave 1.7489 (HYP-026).
+With z-loss, softcap 50 gives 1.6624. The combination is super-additive:
+z-loss=1e-4 alone gives +0.005, softcap 50 alone gives -0.025 (hurt!),
+but together they give +0.011. Z-loss enables higher softcap by providing
+the smooth scale control that the model needs when the hard cap is relaxed.
