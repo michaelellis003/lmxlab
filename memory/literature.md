@@ -2968,3 +2968,37 @@ at 9L/9u (+0.111 BPB) — the 3 unique blocks lack sufficient diversity for
 the attention-based aggregation to find complementary information.
 
 **Cited in:** HYP-036 literature check (2026-03-20)
+
+## LIT-135: Depth and Looping for In-Context Learning
+
+**Title:** On the Role of Depth and Looping for In-Context Learning with
+Task Diversity
+**Source:** arXiv 2410.21698 — **Grade C**
+
+**Key finding:** Looped Transformers (recurrent weight sharing) trade
+expressivity for robustness/generalization. Standard (unique-layer)
+Transformers achieve better expressivity through layer diversity. Monotonic
+loss improvement across depth requires weight sharing, but monotonicity is
+not desirable — non-monotonic depth-dependent computation enables richer
+representations.
+
+**Relevance:** Explains why 9L/9u beats 9L/3u for AttnRes: unique layers
+enable the depth-dependent computation that cross-layer aggregation exploits.
+Cycling destroys layer-specific specialization.
+
+**Cited in:** HYP-036 literature check (2026-03-20)
+
+## LIT-136: Cross-layer Attention Sharing
+
+**Title:** Cross-layer Attention Sharing for Pre-trained Large Language Models
+**Source:** arXiv 2408.01890 — **Grade C**
+
+**Key finding:** Direct weight sharing in attention layers is ineffective.
+Shallow layers are vulnerable to small deviations in attention weights.
+Cross-layer mechanisms depend on layer-specific attention patterns that
+weight sharing cannot maintain.
+
+**Relevance:** Converging evidence that cross-layer aggregation (like AttnRes)
+is brittle when layer-specific patterns are destroyed by weight sharing.
+
+**Cited in:** HYP-036 literature check (2026-03-20)
