@@ -5674,3 +5674,15 @@ Per-step, dim=512 is decisively better. GPU recipe stays at dim=512.
 
 dim=384 + int4 quantization (fitting ~8M params) could still be interesting
 for GPU, but that's a GPU-only experiment.
+
+### 2026-03-21 [INTERPRET] HYP-052: V normalization — neutral
+
+V_NORM=1: 1.6642 BPB vs baseline mean 1.6685 → +0.0043 (0.6σ, noise).
+
+**Verdict:** INCONCLUSIVE. V normalization is neutral. This makes sense:
+V magnitude information is useful (tells the model how much to weight
+each value vector). Normalizing V removes this signal. Q and K norms
+are different — they're followed by RoPE and dot product, where magnitude
+is redundant (q_gain handles scale).
+
+**Best local BPB unchanged: 1.6685 ± 0.007.**

@@ -520,6 +520,25 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-052: V normalization — RMSNorm on V like Q and K
+    hyp052_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-052")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp052_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_cap50, "V_NORM": "1"},
+            "description": "V normalization: RMSNorm on V (completes QKV norm)",
+            "hypothesis": "HYP-052-vnorm",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
