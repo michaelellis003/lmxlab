@@ -6059,3 +6059,55 @@ provides good coverage. Tighter strides add compute overhead (longer eval time:
 1192s for stride 64 vs 750s for stride 256) without improving BPB.
 
 **Best local BPB unchanged: 1.6344 (sp2048, stride 256).**
+
+### 2026-03-21 [REVIEW] Cross-disciplinary research results — BIG IDEAS
+
+**5 cross-disciplinary techniques ranked by potential impact:**
+
+**1. Natural Gradient / K-FAC (Optimization Theory)**
+- 30-50% fewer steps to convergence
+- Computes Fisher-vector products for better preconditioning
+- Synergizes with quantization (2nd-order methods robust to low precision)
+- ~300-400 lines to implement
+- **CONCERN:** We already use Muon (momentum-corrected optimizer).
+  K-FAC would REPLACE Muon, not supplement it. Big implementation risk.
+  Also, batch-size dependent (Fisher estimate quality depends on batch).
+
+**2. Per-Layer Rate-Distortion Optimal Quantization (Information Theory)**
+- Allocate different bit widths per layer based on Hessian sensitivity
+- 30-40% effective param reduction vs uniform int8
+- ~200 lines, no architecture changes
+- **THIS IS ACTIONABLE:** Our int8 quantization is uniform across layers.
+  Competition SOTA (PR #374) uses non-uniform: int8 boundary + int6 middle.
+  We can compute layer sensitivity and optimize bit allocation.
+
+**3. Sparse Expander Graph Attention (Graph Theory)**
+- Replace full attention with O(n) sparse attention on expander graph
+- Saves ~70-80% of attention params
+- **CONCERN:** At seq_len=1024 with 4 heads, attention is already efficient.
+  Sparse attention helps more at longer sequences. May not help at 1024.
+
+**4. Monarch Matrix Factorization (Numerical Linear Algebra)**
+- Post-hoc weight compression: 2-5x param reduction on MLPs
+- Closed-form projection, no retraining
+- **CONCERN:** We tested Kronecker MLP (similar structured factorization)
+  and it HURT (-0.285 BPB). Monarch may have same issue at small scale.
+
+**5. Data Valuation via Shapley Values (Statistics)**
+- Identify which training data is most valuable
+- Accelerates experimental iteration
+- **CONCERN:** Not directly improving BPB. Meta-optimization.
+
+### 2026-03-21 [DECISION] Prioritize RDOQ for next experiment
+
+**Per-Layer Rate-Distortion Optimal Quantization (RDOQ)** is the best fit:
+1. Directly addresses a real bottleneck (uniform int8 is suboptimal)
+2. Information-theoretically grounded
+3. Competition SOTA already uses non-uniform quantization
+4. Implementable as POST-TRAINING optimization (no retraining)
+5. Can test locally: train once, then try different bit allocations
+
+**Plan:** After training with best config, measure per-layer sensitivity
+via loss change when quantizing each layer individually. Allocate more
+bits to sensitive layers, fewer to insensitive ones. Compare BPB of
+non-uniform vs uniform int8 serialization.
