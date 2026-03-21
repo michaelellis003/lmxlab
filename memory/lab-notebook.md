@@ -5103,3 +5103,42 @@ XSA+VR (1.6758) beats DWA+VR (1.6837) by +0.0079 BPB. XSA is simpler
 - XSA should be added to all GPU submission variants
 - XSA+VR replaces DWA+VR as the recommended combo
 - AttnRes+XSA+VR could be even better at 11L (test on GPU)
+
+### 2026-03-20 [PLAN] HYP-039 follow-up: XSA + DWA + VR triple combo
+
+**What:** Test whether XSA and DWA are additive or redundant when combined
+with Value Residual. DWA+VR was 1.6837, XSA+VR is 1.6758. If XSA+DWA+VR
+beats both, the gains are orthogonal and we should use all three on GPU.
+If not, XSA replaces DWA entirely.
+
+**Why:** DWA (depth-weighted average) and XSA (self-value removal) target
+different aspects of attention: DWA controls cross-layer aggregation while
+XSA controls within-layer feature extraction. They SHOULD be orthogonal.
+
+**Risks:** DWA adds ~6% overhead locally. Combined with XSA (~5%), total
+overhead ~11%, costing ~200 steps. Still within reliable comparison range.
+
+### 2026-03-20 [INTERPRET] HYP-039 arm 4: XSA+DWA+VR = XSA+VR (DWA redundant)
+
+**Result:** XSA+DWA+VR = 1.6758 BPB, identical to XSA+VR (1.6758).
+DWA adds 7ms/step overhead (316→323ms) with zero BPB benefit.
+
+**Full comparison:**
+
+| Arm | Config | BPB | Steps | ms/step |
+|-----|--------|-----|-------|---------|
+| 1 | Baseline | 1.7484 | 2018 | 297 |
+| 2 | XSA | 1.7401 | 1929 | 311 |
+| 3 | XSA+VR | **1.6758** | 1902 | 316 |
+| 4 | XSA+DWA+VR | 1.6758 | 1858 | 323 |
+
+**Conclusion:** XSA fully subsumes DWA's contribution. Both target attention
+output quality: DWA blends cross-layer representations, XSA removes self-value
+redundancy. With XSA, the attention output is already maximally contextual,
+so DWA's blending adds nothing.
+
+**GPU submission update:** Remove DWA from all variants. Use XSA+VR instead
+of DWA+VR. This saves ~N×dim learnable params and ~2% compute.
+
+**Belief update:** B-030 (XSA+VR super-additive) strengthened. DWA is now
+redundant with XSA, simplifying the GPU recipe.

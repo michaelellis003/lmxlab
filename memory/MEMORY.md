@@ -95,16 +95,14 @@ literature:
 - Literature favors H1b-d (null/scale, prior 0.65) and H1b-a
   (LR mismatch, prior 0.70)
 
-## Current State
-- On main branch
-- MLflow integration added (`src/lmxlab/experiments/mlflow.py`)
-- HYP-001 tested: inconclusive (GPT baseline beat LLaMA — confounded)
-- HYP-001b Sub-exp A tested: H1b-a SUPPORTED, H1b-d FALSIFIED
-  - Full LLaMA beats GPT by 8% at correct LR (d=1.72, large effect)
-  - LR was the dominant confound: LR=1e-3 bad for all configs,
-    complex architectures prefer 1e-4 or 3e-4
-  - SwiGLU is largest single contributor (+48.9% of total improvement)
-  - CIs include zero (n=3) — directionally clear but low power
-- B-006 posterior: 0.30 -> 0.60 (LLaMA features help at correct LR)
-- ANOM-001 explained (LR mismatch), ANOM-004 new (RoPE low variance)
-- Next: R-001 (FLOP counter), then longer training (DEC-005, ~1 PFLOPs)
+## Current State (2026-03-20)
+- **Parameter Golf competition**: 39 hypotheses tested, best local BPB 1.6758
+- **Best config**: 6L+3u+4h/4kv + XSA + Value Residual + NorMuon + stride=256
+- **XSA+VR super-additive** (HYP-039): +0.073 BPB combined vs +0.035 expected
+- **DEC-015**: Local Mac iteration complete, GPU needed for remaining work
+- **5 GPU submission variants** ready in `parameter-golf/records/track_10min_16mb/`
+- Competition SOTA: ~1.13 BPB (PR #287: XSA+EMA+Int6)
+- **Key techniques proven locally**: 4 heads (head_dim=128), 3 unique blocks,
+  relu^2, sliding window eval, NorMuon, XSA, Value Residual
+- Training script: `/Users/michaelellis/Projects/parameter-golf/train_gpt_mlx.py`
+- Recipe: `recipes/pgolf_autorun.py` (propose() is mutable)

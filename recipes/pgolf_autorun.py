@@ -143,6 +143,11 @@ def propose(
             "description": "XSA + Value Residual (test interaction)",
             "hypothesis": "HYP-039-xsa-vr",
         },
+        {
+            "env_overrides": {**best_local_base, "XSA": "1", "DENSE_DWA": "1", "VALUE_RESID": "1"},
+            "description": "XSA + DWA + Value Residual (triple combo test)",
+            "hypothesis": "HYP-039-xsa-dwa-vr",
+        },
     ]
 
     if n < len(configs):
