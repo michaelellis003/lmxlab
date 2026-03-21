@@ -5855,3 +5855,13 @@ bottleneck on MLX makes it untestable locally for full 600s runs.
 Implement CUDA parallel scan for GPU submission.
 
 **Verdict:** INCONCLUSIVE locally (throughput-blocked, not quality-blocked).
+
+### 2026-03-21 [EXPERIMENT] sp4096 tokenizer training
+
+**Status:** First attempt OOM'd (15M docs, 45GB → ~72% memory during BPE merge).
+Retrying with --tokenizer-train-docs 5000000 (5M docs, sufficient for BPE quality).
+
+**sp2048 tokenizer training:** Completed successfully in ~40 min with all 15M docs.
+sp4096 needs more memory for the larger merge table (4096 merges vs 2048).
+
+Running in background. Will create local truncated dataset and test when ready.
