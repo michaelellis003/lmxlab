@@ -3067,3 +3067,48 @@ variables changed. This experiment isolates weight sharing and head count.
 At 6 layers, sublayer outputs haven't diverged enough for attention-over-depth
 to outperform simple residual connections. Head count is secondary (8h is
 less bad than 4h). ANO-018 updated accordingly.
+
+---
+
+## HYP-036: [PGOLF] AttnRes + Weight Sharing at Sufficient Depth (9L/3u)
+
+**Experiment:** 36 — AttnRes with weight sharing at the depth threshold
+**Status:** tested (H36-c SUPPORTED — sharing kills AttnRes at 9L)
+**Question:** Does AttnRes work with weight sharing when depth is sufficient?
+
+**Background:** HYP-035 showed AttnRes needs depth >=9L. HYP-034 showed AttnRes
+fails at 6L/3u. But the confound remains: does sharing specifically break AttnRes,
+or was 6L simply too shallow? Testing 9L/3u (3 unique blocks × 3 cycles) isolates
+sharing at the depth threshold where AttnRes is known to work (9L/9u: +0.111).
+
+If AttnRes works at 9L/3u, it confirms depth is THE factor and we should update
+GPU variant C (12L/3u) to use AttnRes instead of DWA. If it fails, sharing IS
+an independent factor and variant C should keep DWA.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H36-a | Depth alone determines AttnRes viability | AttnRes BPB < Baseline BPB at 9L/3u (gain > 0) | Gain <= 0 |
+| H36-b | Sharing penalty exists but is small at 9L | Gain at 9L/3u is > 0 but < +0.111 (9L/9u gain) | Gain >= 0.111 or gain <= 0 |
+| H36-c | Sharing kills AttnRes regardless of depth | AttnRes BPB >= Baseline BPB at 9L/3u | AttnRes BPB < Baseline BPB |
+
+**Design:** 200-step iso-step, 9L/8h/4kv, VR=1.
+- Arm 1: Baseline (9L/9u, no AttnRes) — reference: 2.415 from HYP-033
+- Arm 2: Full AttnRes + VR (9L/9u) — reference: 2.303 from HYP-033
+- Arm 3: Baseline (9L/3u, no AttnRes)
+- Arm 4: Full AttnRes + VR (9L/3u)
+
+**Results (200 iso-steps):**
+
+| Config | AttnRes Off | AttnRes On | Delta | ms/step (AttnRes) |
+|--------|-------------|------------|-------|-------------------|
+| 9L/9u/8h/4kv (HYP-033 ref) | 2.415 | 2.303 | +0.111 | ~810 |
+| 9L/3u/8h/4kv (new) | 2.417 | 2.445 | -0.028 | ~1480 |
+
+**Verdicts:**
+- H36-a: **FALSIFIED** — gain is -0.028, not positive
+- H36-b: **FALSIFIED** — gain is negative
+- H36-c: **SUPPORTED** — sharing kills AttnRes even at depth=9
+
+**Key finding:** Weight sharing is an independent factor (0.139 BPB penalty at
+constant depth=9). AttnRes requires BOTH depth >=9 AND unique layers.
+GPU variant C (12L/3u) should NOT use AttnRes — keep DWA or nothing.

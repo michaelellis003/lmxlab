@@ -4722,3 +4722,63 @@ representation diversity for attention-over-depth to help.
 **GPU strategy unchanged:** Variant E (11L + AttnRes) remains highest priority.
 Expected per-step gain may be even larger at 11L (more diversity). The 5-10%
 GPU overhead (vs 2.5x Mac overhead) makes AttnRes essentially free on H100.
+
+---
+
+### 2026-03-20 — [PLAN] HYP-036: AttnRes + Weight Sharing at 9L Depth Threshold
+
+**Rationale:** HYP-035 showed depth >=9L is needed for AttnRes. But we only
+tested sharing at 6L (too shallow). GPU variant C uses 12L/3u + DWA. If AttnRes
+works at 9L/3u, we should replace DWA with AttnRes in variant C. This is the
+last local experiment that can inform the GPU strategy.
+
+**Design:** 200 iso-steps, 9L/8h/4kv, VR=1. 4 arms:
+- 9L/9u baseline (ref: 2.415), 9L/9u AttnRes (ref: 2.303)
+- 9L/3u baseline (new), 9L/3u AttnRes (new)
+
+**Expected outcome:** H36-a most likely (depth > sharing). Predict AttnRes gain
+at 9L/3u between +0.03 and +0.08 (some sharing penalty but still positive).
+
+**Risk:** 9L × 2.7x AttnRes overhead = ~800ms/step × 200 = 160s. Well within limits.
+3u has 2x more params per block than 9u but same total unique params (~6.5M).
+
+**Artifact size impact:** None (iso-step comparison only).
+
+---
+
+### 2026-03-20 — [INTERPRET] HYP-036: Sharing Kills AttnRes Even at 9L
+
+**Results (200 iso-steps, 8h/4kv, VR=1):**
+
+| Config | AttnRes Off | AttnRes On | Delta |
+|--------|-------------|------------|-------|
+| 9L/9u (HYP-033 ref) | 2.415 | 2.303 | **+0.111** |
+| 9L/3u (new) | 2.417 | 2.445 | **-0.028** |
+
+**Adjudication:**
+- H36-a (depth alone determines viability): **FALSIFIED** — gain is -0.028
+- H36-b (small sharing penalty): **FALSIFIED** — gain is negative
+- H36-c (sharing kills regardless of depth): **SUPPORTED**
+
+**My prediction was wrong.** I expected +0.03 to +0.08 gain at 9L/3u based on
+HYP-035's conclusion that depth was the primary factor. In reality, sharing
+has a 0.139 BPB penalty at constant depth=9 (turning +0.111 into -0.028).
+
+**Root cause revision:** AttnRes needs TWO conditions:
+1. Depth >=9 for representation diversity across the stack
+2. Unique layers for per-layer specialization
+
+Both contribute ~0.1 BPB independently. The "Layers as Painters" paper
+(LIT-130) already told us this: even similar layers are NOT interchangeable.
+Weight sharing makes them literally identical, destroying the subtle
+per-layer specialization that AttnRes exploits.
+
+**GPU strategy update:**
+- Variant E (11L unique + AttnRes): **KEEP** — both conditions met
+- Variant C (12L/3u + DWA): **Keep DWA, do NOT add AttnRes**
+- B-028 updated to reflect both factors (posterior 0.92)
+- ANO-018 fully resolved
+
+**This is the definitive AttnRes characterization for pgolf:**
+AttnRes = +0.111 per-step if (depth >= 9 AND unique layers), else negative.
+No further local experiments needed on this topic.

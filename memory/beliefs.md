@@ -742,25 +742,25 @@ AttnRes overhead is ~2.7x on Mac (memory-bound) but expected ~5-10% on GPU
 
 ---
 
-### B-028: AttnRes Requires Depth (>=9 Layers)
+### B-028: AttnRes Requires BOTH Depth (>=9L) AND Unique Layers
 
 **Prior:** 0.50 (no prior expectation)
-**Current posterior:** 0.85
-**Direction:** Depth-dependent (REVISED from "weight-sharing-dependent")
+**Current posterior:** 0.92
+**Direction:** Both depth AND sharing matter (REVISED twice)
 
-AttnRes requires sufficient depth for sublayer outputs to diverge enough to
-make attention-over-depth useful. At 6 layers, all configs fail regardless of
-weight sharing or head count. At 9 layers, +0.111 gain. The mechanism needs
-diverse representations across depth — shallow models produce too-correlated
-intermediate outputs.
+AttnRes requires two independent conditions: (1) sufficient depth (>=9 layers)
+for representation diversity across the stack, and (2) unique (non-shared) layer
+weights for per-layer specialization. At 9L/9u: +0.111. At 9L/3u: -0.028. At
+6L/6u: -0.052. Both factors contribute ~0.1 BPB penalty each.
 
-Head count is a secondary factor (8h loses less than 4h at 6L).
+Head count is a tertiary factor (8h slightly less bad than 4h at 6L).
 
-**Implication:** GPU variant E (11 unique layers) should give even larger
-per-step gains. Weight sharing variant C may actually work if depth is
-sufficient (e.g., 12 layers with 3 unique). **However, untested.**
+**Implication:** GPU variant E (11 unique layers + AttnRes) is the ONLY viable
+AttnRes config. Variant C (12L/3u) should NOT use AttnRes despite sufficient
+depth — sharing kills it. Keep DWA or plain residuals for shared configs.
 
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
-| 2026-03-20 | HYP-034: Full AttnRes -0.088 with 3u sharing at 6L. | A | For | 0.85 |
-| 2026-03-20 | HYP-035: Full AttnRes -0.052 (8h) and -0.099 (4h) with 6 unique layers. Depth, not sharing, is the bottleneck. | A | Revised and strengthened | 0.85 |
+| 2026-03-20 | HYP-034: Full AttnRes -0.088 with 3u sharing at 6L. | A | For (depth) | 0.85 |
+| 2026-03-20 | HYP-035: Full AttnRes -0.052 (8h) and -0.099 (4h) with 6 unique layers. | A | Depth matters | 0.85 |
+| 2026-03-20 | HYP-036: Full AttnRes -0.028 at 9L/3u. Sharing kills gain even at sufficient depth. | A | Both factors independent | 0.92 |

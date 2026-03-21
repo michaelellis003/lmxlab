@@ -691,38 +691,37 @@ and others don't?"
 
 ---
 
-## ANO-018: AttnRes Requires Depth (>=9 Layers), Not Just Unique Layers
+## ANO-018: AttnRes Requires BOTH Depth AND Unique Layers
 
 **Date:** 2026-03-20
-**Source:** HYP-034 + HYP-035
+**Source:** HYP-034 + HYP-035 + HYP-036
 **Severity:** high
-**Status:** resolved — root cause is depth, not weight sharing
+**Status:** resolved — both depth and sharing are independent factors
 
-**Observation:** Full AttnRes showed +0.111 BPB gain on 9L/8h/4kv but fails on
-ALL 6-layer configs regardless of sharing or head count.
+**Observation:** AttnRes only works with sufficient depth AND unique layers.
 
 **Evidence (all 200 iso-steps):**
 
 | Config | AttnRes Off | AttnRes On | Delta |
 |--------|-------------|------------|-------|
 | 9L/9u/8h/4kv | 2.415 | 2.303 | **+0.111** |
+| 9L/3u/8h/4kv | 2.417 | 2.445 | -0.028 |
 | 6L/6u/8h/4kv | 2.405 | 2.457 | -0.052 |
 | 6L/6u/4h/4kv | 2.408 | 2.507 | -0.099 |
 | 6L/3u/4h/4kv | 2.407 | 2.496 | -0.088 |
 
-**Root cause:** Depth, not weight sharing. With 6 layers, sublayer outputs
-haven't diverged enough for the attention-over-depth mechanism to be useful.
-The overhead of computing attention over 13 correlated sources overwhelms
-any quality gain. With 9+ layers, representations diverge enough for
-selective aggregation to help.
+**Root cause (two independent factors):**
+1. **Depth:** 6L models don't generate enough representation diversity. Even
+   with unique layers (6L/6u), AttnRes fails (-0.052).
+2. **Sharing:** Cyclic weight sharing destroys per-layer specialization. Even
+   at sufficient depth (9L/3u), AttnRes fails (-0.028).
 
-Head count is a secondary factor: 8h is less bad (-0.052) than 4h (-0.099)
-at 6L, likely because more diverse attention patterns create more distinct
-per-sublayer outputs.
+Both factors contribute ~0.1 BPB penalty. Only when BOTH conditions are met
+(9L/9u) does AttnRes produce a gain (+0.111).
 
-**Revised prediction:** AttnRes with 11L (GPU variant E) should give even
-larger per-step gain than +0.111. Extrapolating: the gain is monotonically
-increasing with depth.
+Head count is a tertiary factor (8h less bad than 4h at 6L).
 
-**Follow-up:** (a) GPU variant E validation, (b) consider AttnRes as
-depth-efficiency technique only for deep models
+**Implication:** GPU variant E (11L unique + AttnRes) is the only viable
+AttnRes config. Variant C (12L/3u) should NOT use AttnRes.
+
+**Follow-up:** GPU variant E validation only
