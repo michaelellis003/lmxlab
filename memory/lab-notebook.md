@@ -5251,3 +5251,42 @@ Treat as suggestive, not definitive. On GPU with 3 seeds this should resolve.
 
 **Caution:** All deltas are small (0.001-0.002) and n=1. The U-curve is
 suggestive but needs multi-seed GPU validation.
+
+### 2026-03-21 [REVIEW] Definitive local stopping assessment
+
+**Context:** Third consecutive /autorun invocation with no new experiment
+to run. Comprehensive assessment of all possible local experiments.
+
+**Techniques assessed and rejected:**
+
+| Technique | Source | Rejection reason |
+|-----------|--------|-----------------|
+| Canon ACD | PR #312 | 1.1668 BPP (below SOTA), complex, unclear benefit |
+| CLASE-Quant | PR #309 | Serialization trick, int8 gap already 0.001 |
+| WarmdownQuant | PR #310 | Schedule change, batch-dependent (DEC-015) |
+| BigramHash(10240) | PR #287 | 42%+ overhead, throughput-dominated |
+| TTT | PR #290 | Inference-time compute, hurts with XSA |
+| EMA/SWA | Various | Batch-size dependent (tested, hurt locally) |
+| Momentum 0.99 | Various | Batch-size dependent |
+| MLP 3x | Various | Changes step count substantially |
+
+**Stopping conditions met (all 3):**
+1. All active hypotheses tested (HYP-039, HYP-040 complete)
+2. No queued ideas pass quality gates for local testing
+3. 3rd consecutive iteration with no new experiment found
+
+**Final local research summary:**
+
+| Technique | BPB Effect | Reliable? |
+|-----------|-----------|-----------|
+| NUM_HEADS=4 (head_dim=128) | +0.072 | YES (iso-step) |
+| UNIQUE_BLOCKS=3 | +0.029 | YES (iso-step) |
+| XSA + Value Residual | +0.073 | YES (iso-step, super-additive) |
+| Partial XSA (last 2/6) | +0.002 | Marginal (n=1) |
+| Sliding window stride=256 | +0.032 | YES (eval-only) |
+| NorMuon | +0.012 | YES (iso-step) |
+| relu^2 > SwiGLU | +0.015 | YES (iso-step) |
+
+**Best local BPB: 1.6738** (all above combined).
+
+**Definitive next step: GPU validation on 8xH100 via RunPod.**
