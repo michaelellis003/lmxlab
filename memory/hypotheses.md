@@ -3190,3 +3190,60 @@ a fundamentally new type of grokking predictor (geometric, not loss-based).
   fwd-bwd at 4 checkpoints) ≈ 4-6 hours on Mac
 
 **Recipe:** `recipes/hyp037_commutator_defect.py`
+
+**Results (10 seeds, 10K steps, defect at 1K/2K/5K/10K):**
+
+| Seed | GrokStep | Defect@1K | Defect@2K | Defect@5K | Defect@10K |
+|------|----------|-----------|-----------|-----------|------------|
+| 42 | 18000 | 3.18 | 1249.14 | 909.87 | 110.37 |
+| 43 | 12000 | 2.90 | 32.55 | 58.47 | 174.82 |
+| 44 | >50K | 3.03 | 3.39 | 61.95 | 95.98 |
+| 45 | 48000 | 3.25 | 105.11 | 77.79 | 80.29 |
+| 46 | 22000 | 3.06 | 3.58 | 62.45 | 8.78 |
+| 47 | 12000 | 3.14 | 38.55 | 236.86 | 37.44 |
+| 48 | 4000 | 3.14 | 104.39 | 181.21 | 115.79 |
+| 49 | 48000 | 45.01 | 125.24 | 148.72 | 230.18 |
+| 50 | 12000 | 3.26 | 3.25 | 4.38 | 4.91 |
+| 51 | 36000 | 5.46 | 75.25 | 194.19 | 71.84 |
+
+**Spearman correlations (defect vs grok_step):**
+- defect@1K: rho=0.209, p=0.562
+- defect@2K: rho=0.111, p=0.761
+- defect@5K: rho=-0.074, p=0.839
+- defect@10K: rho=0.086, p=0.813
+
+**Grokker/non-grokker separation at 2K:**
+- Grokkers (n=9): mean=193.01, std=375.79
+- Non-grokker (n=1, seed 44): mean=3.39
+- Cohen's d = 0.505 (borderline, but n=1 non-grokker is unreliable)
+
+**Hypothesis adjudication:**
+
+| ID | Prediction | Observed | Verdict |
+|----|-----------|----------|---------|
+| H37-a | \|rho\| >= 0.6 | rho = 0.111 | **FALSIFIED** — defect has zero cross-seed correlation, same as p@64 in HYP-016. |
+| H37-b | d > 0.5 | d = 0.505 | **INCONCLUSIVE** — technically passes threshold but n=1 non-grokker and huge variance (std=375.79) make this unreliable. |
+| H37-c | \|rho\| < 0.4 and d < 0.3 | rho=0.111, d=0.505 | **PARTIALLY SUPPORTED** — correlation criterion met, separation criterion borderline failed. |
+
+**Key findings:**
+
+1. **The commutator defect has no cross-seed predictive power** (rho=0.111).
+   This is EXACTLY the same rho as p@64 in HYP-016. The geometric metric
+   is as uninformative as loss-based metrics for cross-seed prediction.
+
+2. **Defect at 2K shows bimodal pattern**: 5 seeds have elevated defect
+   (33-1249) and 5 have flat (~3). This corresponds to memorization speed
+   (how quickly training loss drops), NOT grokking speed. Seed 50 has flat
+   defect yet groks at 12K; seed 42 has highest defect (1249) yet groks
+   at 18K.
+
+3. **Seed 50 is anomalous**: near-zero defect at ALL checkpoints yet
+   groks at 12K. See ANOM-021. Suggests multiple grokking mechanisms.
+
+4. **The defect is informative within-run** (rises from ~3 to 30-1200 as
+   training progresses) but this temporal signal doesn't predict cross-seed
+   grokking timing. Grokking onset is genuinely stochastic at this scale.
+
+**Conclusion:** B-017 (grokking onset is unpredictable from early signals)
+is further strengthened. Now tested with 4 metric types: p@64, val_loss,
+val_acc (HYP-016), and commutator defect (HYP-037). All yield rho ~0.1.

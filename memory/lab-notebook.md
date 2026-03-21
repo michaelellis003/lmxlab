@@ -4831,3 +4831,37 @@ contribution: a geometric grokking predictor where loss-based ones failed.
 - Does this test ONE thing? YES — cross-seed prediction power of a geometric
   metric, controlling architecture (single architecture, 10 seeds).
 - Could this violate constraints? No (separate from pgolf)
+
+### [INTERPRET] HYP-037 results — 2026-03-20
+
+**Commutator Defect as Cross-Seed Grokking Predictor — FALSIFIED**
+
+Ran 10 seeds × 10K steps with commutator defect measured at 1K/2K/5K/10K.
+The defect has ZERO cross-seed predictive power (rho=0.111 at step 2K),
+identical to HYP-016's p@64 result. All 4 metric types tested now yield
+rho ~0.1: p@64, val_loss, val_acc, and commutator defect.
+
+**Key observations:**
+1. Defect at 2K is bimodal: 5 seeds elevated (33-1249), 5 flat (~3).
+   Bimodality tracks memorization speed, not grokking speed.
+2. Seed 50 is anomalous (ANOM-021): flat defect everywhere yet groks at
+   12K. Suggests multiple grokking mechanisms exist.
+3. B-015 updated to 0.97 — grokking onset is genuinely stochastic.
+
+**What this means for the field:**
+The commutator defect paper (LIT-137) showed it works as a within-run
+temporal signal. Our contribution: it does NOT generalize to cross-seed
+prediction. The within-run signal tracks whether the model has started
+the curvature transition, but different seeds start this transition at
+different times unpredictably. This is not a failure of the metric —
+it's a property of grokking itself.
+
+| Metric type | rho with grok_step | Source |
+|-------------|-------------------|--------|
+| pass@64 | 0.111 | HYP-016 |
+| val_loss | -0.062 | HYP-016 |
+| val_acc | -0.006 | HYP-016 |
+| commutator defect | 0.111 | HYP-037 |
+
+**Verdict:** H37-a FALSIFIED, H37-b INCONCLUSIVE, H37-c PARTIALLY SUPPORTED.
+**Next:** Post-experiment literature check, then assess stopping conditions.

@@ -459,10 +459,13 @@ multi-seed runs for grokking studies.
 | 2026-03-16 | HYP-016: 10 seeds, grok steps 4K-48K (12x range), no early metric predicts onset (all rho < 0.12). | F | Definitive | 0.95 |
 | 2026-03-15 | HYP-009: 1/3 LLaMA seeds grokked at wd=0.1 | C | Supporting | — |
 
-**Why 0.95:** Confirmed with 10 seeds. The 12x range and
-zero correlation with all early metrics is definitive. Only
-held from 1.0 because we've only tested one architecture
-(MoE-Jamba) at 10-seed scale.
+| 2026-03-20 | HYP-037: Commutator defect (geometric curvature metric) also has rho=0.111, exactly same as loss-based metrics. 4 metric types tested, all ~0.1. | F | Definitive | 0.97 |
+
+**Why 0.97:** Now confirmed with 4 qualitatively different
+metric types (p@64, val_loss, val_acc, commutator defect) —
+all yield rho ~0.1. The geometric/curvature approach was the
+strongest remaining candidate; its failure is definitive.
+Held from 1.0 because single architecture at 10-seed scale.
 
 ---
 

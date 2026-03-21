@@ -725,3 +725,32 @@ Head count is a tertiary factor (8h less bad than 4h at 6L).
 AttnRes config. Variant C (12L/3u) should NOT use AttnRes.
 
 **Follow-up:** GPU variant E validation only
+
+---
+
+## ANOM-021: Seed 50 groks without curvature signal
+
+**Date:** 2026-03-20
+**Source:** HYP-037
+**Severity:** medium
+**Status:** open
+
+**Observation:** Seed 50 (MoE-Jamba, mod 97) has near-zero commutator
+defect at ALL checkpoints (3.26, 3.25, 4.38, 4.91) yet groks at step
+12K — one of the fastest grokkers. All other fast grokkers (seeds 43,
+47, 48) show elevated defect by step 2K (33-104). Seed 50 also has
+the lowest loss at step 5K (0.91) and stays low throughout.
+
+**Expected:** If grokking requires loss landscape curvature change
+(as LIT-137 argues), seed 50 should show elevated defect before
+grokking. It doesn't.
+
+**Possible explanations:**
+1. **Already in generalizing basin.** Seed 50's initialization may
+   land directly in a flat generalizing minimum, bypassing the
+   curvature transition entirely. Loss drops fast and stays low.
+2. **Defect measurement noise.** K=5 may be insufficient. But the
+   consistency across 4 checkpoints argues against noise.
+3. **Different grokking mechanism.** Not all grokking follows the
+   curvature-transition pathway. Some seeds may generalize via
+   a smooth landscape without the sharp curvature change.
