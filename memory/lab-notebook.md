@@ -5708,3 +5708,28 @@ of overfitting — the model is severely undertrained.
 "In the undertrained regime, maximize per-step signal and capacity.
 Only additive auxiliary losses (z-loss) help. All forms of regularization,
 capacity reduction, or signal dilution are harmful."
+
+### 2026-03-21 [PLAN] HYP-054: sp2048 vocabulary — larger tokens
+
+**What:** Train a 2048-vocab SentencePiece BPE tokenizer on the FineWeb
+corpus and tokenize the full dataset. Then test training with VOCAB_SIZE=2048
+vs 1024.
+
+**Why:** Competition SOTA uses sp2048. Larger vocab = fewer tokens per document
+= each token carries more semantic information. The BPB metric normalizes
+across vocab sizes (bits per BYTE, not per token), so larger vocab can improve
+BPB by encoding bytes more efficiently.
+
+**Trade-offs:**
+- Embedding table: 2048×512 = 1M params (vs 512K for sp1024) — 500KB extra artifact
+- Fewer tokens per sequence: ~40% fewer tokens (each sp2048 token ≈ 1.6 sp1024 tokens)
+- Fewer training tokens overall in 600s — but each token is richer
+- Eval metric (BPB) automatically adjusts for tokenizer efficiency
+
+**Status:** SentencePiece training running in background on 45GB docs_selected.jsonl.
+Expected: 20-60 min for tokenizer training + 30-60 min for shard creation.
+
+**After data ready:**
+1. Create fineweb10B_sp2048_local (truncated val set, ~2M tokens)
+2. Run training with VOCAB_SIZE=2048, TOKENIZER_PATH=sp2048 model
+3. Compare BPB (tokenizer-agnostic) vs sp1024 baseline
