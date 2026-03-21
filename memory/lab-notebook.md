@@ -5829,3 +5829,29 @@ this is very likely real.
 - TIME: ~4 hours
 
 **Starting with Priority 1 (sp4096) then Priority 2 (minGRU hybrid).**
+
+### 2026-03-21 [INTERPRET] HYP-055: MinGRU — correct but too slow on MLX
+
+**MinGRU smoke tests (200 steps, sp2048):**
+
+| Config | BPB@200 | ms/step | Notes |
+|--------|---------|---------|-------|
+| Attention baseline | 2.3565 | 310 | Reference |
+| MinGRU layer 0 | 2.2735 | 2580 | **Better per-step** but 8.3x slower |
+| MinGRU layers 0,1,2 | 2.5766 | 4200 | Worse BPP + slower |
+
+**Key finding:** MinGRU produces BETTER per-step quality than attention
+at the 1-layer level (2.27 vs 2.36 at 200 iso-steps). However, the
+sequential scan on MLX is 8.3x slower than attention (no CUDA parallel scan).
+At 600s wallclock, this means ~230 steps vs ~1900 — throughput kills it.
+
+**GPU potential:** On CUDA with parallel scan (Mamba-style kernel), minGRU
+would be ~2-4x faster than this MLX implementation. If it matches attention
+throughput, the per-step quality advantage (+0.08 BPB at 200 steps) would
+translate to a real BPB win.
+
+**Decision:** MinGRU is a **GPU-only experiment**. The sequential scan
+bottleneck on MLX makes it untestable locally for full 600s runs.
+Implement CUDA parallel scan for GPU submission.
+
+**Verdict:** INCONCLUSIVE locally (throughput-blocked, not quality-blocked).

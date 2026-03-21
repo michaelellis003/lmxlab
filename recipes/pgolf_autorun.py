@@ -596,6 +596,55 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-055: MinGRU hybrid layers (replace some attention with minGRU)
+    hyp055_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-055")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp055_runs)
+
+    # Use sp2048 best config as base
+    best_sp2048 = {
+        "UNIQUE_BLOCKS": "3",
+        "NUM_HEADS": "4",
+        "NUM_KV_HEADS": "4",
+        "NUM_LAYERS": "6",
+        "EVAL_STRIDE": "256",
+        "NORMUON": "1",
+        "XSA": "1",
+        "XSA_START_LAYER": "4",
+        "VALUE_RESID": "1",
+        "FP16_EMBED": "1",
+        "Z_LOSS": "1e-4",
+        "LOGIT_SOFTCAP": "50.0",
+        "VOCAB_SIZE": "2048",
+        "TOKENIZER_PATH": "./data/tokenizers/fineweb_2048_bpe.model",
+        "DATA_PATH": "./data/datasets/fineweb10B_sp2048_local",
+        "VAL_BATCH_SIZE": "65536",
+    }
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "MINGRU_LAYERS": "0"},
+            "description": "MinGRU layer 0 only (early layer = RNN, rest = attention)",
+            "hypothesis": "HYP-055-mingru0",
+        },
+        {
+            "env_overrides": {**best_sp2048, "MINGRU_LAYERS": "0,1"},
+            "description": "MinGRU layers 0,1 (first 2 = RNN, last 4 = attention)",
+            "hypothesis": "HYP-055-mingru01",
+        },
+        {
+            "env_overrides": {**best_sp2048, "MINGRU_LAYERS": "0,1,2"},
+            "description": "MinGRU layers 0,1,2 (half RNN, half attention)",
+            "hypothesis": "HYP-055-mingru012",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
