@@ -5733,3 +5733,37 @@ Expected: 20-60 min for tokenizer training + 30-60 min for shard creation.
 1. Create fineweb10B_sp2048_local (truncated val set, ~2M tokens)
 2. Run training with VOCAB_SIZE=2048, TOKENIZER_PATH=sp2048 model
 3. Compare BPB (tokenizer-agnostic) vs sp1024 baseline
+
+### 2026-03-21 [INTERPRET] HYP-054: sp2048 — massive BPB improvement (+0.034)
+
+**sp2048 vs sp1024 (all other settings identical):**
+
+| Vocab | BPB | Params | Artifact | Steps | ms/step |
+|-------|-----|--------|----------|-------|---------|
+| sp1024 | 1.6685 ± 0.007 | 6.82M | 6.2MB | ~1900 | ~310 |
+| **sp2048** | **1.6344** | 7.35M | 7.0MB | ~1900 | ~310 |
+
+**Delta: +0.034 BPB (4.7σ above noise floor — HIGHLY SIGNIFICANT).**
+
+**Why sp2048 helps:**
+1. Each sp2048 token encodes ~1.6 sp1024 tokens' worth of bytes
+2. The model predicts fewer, more meaningful tokens per document
+3. BPB = val_loss × ln(2) / bytes_per_token. Larger tokens → more bytes
+   per token → lower BPB for the same per-token prediction quality
+4. The extra 530K params (embedding table) is modest cost for the gain
+
+**Artifact budget:** 7.0MB still leaves 9MB for int6/int4 quantization
+to fit larger models in the 16MB limit.
+
+**Step count check:** Both get ~1900 steps at ~310ms/step. sp2048 tokens
+are processed at the same rate — the model dim is unchanged, only the
+embedding table is bigger. So this is NOT a throughput artifact.
+
+**New best local BPB: 1.6344** (sp2048, single seed).
+
+**GPU implication:** sp2048 should be the default vocabulary for all GPU
+submissions. The +0.034 BPP gain is larger than most architecture techniques.
+Competition SOTA already uses sp2048 — this validates their approach.
+
+**Caution:** Single seed (n=1). Need multi-seed to confirm, but at 4.7σ
+this is very likely real.

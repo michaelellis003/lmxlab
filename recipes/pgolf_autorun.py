@@ -558,6 +558,44 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-054: sp2048 vocabulary test
+    hyp054_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-054")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp054_runs)
+
+    sp2048_base = {
+        "UNIQUE_BLOCKS": "3",
+        "NUM_HEADS": "4",
+        "NUM_KV_HEADS": "4",
+        "NUM_LAYERS": "6",
+        "EVAL_STRIDE": "256",
+        "NORMUON": "1",
+        "XSA": "1",
+        "XSA_START_LAYER": "4",
+        "VALUE_RESID": "1",
+        "FP16_EMBED": "1",
+        "Z_LOSS": "1e-4",
+        "LOGIT_SOFTCAP": "50.0",
+        "VOCAB_SIZE": "2048",
+        "TOKENIZER_PATH": "./data/tokenizers/fineweb_2048_bpe.model",
+        "DATA_PATH": "./data/datasets/fineweb10B_sp2048_local",
+        "VAL_BATCH_SIZE": "65536",
+    }
+
+    configs = [
+        {
+            "env_overrides": {**sp2048_base},
+            "description": "sp2048 vocab with best config (BPB comparison vs sp1024)",
+            "hypothesis": "HYP-054-sp2048",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
