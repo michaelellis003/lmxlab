@@ -337,12 +337,13 @@ model's distribution but are too weak for greedy decoding.
 |------|----------|-------|-----------|------------|
 | 2026-03-15 | HYP-009: Seed 42 grokked. pass@64=98.9% at step 4K when pass@1=14.1%, val_acc=19.9%. pass@1 reaches 99% at step 43K — 39K steps later. | F | Very strong for | 0.80 |
 | 2026-03-16 | HYP-014: Replicated across 4 architectures. All 4 show pass@64 > 46% at step 2K, long before any architecture groks. Bamba pass@64=99.6% at step 2K, groks at step 20K. | C | Moderate for | 0.85 |
+| 2026-03-20 | HYP-038: pass@64 >98% by step 2-4K for all 5 seeds. pass@1 oscillates 0.5-0.9 for 26K+ steps. The gap persists long after "grokking" — even post-grok seeds oscillate. | F | Very strong for | 0.90 |
 
-**Update (HYP-014):** Now replicated across 4 architecture
-families. pass@64 saturates early for all architectures, long
-before greedy accuracy grokking occurs. The lead time varies
-(Bamba: 18K steps, LLaMA: 42K steps) but the phenomenon is
-universal. Posterior → 0.85.
+**Update (HYP-038):** The latent knowledge phase is even more
+dramatic than initially observed. pass@64 saturates early, but
+pass@1/P(correct) OSCILLATE for tens of thousands of steps rather
+than smoothly increasing. The latent→expressed transition is not
+gradual — it's an extended oscillatory regime. Posterior → 0.90.
 
 ---
 
@@ -773,3 +774,32 @@ depth — sharing kills it. Keep DWA or plain residuals for shared configs.
 | 2026-03-20 | HYP-034: Full AttnRes -0.088 with 3u sharing at 6L. | A | For (depth) | 0.85 |
 | 2026-03-20 | HYP-035: Full AttnRes -0.052 (8h) and -0.099 (4h) with 6 unique layers. | A | Depth matters | 0.85 |
 | 2026-03-20 | HYP-036: Full AttnRes -0.028 at 9L/3u. Sharing kills gain even at sufficient depth. | A | Both factors independent | 0.92 |
+
+---
+
+### B-029: Grokking sharpening is oscillatory, not gradual
+
+**Prior:** N/A (new belief from HYP-038)
+**Current posterior:** 0.85
+**Direction:** For oscillatory sharpening
+
+During the latent knowledge phase (pass@64 ~100%, pass@1 low), P(correct
+answer token) does NOT increase monotonically. Instead, it oscillates with
+amplitude 0.05-0.15 around a slowly-rising plateau (0.50-0.73), with 5-8
+direction changes per seed over 30K steps. The eventual transition to high
+P(correct) appears to be a sudden phase transition (seed 45: 0.65→0.96 in
+2K steps) that emerges from this oscillatory regime.
+
+This connects ANOM-020 (pre-grok oscillation in val_acc) to a deeper
+phenomenon: the oscillation is in the full output distribution, not just
+accuracy. LIT-144 confirms oscillations predict grokking. LIT-145 suggests
+logit scaling drives the oscillations.
+
+**Implication:** Grokking interventions should target the oscillatory
+instability rather than the gradual circuit formation. Techniques like
+logit temperature control, gradient clipping, or spherical normalization
+(LIT-147) might accelerate the transition by damping harmful oscillations.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-20 | HYP-038: 5 seeds × 30K steps. All seeds show 5-8 direction changes in P(correct). Only 1/5 reached >90% via sudden phase transition. | F | Strong for | 0.85 |

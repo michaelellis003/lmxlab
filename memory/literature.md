@@ -3125,3 +3125,65 @@ for cross-seed prediction testing.
 
 **Cited in:** HYP-037 post-experiment literature check (2026-03-20)
 
+## LIT-144: Predicting Grokking Long Before it Happens (ICLR 2024)
+
+**Title:** Predicting Grokking Long Before it Happens: A Look into the Loss Landscape
+**Source:** ICLR 2024 — **Grade B** (peer-reviewed)
+
+**Key finding:** Oscillations in the learning curve during the first few
+epochs forecast grokking in extended training. Fourier transform spectral
+signatures detect these oscillations. Slingshots and grokking come in tandem.
+
+**Relevance:** Directly validates HYP-038 finding that all 5 seeds show
+oscillatory P(correct) with 5-8 direction changes. The oscillations are
+fundamental signatures of grokking, not noise.
+
+**Cited in:** HYP-038 literature check (2026-03-20)
+
+## LIT-145: Grokking at the Edge of Numerical Stability (2025)
+
+**Title:** Grokking at the Edge of Numerical Stability
+**Source:** arXiv 2501.04697 — **Grade C** (preprint)
+
+**Key finding:** Without regularization, grokking pushes models to numerical
+stability edge via "Softmax Collapse." After overfitting, gradients align with
+NLM direction that scales logits without changing predictions, delaying
+generalization until numerical saturation.
+
+**Relevance:** The P(correct) plateau at 0.50-0.73 with oscillations could
+reflect NLM phase where logits scale without prediction improvement. May
+explain why oscillation amplitude persists rather than damping.
+
+**Cited in:** HYP-038 literature check (2026-03-20)
+
+## LIT-146: Grokking and Generalization Collapse via HTSR (2025)
+
+**Title:** Grokking and Generalization Collapse: Insights from HTSR Theory
+**Source:** arXiv 2506.04434 — **Grade C** (preprint)
+
+**Key finding:** Three-phase model including "anti-grokking" where test
+accuracy collapses after extended training. Weight entropy sharply decreases
+with generalization. Spectral exponent alpha predicts both grokking and collapse.
+
+**Relevance:** Post-grok oscillations in HYP-038 (seeds 42, 43 continuing to
+oscillate past grok step) may represent unstable equilibrium before potential
+anti-grokking collapse.
+
+**Cited in:** HYP-038 literature check (2026-03-20)
+
+## LIT-147: Geometric Inductive Bias of Grokking (2026)
+
+**Title:** The Geometric Inductive Bias of Grokking: Bypassing Phase
+Transitions via Architectural Topology
+**Source:** arXiv 2603.05228 — **Grade C** (preprint)
+
+**Key finding:** Spherical topology (L2 norm + fixed temperature) reduces
+grokking onset by 20x by removing magnitude-based degrees of freedom. The
+prolonged plateau corresponds to implicit margin-maximization.
+
+**Relevance:** Suggests magnitude control could stabilize the oscillatory
+regime observed in HYP-038. If oscillations are magnitude-driven (consistent
+with LIT-145 NLM theory), spherical constraints would damp them.
+
+**Cited in:** HYP-038 literature check (2026-03-20)
+

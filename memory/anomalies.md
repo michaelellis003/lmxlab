@@ -662,9 +662,9 @@ training, (b) higher weight decay, (c) routing monitoring.
 
 ## ANOM-020: Bamba grokking oscillation then stabilization
 
-**Status:** open (broader than initially thought)
-**Experiment:** HYP-014, HYP-015
-**Date:** 2026-03-16
+**Status:** explained (via HYP-038)
+**Experiment:** HYP-014, HYP-015, HYP-038
+**Date:** 2026-03-16 (updated 2026-03-20)
 
 **Original observation (HYP-014, single-seed):** Bamba
 grokked at step 20K but oscillated before stabilizing after
@@ -679,15 +679,24 @@ HYP-014 may be the same phenomenon — the model is in the
 oscillating plateau phase and happened to briefly cross the
 0.95 threshold.
 
-**Revised interpretation:** Pre-grok oscillation is a
-universal feature of grokking at this scale, not specific to
-Bamba or any architecture. The phenomenon is analogous to
-HYP-009's "oscillating plateau" where pass@64 ≈ 100% but
-val_acc oscillates. The question is not "why does Bamba
-oscillate?" but "why do some seeds eventually break through
-and others don't?"
+**Explanation (HYP-038):** The oscillation is a universal
+feature of the output distribution, not just accuracy. HYP-038
+measured P(correct answer token) across 5 seeds × 30K steps and
+found ALL seeds oscillate with 5-8 direction changes of >0.01
+magnitude. P(correct) fluctuates between 0.50-0.73 for tens of
+thousands of steps while pass@64 remains near 100%. The oscillation
+is in the full output distribution, not just a threshold-crossing
+artifact in accuracy.
 
-**Follow-up:** (a) still relevant, (b) still relevant.
+The transition from oscillatory plateau to stable high accuracy
+appears to be a rare sudden phase transition (seed 45: 0.65→0.96
+in 2K steps). Even seeds past their known grok_step (42@18K,
+43@12K) continue oscillating at step 30K, suggesting the
+"grokking" measured by val_acc threshold is NOT the same as full
+output distribution convergence.
+
+**Root cause:** Oscillatory sharpening during the latent knowledge
+phase is the normal dynamics of grokking. See B-029.
 
 ---
 

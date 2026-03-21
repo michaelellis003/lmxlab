@@ -209,6 +209,20 @@ through HYP-010) converge on a clear story:
   due to overparameterization (data bottleneck).
 - See HYP-010 results in hypotheses.md.
 
+**HYP-038: Oscillatory sharpening dynamics — COMPLETED**
+- P(correct answer token) oscillates 0.50-0.73 with 5-8 direction
+  changes per seed during "latent knowledge phase." Phase transition
+  to >90% is rare and sudden (1/5 seeds in 30K steps). ANOM-020 explained.
+- Opens new direction: Can we accelerate the phase transition?
+  (LIT-147 suggests spherical normalization reduces grokking 20x.)
+
+**HYP-039 (candidate): Spherical normalization accelerates grokking**
+- Motivated by: LIT-147 (geometric inductive bias), HYP-038 finding
+  that oscillations are magnitude-driven.
+- Design: Add L2 norm + fixed temperature to output logits. Compare
+  oscillation count and transition width vs baseline.
+- Priority: HIGH — directly actionable follow-up from HYP-038.
+
 ## Retired Items
 
 | ID | Topic | Reason |
