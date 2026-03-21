@@ -5016,3 +5016,90 @@ could stabilize the oscillatory regime we observed.
    phase transition from oscillatory to locked-in
 3. Finer temporal resolution (every 500 steps) around the transition
    point to characterize the phase transition dynamics
+
+---
+
+### 2026-03-20 [PLAN] HYP-039: Exclusive Self Attention (XSA)
+
+**Exception to DEC-015:** Architecture-level change with zero step-count
+impact. Iso-step comparison is reliable locally (same rationale as HYP-027).
+
+**What:** Test XSA (arXiv 2603.09078) — orthogonal projection that removes
+self-value component from attention output. Forces attention to focus on
+contextual information rather than replicating token's own features.
+
+**Why:** Used in ALL top 3 competition submissions (PRs #287, #290, #295).
+Current SOTA is 1.1271 BPB. Zero new params, ~2% overhead. Batch-size
+independent so local results should transfer to GPU.
+
+**Implementation:**
+- Added `XSA` env var to Hyperparameters dataclass
+- Added `xsa: bool` param through Block → CausalSelfAttention
+- 6 lines after SDPA: normalize V, project y onto V direction, subtract
+- Handles GQA via mx.repeat when num_kv_heads != num_heads
+- Syntax verified via py_compile
+
+**3 arms:**
+1. Baseline (best local: 6L+3u+4h/4kv+stride256+NorMuon)
+2. XSA=1 (all layers)
+3. XSA=1 + VALUE_RESID=1 (test interaction)
+
+**Predictions:**
+- H39-a (0.55): XSA improves > +0.005 BPB
+- H39-b (0.30): XSA neutral (< 0.005)
+- H39-c (0.15): XSA hurts (self-value useful at 6L)
+
+**Risk:** Competition PRs use 11L — XSA may need depth ≥9 like AttnRes.
+
+### 2026-03-20 [EXPERIMENT] HYP-039: XSA iso-step results
+
+**Config:** 6L+3u+4h/4kv, EVAL_STRIDE=256, NORMUON=1, 8K batch, 600s wallclock.
+
+| Arm | Config | BPB | Steps | ms/step | Delta |
+|-----|--------|-----|-------|---------|-------|
+| 1 | Baseline | 1.7484 | 2018 | 297 | — |
+| 2 | XSA=1 | 1.7401 | 1929 | 311 | +0.0083 |
+| 3 | XSA=1+VR=1 | **1.6758** | 1902 | 316 | **+0.0726** |
+
+**Step count confound (B-022):** XSA adds ~4.6% per-step overhead (297→311ms),
+costing ~89 steps (2018→1929). XSA+VR costs ~6.4% (297→316ms), losing ~116 steps.
+The BPB gains (+0.0083, +0.0726) far exceed what step loss could explain
+(~0.003 per 89 steps based on learning curves). True iso-step gains would be
+slightly larger.
+
+**Key finding:** XSA + Value Residual is **super-additive**:
+- VR alone: +0.027 (from HYP-030)
+- XSA alone: +0.008
+- Expected sum: +0.035
+- Actual combined: +0.073 (2.1x expected)
+
+**New best local BPB: 1.6758** (previously 1.6837 with DWA+VR).
+
+### 2026-03-20 [INTERPRET] HYP-039: XSA adjudication
+
+**Re-read predictions before results:**
+- H39-a (0.55): XSA gain > +0.005
+- H39-b (0.30): XSA gain < 0.005
+- H39-c (0.15): XSA hurts (loss > 0.005)
+
+**Adjudication:**
+- **H39-a: SUPPORTED.** XSA alone gives +0.0083, above the 0.005 threshold.
+  XSA+VR gives +0.0726. Both exceed falsification criterion.
+- **H39-b: FALSIFIED.** Gain is 0.0083 > 0.005.
+- **H39-c: FALSIFIED.** XSA does not hurt.
+
+**Surprise finding:** The super-additive interaction between XSA and Value
+Residual was unexpected. Hypothesis: XSA forces attention to learn contextual
+(cross-token) features by removing the self-value shortcut. When VR provides
+a stable first-layer V residual, the model has two complementary channels:
+VR handles token-level feature preservation while XSA-enhanced attention
+focuses purely on cross-token context. Neither alone is as effective.
+
+**Comparison to previous DWA+VR best (1.6837):**
+XSA+VR (1.6758) beats DWA+VR (1.6837) by +0.0079 BPB. XSA is simpler
+(no learnable weights vs DWA's N×dim params) and likely faster on GPU.
+
+**GPU implications:**
+- XSA should be added to all GPU submission variants
+- XSA+VR replaces DWA+VR as the recommended combo
+- AttnRes+XSA+VR could be even better at 11L (test on GPU)

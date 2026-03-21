@@ -3352,3 +3352,58 @@ oscillations are fundamental signatures of the grokking process, not noise.
 LIT-147 (Geometric Inductive Bias, 2026) suggests magnitude control could
 stabilize the oscillations. LIT-145 (Numerical Stability, 2025) suggests
 logit scaling (NLM direction) may drive the oscillations.
+
+---
+
+## HYP-039: [PGOLF] Exclusive Self Attention (XSA)
+
+**Experiment:** 39 — XSA iso-step comparison
+**Status:** supported (H39-a confirmed, XSA+VR super-additive)
+**Question:** Does XSA (removing self-value component from attention output)
+improve BPB at our local config?
+
+**Background:** XSA (arXiv 2603.09078, Zhai/Apple, March 2026) orthogonally
+projects attention output to remove the self-value component, forcing attention
+to focus on contextual rather than point-wise features. Used in all top 3
+competition submissions (PRs #287, #290, #295). Zero new parameters, ~2%
+overhead. Batch-size independent (architecture change, not schedule).
+
+**Exception to DEC-015:** Like HYP-027, this is an architecture-level change
+with zero impact on step count. Iso-step comparison is reliable locally.
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H39-a | XSA improves per-step quality | XSA BPB < Baseline BPB at iso-steps (gain > 0.005) | Gain <= 0.005 |
+| H39-b | XSA is neutral (self-value removal redundant with our config) | XSA gain is < 0.005 and > -0.005 | |Gain| >= 0.005 |
+| H39-c | XSA hurts (self-value is useful at our scale/depth) | XSA BPB > Baseline BPB (loss > 0.005) | Loss <= 0.005 |
+
+**Prior:** H39-a at 0.55 (used in top 3 PRs, but those are 11L with different
+config; our 6L/3u may behave differently). H39-b at 0.30, H39-c at 0.15.
+
+**Design:** 600s wall-clock, 3 arms:
+- Arm 1: Baseline (6L+3u+4h/4kv+stride256+NorMuon, no XSA)
+- Arm 2: XSA=1 (same config + XSA on all layers)
+- Arm 3: XSA=1 + VALUE_RESID=1 (test interaction — XSA removes self-value
+  while VR blends first-layer V; potentially complementary or conflicting)
+
+**Implementation:** Orthogonal projection after SDPA output:
+`y = y - (y·v̂)·v̂` where v̂ = V/‖V‖ per position per head.
+Added XSA env var to train_gpt_mlx.py. 6 lines in CausalSelfAttention.__call__.
+
+**Metric:** val_bpb (int8+zlib). Compare at matched step count.
+
+**Results (600s wall-clock):**
+
+| Arm | Config | BPB | Steps | ms/step |
+|-----|--------|-----|-------|---------|
+| 1 | Baseline | 1.7484 | 2018 | 297 |
+| 2 | XSA=1 | 1.7401 | 1929 | 311 |
+| 3 | XSA=1+VR=1 | **1.6758** | 1902 | 316 |
+
+**Verdicts:**
+- **H39-a: SUPPORTED.** XSA=1 gives +0.0083 BPB (> 0.005 threshold).
+  XSA+VR gives +0.0726 (super-additive: 2.1x expected sum of individual gains).
+- **H39-b: FALSIFIED.** Gain exceeds neutral threshold.
+- **H39-c: FALSIFIED.** XSA does not hurt.
+
+**New best local BPB: 1.6758** (XSA+VR, beating prior DWA+VR 1.6837 by +0.0079).

@@ -106,233 +106,42 @@ def propose(
         - iterations: int (training steps, default from env)
         - smoke: bool (if True, override to 200 steps)
     """
-    # HYP-022: Attention config + skip connection ablation
-    hyp022_runs = [
+    # HYP-039: XSA (Exclusive Self Attention) iso-step test
+    # arXiv 2603.09078 — removes self-value component from attention output
+    # Zero new params, ~2% overhead. Used in top 3 competition submissions.
+    # Best local config: 6L+3u+4h/4kv+EVAL_STRIDE=256+NORMUON=1
+    hyp039_runs = [
         r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-022")
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-039")
         and r.get("wall_time_s", 0) > 500
     ]
-    n = len(hyp022_runs)
+    n = len(hyp039_runs)
+
+    # Best local config baseline for comparison
+    best_local_base = {
+        "UNIQUE_BLOCKS": "3",
+        "NUM_HEADS": "4",
+        "NUM_KV_HEADS": "4",
+        "NUM_LAYERS": "6",
+        "EVAL_STRIDE": "256",
+        "NORMUON": "1",
+    }
 
     configs = [
         {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_KV_HEADS": "8",
-            },
-            "description": "3u + full MHA (8 KV heads, no GQA)",
-            "hypothesis": "HYP-022-mha",
+            "env_overrides": {**best_local_base},
+            "description": "HYP-039 baseline (6L+3u+4h+stride256+normuon, no XSA)",
+            "hypothesis": "HYP-039-baseline",
         },
         {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-            },
-            "description": "3u + 4 heads (head_dim=128, MHA)",
-            "hypothesis": "HYP-022-4h",
+            "env_overrides": {**best_local_base, "XSA": "1"},
+            "description": "XSA: Exclusive Self Attention (arXiv 2603.09078), all layers",
+            "hypothesis": "HYP-039-xsa",
         },
         {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "USE_SKIP": "0",
-            },
-            "description": "3u + no skip connections",
-            "hypothesis": "HYP-022-noskip",
-        },
-    ]
-
-    if n < len(configs):
-        return configs[n]
-
-    # HYP-023: Re-optimize block count with wide heads
-    hyp023_runs = [
-        r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-023")
-        and r.get("wall_time_s", 0) > 500
-    ]
-    n = len(hyp023_runs)
-
-    configs = [
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "2",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-            },
-            "description": "2u + 4h/4kv (fewer blocks with wide heads)",
-            "hypothesis": "HYP-023-2u",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "5",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-            },
-            "description": "5u + 4h/4kv (more blocks with wide heads)",
-            "hypothesis": "HYP-023-5u",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "1",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-            },
-            "description": "1u + 4h/4kv (extreme sharing with wide heads)",
-            "hypothesis": "HYP-023-1u",
-        },
-    ]
-
-    if n < len(configs):
-        return configs[n]
-
-    # HYP-024: Deeper cycling (more effective layers, same params)
-    hyp024_runs = [
-        r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-024")
-        and r.get("wall_time_s", 0) > 500
-    ]
-    n = len(hyp024_runs)
-
-    configs = [
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "NUM_LAYERS": "12",
-            },
-            "description": "3u×4 cycles = 12 layers + 4h/4kv",
-            "hypothesis": "HYP-024-12L",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "NUM_LAYERS": "15",
-            },
-            "description": "3u×5 cycles = 15 layers + 4h/4kv",
-            "hypothesis": "HYP-024-15L",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "NUM_LAYERS": "6",
-            },
-            "description": "3u×2 cycles = 6 layers + 4h/4kv",
-            "hypothesis": "HYP-024-6L",
-        },
-    ]
-
-    if n < len(configs):
-        return configs[n]
-
-    # HYP-026: Competition-informed structural experiments
-    hyp026_runs = [
-        r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-026")
-        and r.get("wall_time_s", 0) > 500
-    ]
-    n = len(hyp026_runs)
-
-    configs = [
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "NUM_LAYERS": "6",
-                "MLP_MULT": "3",
-            },
-            "description": "6L+3u+4h + MLP 3x (wider MLP, competition top tech)",
-            "hypothesis": "HYP-026-mlp3x",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "NUM_LAYERS": "6",
-                "LOGIT_SOFTCAP": "50.0",
-            },
-            "description": "6L+3u+4h + high softcap=50 (Optuna signal)",
-            "hypothesis": "HYP-026-softcap50",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "NUM_LAYERS": "6",
-                "MUON_MOMENTUM": "0.99",
-            },
-            "description": "6L+3u+4h + momentum=0.99 (competition consensus)",
-            "hypothesis": "HYP-026-mom99",
-        },
-    ]
-
-    if n < len(configs):
-        return configs[n]
-
-    # HYP-027: Sliding window evaluation
-    hyp027_runs = [
-        r for r in past_results
-        if r.get("config", {}).get("hypothesis", "").startswith("HYP-027")
-        and r.get("wall_time_s", 0) > 500
-    ]
-    n = len(hyp027_runs)
-
-    configs = [
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "NUM_LAYERS": "6",
-                "EVAL_STRIDE": "256",
-            },
-            "description": "6L+3u+4h + sliding window eval stride=256",
-            "hypothesis": "HYP-027-stride256",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "NUM_LAYERS": "6",
-                "EVAL_STRIDE": "128",
-            },
-            "description": "6L+3u+4h + sliding window eval stride=128",
-            "hypothesis": "HYP-027-stride128",
-        },
-        {
-            "env_overrides": {
-                "ITERATIONS": "5000",
-                "UNIQUE_BLOCKS": "3",
-                "NUM_HEADS": "4",
-                "NUM_KV_HEADS": "4",
-                "NUM_LAYERS": "6",
-                "EVAL_STRIDE": "64",
-            },
-            "description": "6L+3u+4h + sliding window eval stride=64",
-            "hypothesis": "HYP-027-stride64",
+            "env_overrides": {**best_local_base, "XSA": "1", "VALUE_RESID": "1"},
+            "description": "XSA + Value Residual (test interaction)",
+            "hypothesis": "HYP-039-xsa-vr",
         },
     ]
 

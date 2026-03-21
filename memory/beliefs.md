@@ -803,3 +803,30 @@ logit temperature control, gradient clipping, or spherical normalization
 | Date | Evidence | Grade | Direction | Updated to |
 |------|----------|-------|-----------|------------|
 | 2026-03-20 | HYP-038: 5 seeds × 30K steps. All seeds show 5-8 direction changes in P(correct). Only 1/5 reached >90% via sudden phase transition. | F | Strong for | 0.85 |
+
+---
+
+## B-030: XSA + Value Residual is super-additive
+
+**Prior:** N/A (new belief from HYP-039)
+**Current:** 0.75
+**Source:** HYP-039 experiment results
+
+XSA (Exclusive Self Attention) and Value Residual Learning produce a
+super-additive interaction: individual gains are +0.008 (XSA) and +0.027
+(VR), but combined gain is +0.073 (2.1x the expected sum of +0.035).
+
+**Mechanism hypothesis:** XSA forces attention to learn cross-token contextual
+features by removing the self-value shortcut. VR provides a stable first-layer
+V residual for token-level feature preservation. Together, they create two
+complementary channels: VR for token identity, XSA-attention for context.
+Neither alone is as effective because without XSA, attention wastes capacity
+on self-modeling; without VR, token features degrade through layers.
+
+**Implication for GPU submissions:** XSA+VR replaces DWA+VR as the recommended
+combination. XSA is simpler (zero learnable params vs DWA's N×dim params)
+and likely faster. AttnRes+XSA+VR at 11L could be even better.
+
+| Date | Evidence | Grade | Direction | Updated to |
+|------|----------|-------|-----------|------------|
+| 2026-03-20 | HYP-039: XSA alone +0.008, VR alone +0.027, XSA+VR +0.073. Super-additive (2.1x expected). New best local BPB 1.6758. | D | Strong for | 0.75 |
