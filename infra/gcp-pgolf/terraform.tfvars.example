@@ -1,0 +1,7 @@
+# Copy this to terraform.tfvars and fill in your values
+billing_account_id = "XXXXXX-XXXXXX-XXXXXX"  # Find at: https://console.cloud.google.com/billing
+org_id             = ""                        # Optional: your GCP org ID
+project_id         = "pgolf-lmxlab"
+region             = "us-central1"
+zone               = "us-central1-a"
+spot               = true                      # Use spot for ~90% cost savings
