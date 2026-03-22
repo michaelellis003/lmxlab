@@ -6111,3 +6111,23 @@ provides good coverage. Tighter strides add compute overhead (longer eval time:
 via loss change when quantizing each layer individually. Allocate more
 bits to sensitive layers, fewer to insensitive ones. Compare BPB of
 non-uniform vs uniform int8 serialization.
+
+### 2026-03-21 [INTERPRET] HYP-061: RDOQ — non-uniform quantization
+
+**FP16 proj layers:** 1.6719 BPB, 9.4MB artifact — WORSE (-0.038)
+**FP16 control tensors:** 1.6381 BPB, 6.9MB artifact — neutral (within noise)
+
+**Finding:** The existing int8 quantization with per-row scaling is already
+near-optimal for our model size. The int8 gap is negligible (<0.001 BPB from
+HYP-029). Non-uniform quantization doesn't help because:
+1. Projection layers are NOT sensitive to int8 quantization (per-row scaling
+   handles the variance well)
+2. Control tensors are already kept at fp16 (below MAX_NUMEL threshold)
+3. The artifact size increase from fp16 projections wastes budget
+
+**RDOQ conclusion:** At 7M params, int8 is already close to optimal.
+The information-theoretic RDOQ approach would only help at larger model
+sizes where the quantization gap becomes measurable. At ~27M params on
+GPU with int6/int4, RDOQ could be more valuable.
+
+**Best local BPB unchanged: 1.6344.**

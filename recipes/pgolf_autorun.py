@@ -774,6 +774,32 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-061: RDOQ — keep output projections at fp16 (most sensitive to quant)
+    hyp061_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-061")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp061_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048,
+                              "INT8_KEEP_FLOAT_NAME_PATTERNS": "tok_emb,proj"},
+            "description": "RDOQ: keep tok_emb + all proj layers at fp16",
+            "hypothesis": "HYP-061-fp16proj",
+        },
+        {
+            "env_overrides": {**best_sp2048,
+                              "INT8_KEEP_FLOAT_NAME_PATTERNS": "tok_emb,attn_scale,mlp_scale,q_gain,resid_mix"},
+            "description": "RDOQ: keep tok_emb + all control tensors at fp16",
+            "hypothesis": "HYP-061-fp16ctrl",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
