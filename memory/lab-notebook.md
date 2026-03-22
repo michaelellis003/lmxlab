@@ -6363,3 +6363,26 @@ hurts because it reduces step count.
 
 **Implication:** The remaining local improvements must be ZERO OVERHEAD.
 Any technique with >5% throughput cost will fail locally.
+
+### 2026-03-21 [SETUP] GPU submission script: XSA+VR+ZLoss+sp2048
+
+Created new GPU submission variant incorporating ALL session findings:
+`records/track_10min_16mb/2026-03-21_XSA_VR_ZLoss_sp2048/`
+
+**Features added to base GPU script (PyTorch/CUDA):**
+1. XSA (Exclusive Self Attention) with XSA_START_LAYER support
+2. Z-loss auxiliary penalty (PaLM-style)
+3. XSA, z_loss_weight, xsa_start_layer env vars
+4. Per-layer XSA gating in GPT forward pass
+
+**Script: 1334 lines (166 remaining of 1500 limit)**
+
+**Recommended GPU run command:**
+```
+VOCAB_SIZE=2048 NUM_LAYERS=11 UNIQUE_BLOCKS=11 XSA=1 XSA_START_LAYER=8
+VALUE_RESID=1 Z_LOSS=1e-4 LOGIT_SOFTCAP=50 FP16_EMBED=1
+MUON_MOMENTUM=0.99 WEIGHT_DECAY=0.04 SWA_ENABLED=1
+```
+
+**Priority: HIGHEST.** This is the only path to closing the 0.51 BPB gap
+from our local 1.6344 to SOTA 1.1246. Apply for RunPod compute immediately.
