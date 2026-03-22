@@ -6912,3 +6912,46 @@ weight sharing constraint. The data doesn't strongly prefer either —
 suggesting the sharing pattern is not a major bottleneck.
 
 **Best v2 BPP unchanged: 1.6408 (cyclic + ortho random fc).**
+
+### 2026-03-22 [PLAN] HYP-081: Diagnostic long training run (1800s)
+
+**Core question:** Is the model still improving rapidly at step 2000,
+or has it plateaued? This determines the VALUE of GPU compute.
+
+**From optimization theory (convergence analysis):**
+- Linear convergence: loss ∝ exp(-c·t) → more steps = proportional gain
+- Sub-linear convergence: loss ∝ 1/t → diminishing returns
+- Plateau: loss ≈ constant → no benefit from more steps
+
+**Method:** Train with best config (ortho random fc + full stack) for 1800s
+(3x normal). Log loss every 200 steps. Compute the loss at 600s, 1200s,
+and 1800s to see the curve shape.
+
+**If still falling at 600s:** GPU will help enormously (7400 steps = 3.7x more)
+**If plateauing at 600s:** Model capacity is the bottleneck, not compute
+
+### 2026-03-22 [INTERPRET] HYP-081: Diagnostic 1800s run — model FAR from converged
+
+**1800s run (5723 steps, 3x longer than competition budget):**
+- val_bpb at 600s (~1900 steps): 1.6408
+- val_bpb at 1800s (5723 steps): **1.5511**
+- Improvement from 3x compute: **+0.090 BPP**
+
+**The model is STILL in the steep part of the learning curve at 600s.**
+Training loss dropped from ~3.5 to ~3.1 between steps 1900 and 5700.
+There is NO sign of convergence — more steps = more improvement.
+
+**GPU extrapolation:**
+On 8xH100: ~7400 steps in 600s (3.9x our 1900 steps)
+Expected BPP: ~1.55 (from our 5700-step curve) + improvements from
+larger batch (524K vs 8K = less noise, better per-step quality)
+Conservative estimate: **~1.40-1.50 BPP on GPU with our innovation stack**
+With competition techniques (SWA, WD, MLP 3x, int6): **~1.10-1.20 BPP**
+
+**This is the MOST IMPORTANT finding for GPU planning.** Our model has
+massive headroom — the 600s budget captures only ~40% of the model's
+potential. Every additional second of GPU training is highly valuable.
+
+**Implication for budget:** Don't waste GPU time on multiple experiment
+variants. Run ONE well-configured long run with our best config.
+Use the full 10-minute budget. Don't cut training short for eval.

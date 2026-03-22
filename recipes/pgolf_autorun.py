@@ -1261,6 +1261,29 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-081: Diagnostic 1800s run (convergence analysis)
+    hyp081_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-081")
+        and r.get("wall_time_s", 0) > 1500
+    ]
+    n = len(hyp081_runs)
+
+    best_ortho = dict(best_random)
+    best_ortho["ORTHO_RANDOM_FC"] = "1"
+
+    configs = [
+        {
+            "env_overrides": {**best_ortho, "MAX_WALLCLOCK_SECONDS": "1800",
+                              "TRAIN_LOG_EVERY": "100"},
+            "description": "Diagnostic 1800s run (3x longer, convergence analysis)",
+            "hypothesis": "HYP-081-long",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
