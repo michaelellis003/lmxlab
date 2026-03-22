@@ -1018,6 +1018,25 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-071: Affine RMSNorm (learnable γ,β — from approximation theory)
+    hyp071_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-071")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp071_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048_v2, "AFFINE_NORM": "1"},
+            "description": "Affine RMSNorm: learned γ,β (preconditioning, ~7K extra params)",
+            "hypothesis": "HYP-071-affine",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

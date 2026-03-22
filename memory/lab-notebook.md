@@ -6607,3 +6607,20 @@ generalization, not just memorization.
 7. NorMuon: USE (validated earlier)
 
 **GPU deployment is READY.** Apply for RunPod compute NOW.
+
+### 2026-03-21 [INTERPRET] HYP-071: Affine RMSNorm — neutral
+
+**Affine RMSNorm (v2 data):** 1.6992 BPB vs plain 1.7002 = +0.001 (noise)
+
+**Why neutral:** The model already has per-layer learned scales via
+attn_scale and mlp_scale parameters. Adding γ,β to the norm layer is
+redundant — the same expressiveness is already available through the
+existing scale parameters.
+
+**Cross-disciplinary note (numerical analysis):**
+Affine preconditioning helps iterative methods when the condition number
+is large. Our transformer blocks with learned residual scales already
+act as preconditioners. Adding another layer of preconditioning (affine
+norm) on top doesn't further reduce the condition number.
+
+**Best v2 BPB unchanged: 1.6530 (full innovation stack).**
