@@ -6998,3 +6998,36 @@ the absolute LR value. The fraction is batch-independent.
 1. Re-request H100/A100 quota on March 24 (48hr after project creation)
 2. When approved: terraform apply → full experiment suite
 3. Estimated cost for 20 experiments on H100: ~$44
+
+### 2026-03-22 [EXPERIMENT] L4 GPU validation — baseline at 32K batch
+
+**GPU:** NVIDIA L4, 24GB VRAM, PyTorch 2.7.1, CUDA 12.8
+**Config:** 11L, 11 unique blocks, 8h/4kv, MLP 3x, sp1024
+**Batch:** 16K × 2 grad_accum = 32K effective
+**Cost:** ~$0.82 (70 min at $0.70/hr)
+
+**Training trajectory (600s, 3050 steps):**
+
+| Step | BPB | Note |
+|------|-----|------|
+| 1500 | 1.6417 | Matches local 600s best |
+| 2000 | 1.5782 | Better than local 1800s |
+| 2500 | 1.5194 | Steep improvement |
+| 3050 | **1.4784** | Final (pre-quantization) |
+
+**Key findings:**
+1. L4 processes 3050 steps vs Mac's ~1900 in 600s (1.6x faster per step)
+2. 32K batch gives 4x less gradient noise → better per-step quality
+3. Combined: 1.4784 BPP (L4 baseline) vs ~1.65 (Mac baseline) = +0.17 improvement
+   from just more compute + less noise
+
+**Eval issue:** Stride=64 sliding window eval was extremely slow on L4
+(would take 60+ min). For future L4 runs, use stride=256 or no stride.
+
+**Did NOT test:** XSA+VR, z-loss, SWA, WD, random fc (eval too slow,
+SSH unstable under memory pressure). These need the H100 with more VRAM.
+
+**Cost total this session:** $0.82 (L4) + $0.06 (earlier validation) = $0.88
+**Budget remaining:** ~$19.12 of $20
+
+**H100 quota:** Re-request on March 24 (48hr billing history).
