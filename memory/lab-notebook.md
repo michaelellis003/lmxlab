@@ -6955,3 +6955,46 @@ potential. Every additional second of GPU training is highly valuable.
 **Implication for budget:** Don't waste GPU time on multiple experiment
 variants. Run ONE well-configured long run with our best config.
 Use the full 10-minute budget. Don't cut training short for eval.
+
+### 2026-03-22 [PLAN] HYP-082: Warmdown schedule optimization
+
+**Current:** WARMDOWN_ITERS=1200. At ~1900 total steps, warmdown starts at
+step ~700 → 63% of training is in cooldown phase. On GPU with ~7400 steps,
+it's only 16%.
+
+**From optimal control theory (bang-bang control):**
+For convex optimization with fixed time budget, the optimal schedule is:
+- Full learning rate for as long as possible
+- Brief cooldown at the end
+The optimal warmdown fraction depends on how far from convergence we are.
+Our 1800s run proved we're far → shorter warmdown should help.
+
+**Test:** WARMDOWN_ITERS=400 (21% warmdown) and WARMDOWN_ITERS=200 (11%).
+Match the GPU's ~16% warmdown ratio.
+
+**Note:** This IS a schedule change (DEC-015 says unreliable locally).
+But the question is about the FRACTION of training spent cooling, not
+the absolute LR value. The fraction is batch-independent.
+
+### 2026-03-22 [SETUP] GPU validation on GCP L4
+
+**GCP Project:** pgolf-lmxlab (created via Terraform)
+**GPU:** NVIDIA L4, 23.7GB VRAM, PyTorch 2.7.1, CUDA 12.8
+**Cost:** ~$0.06 (5 min at $0.70/hr)
+
+**Validation results:**
+- Training script (train_gpt.py): SYNTAX OK
+- Model instantiation with XSA+VR+z-loss: OK (13.1M params)
+- Forward pass: OK (loss=6.94, expected ~7 for random init)
+- Backward pass: OK (gradients compute)
+- SentencePiece: installed and available
+
+**GPU quota status:**
+- GPUS_ALL_REGIONS: APPROVED (limit=1)
+- NVIDIA_H100_GPUS: DENIED (need 48hr billing history, re-request March 24)
+- NVIDIA_A100_GPUS: DENIED (same reason)
+
+**Next steps:**
+1. Re-request H100/A100 quota on March 24 (48hr after project creation)
+2. When approved: terraform apply → full experiment suite
+3. Estimated cost for 20 experiments on H100: ~$44
