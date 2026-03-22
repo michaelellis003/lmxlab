@@ -6386,3 +6386,82 @@ MUON_MOMENTUM=0.99 WEIGHT_DECAY=0.04 SWA_ENABLED=1
 
 **Priority: HIGHEST.** This is the only path to closing the 0.51 BPB gap
 from our local 1.6344 to SOTA 1.1246. Apply for RunPod compute immediately.
+
+### 2026-03-21 [PLAN] HYP-066: Eval-time n-gram context mixing (coding theory)
+
+**Core problem (coding theory / data compression):**
+"Given predictions from a neural model p_nn(x) and a simple statistical
+model p_stat(x), how do we combine them to minimize bits-per-byte?"
+
+**From PAQ/cmix compression (context mixing):**
+The best lossless text compressors combine predictions from multiple
+models at eval time. The optimal mixing weight is learned adaptively:
+  p_mix = α * p_nn + (1-α) * p_stat
+where α is optimized on the validation data.
+
+**Key insight:** This is a POST-HOC ensemble. The transformer trains
+normally (zero overhead). At eval time, we also compute n-gram
+probabilities and mix them in. The n-gram model is TINY (unigram
+counts = vocab_size floats = 8KB) and provides a "safety net"
+for rare tokens the transformer hasn't learned well.
+
+**Implementation:**
+1. After training, compute unigram counts from training data
+2. At eval: p_final = α * p_transformer + (1-α) * p_unigram
+3. Grid search α on val set
+4. This costs zero params and zero training compute
+
+**Why this might work for us specifically:**
+Our model is undertrained (0.16% of data). For rare tokens, the
+transformer assigns near-uniform probability. A unigram prior
+(which captures token frequency) could improve predictions for
+these tokens without hurting common tokens.
+
+**From statistics (shrinkage estimation):**
+This is exactly James-Stein shrinkage — combining an unbiased but
+noisy estimator (transformer) with a biased but low-variance
+estimator (unigram). Shrinkage provably reduces MSE when the
+noisy estimator has high variance, which ours does (undertrained).
+
+### 2026-03-21 [INTERPRET] HYP-066/067: Context mixing + progressive training
+
+**HYP-066 (Context mixing — from coding theory / James-Stein shrinkage):**
+
+| Alpha | BPB | Delta |
+|-------|-----|-------|
+| 0.001 | 1.6358 | -0.001 (noise) |
+| 0.01 | 1.6503 | -0.016 |
+| 0.05 | 1.6790 | -0.045 |
+
+Unigram mixing doesn't help because the unigram prior is too uninformative
+(9.39 bits/token vs transformer's 3.23 nats). Context mixing needs a GOOD
+secondary model (trained bigram/trigram), not just frequency counts.
+James-Stein shrinkage only helps when the "biased estimator" is
+actually closer to truth than uniform — unigram isn't.
+
+**HYP-067 (Progressive seq_len — multigrid-inspired):**
+
+| Config | BPB | Delta |
+|--------|-----|-------|
+| 60%@512 + 40%@1024 | 1.6572 | -0.023 |
+| 40%@512 + 60%@1024 | 1.6442 | -0.010 |
+| **Uniform 1024** | **1.6344** | **—** |
+
+The multigrid analogy doesn't transfer because 512-seq and 1024-seq
+models learn DIFFERENT distributions (different context windows = different
+language models). In multigrid, coarse and fine grids represent the SAME
+PDE at different resolutions. Here, 512 represents a fundamentally
+different (weaker) language model.
+
+**GPU note:** Progressive training might work on GPU where attention is
+O(n²) — at seq=512, each step is 4x cheaper than seq=2048. If we
+start at 512 for 30% of training, we get 30% × 4x = 1.2x more
+equivalent steps. This is NOT the case on MLX where SDPA is approximately
+linear in seq_len.
+
+**Cross-disciplinary lesson (numerical PDE):**
+Multigrid works because the OPERATOR is the same at all scales — only the
+discretization changes. For language modeling, the "operator" (what the
+model is trying to learn) changes with context length. Short context =
+n-gram-like model. Long context = discourse-level model. They're
+fundamentally different tasks, not different resolutions of the same task.

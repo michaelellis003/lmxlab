@@ -875,6 +875,68 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-066: Eval-time context mixing (from coding theory / James-Stein shrinkage)
+    hyp066_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-066")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp066_runs)
+
+    unigram_path = "./data/unigram_sp2048_logprobs.npy"
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048,
+                              "EVAL_MIX_ALPHA": "0.01",
+                              "EVAL_MIX_LOGPROBS": unigram_path},
+            "description": "Context mixing alpha=0.01 (1% unigram, 99% transformer)",
+            "hypothesis": "HYP-066-mix001",
+        },
+        {
+            "env_overrides": {**best_sp2048,
+                              "EVAL_MIX_ALPHA": "0.05",
+                              "EVAL_MIX_LOGPROBS": unigram_path},
+            "description": "Context mixing alpha=0.05 (5% unigram, 95% transformer)",
+            "hypothesis": "HYP-066-mix005",
+        },
+        {
+            "env_overrides": {**best_sp2048,
+                              "EVAL_MIX_ALPHA": "0.001",
+                              "EVAL_MIX_LOGPROBS": unigram_path},
+            "description": "Context mixing alpha=0.001 (0.1% unigram, 99.9% transformer)",
+            "hypothesis": "HYP-066-mix0001",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
+    # HYP-067: Progressive sequence length (multigrid-inspired)
+    # Train at seq_len=512 for first 60%, then switch to 1024
+    hyp067_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-067")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp067_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "PROGRESSIVE_SEQ": "0.6"},
+            "description": "Progressive seq: 60% at 512, 40% at 1024 (multigrid)",
+            "hypothesis": "HYP-067-prog06",
+        },
+        {
+            "env_overrides": {**best_sp2048, "PROGRESSIVE_SEQ": "0.4"},
+            "description": "Progressive seq: 40% at 512, 60% at 1024",
+            "hypothesis": "HYP-067-prog04",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
