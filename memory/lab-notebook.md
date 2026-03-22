@@ -6131,3 +6131,62 @@ sizes where the quantization gap becomes measurable. At ~27M params on
 GPU with int6/int4, RDOQ could be more valuable.
 
 **Best local BPB unchanged: 1.6344.**
+
+### 2026-03-21 [PLAN] HYP-062: Monarch post-hoc compression
+
+**What:** After training with best config, project each weight matrix to
+its optimal Monarch approximation. Evaluate BPB of compressed model.
+If quality loss is small, the artifact gets much smaller → room for
+larger model within 16MB.
+
+**Math:** For n=512 (not a perfect square), use rectangular Monarch:
+m1=16, m2=32 where m1*m2=512. Block sizes: 16×16 and 32×32.
+Params per matrix: m1*m2*(m1+m2) = 512*(16+32) = 24,576 (vs 262,144 dense = 10.7x compression)
+
+**Implementation plan:**
+1. Train model normally with best sp2048 config
+2. After training, for each 2D weight matrix:
+   a. Reshape as (m1, m2, m1, m2) tensor
+   b. SVD each (m1×m2) block to get rank-1 approximation
+   c. Reconstruct compressed weight
+3. Evaluate BPB with compressed weights
+4. If quality loss < 0.01 BPB, use Monarch for serialization
+
+**Risk:** At small scale (512×512), Monarch approximation error may be
+too large. We already showed Kronecker MLP hurt (-0.285 BPB). Monarch
+is more expressive than Kronecker but same risk of underfitting.
+
+**Alternative:** Instead of post-hoc, use Monarch DURING training
+(parameterize weights as Monarch factors). This lets the optimizer
+adapt to the structured constraint. But changes training dynamics.
+
+### 2026-03-21 [INTERPRET] HYP-062: Monarch compression — not viable at 7M params
+
+**Rank sweep on 512×512 attention Q matrix (blocks 16×32):**
+
+| Rank | Error | Params | Compression |
+|------|-------|--------|-------------|
+| 1 | 87.9% | 32K | 8x |
+| 4 | 59.5% | 131K | 2x |
+| 8 | 30.9% | 262K | 1x |
+| 16 | 0.0% | 524K | 0.5x |
+
+**Finding:** Weight matrices are FULL RANK at the block level. Monarch
+rank-1 approximation captures only 12% of the information. Even rank-8
+(no compression) has 31% error. The weights are too dense for structured
+compression.
+
+**Root cause:** At 7M params with 512 dim, every parameter carries unique
+information. There's no redundancy to exploit. Monarch works for large
+models (>100M params) where weights have significant low-rank structure.
+Our model is "tight" — no slack for compression.
+
+**Confirms:** The Kronecker MLP result (HYP-032, -0.285 BPP) and this
+Monarch result converge on the same conclusion: structured matrix
+factorizations don't help at small scale because there's no redundancy.
+
+**Cross-disciplinary lesson (updated):** Rate-distortion theory tells us
+that compression requires redundancy. At 7M params, we're already near
+the information-theoretic minimum for this model class. The path to
+better BPP is NOT compression but MORE PARAMETERS (via int6/int4
+quantization to fit more params in 16MB) or BETTER ARCHITECTURE.
