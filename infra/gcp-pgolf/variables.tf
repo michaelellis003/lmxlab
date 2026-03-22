@@ -30,19 +30,19 @@ variable "zone" {
 variable "gpu_type" {
   description = "GPU accelerator type"
   type        = string
-  default     = "nvidia-tesla-a100"  # 40GB A100
+  default     = "nvidia-h100-80gb"  # H100 80GB — same as competition, results transfer directly
 }
 
 variable "machine_type" {
   description = "GCP machine type"
   type        = string
-  default     = "a2-highgpu-1g"  # 1x A100, 12 vCPUs, 85GB RAM
+  default     = "a3-highgpu-1g"  # 1x H100, 26 vCPUs, 234GB RAM, ~$7.35/hr
 }
 
 variable "spot" {
-  description = "Use spot/preemptible instance for cost savings"
+  description = "Use spot/preemptible instance for cost savings (risk: interruption every 1-4 hrs)"
   type        = bool
-  default     = true
+  default     = false  # On-demand is safer for 15-min experiments (~$3.67/hr vs $0.35)
 }
 
 variable "disk_size_gb" {
