@@ -854,6 +854,27 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-065: BigramHash with sp2048 (context mixing from coding theory)
+    # Core problem: "How do we combine local (bigram) and global (attention) predictions?"
+    # From coding theory: context mixing improves compression by combining models.
+    hyp065_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-065")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp065_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "BIGRAM_VOCAB_SIZE": "4096", "BIGRAM_DIM": "64"},
+            "description": "BigramHash 4096 dim=64 with sp2048 (local context mixing)",
+            "hypothesis": "HYP-065-bigram4k",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

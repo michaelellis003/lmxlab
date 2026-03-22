@@ -6298,3 +6298,68 @@ if we could get more steps. But the competition fixes batch at 524K (8 DDP
 workers × 65K tokens each).
 
 **Belief update: B-022 re-confirmed from optimization theory perspective.**
+
+### 2026-03-21 [PLAN] HYP-065: Progressive sequence length (multigrid-inspired)
+
+**Core problem (cross-disciplinary):**
+"How do I maximize useful gradient information per wall-clock second?"
+
+**From numerical PDE (multigrid methods):**
+Multigrid solves PDEs by alternating between coarse (fast) and fine (slow)
+grids. Coarse grids capture global structure cheaply; fine grids add local
+detail. Applied to language modeling:
+- "Coarse grid" = short sequences (512 tokens, faster, more diverse)
+- "Fine grid" = full sequences (1024 tokens, slower, better context)
+
+**Experiment:** Train first 60% of steps at seq_len=512, then switch to
+seq_len=1024 for the remaining 40%. This gives:
+- First 60%: ~2x more steps (faster per-step) + 2x more sequences per batch
+- Last 40%: full context for fine-tuning long-range patterns
+
+**Implementation:** Add PROGRESSIVE_SEQ env var. Two-phase training:
+Phase 1 (0-60%): TRAIN_SEQ_LEN=512, faster
+Phase 2 (60-100%): TRAIN_SEQ_LEN=1024, full quality
+
+**Hypothesis:** The model learns most per-token patterns in phase 1 (short
+context is sufficient for local patterns), then refines long-range patterns
+in phase 2. Net effect: more total learning than uniform 1024.
+
+**Quality gates:**
+- Gate 1: YES — would change training recipe if it works
+- Gate 2: YES — small scale benefits more from speed
+- Gate 3: NOVEL — progressive seq_len isn't standard for pgolf
+- Gate 4: UNCERTAIN — could go either way
+- Gate 5: YES — clean experiment
+- Gate 6: YES — not tested before
+
+### 2026-03-21 [INTERPRET] HYP-064/065: Grad accum + BigramHash with sp2048
+
+**HYP-064 (Gradient accumulation — bias-variance tradeoff):**
+
+| Accum | Batch | BPB | Steps |
+|-------|-------|-----|-------|
+| **1** | **8K** | **1.6344** | ~1900 |
+| 2 | 16K | 1.6484 | ~950 |
+| 4 | 32K | 1.6528 | ~475 |
+
+Verdict: Step count > noise reduction. We're in the underfitting (bias-dominated)
+regime, not the noise-dominated regime.
+
+**HYP-065 (BigramHash 4096 dim=64 with sp2048):**
+1.7206 BPB — worse by 0.086. Throughput penalty (~10%) dominates.
+Consistent with previous BigramHash results (GPU-only technique).
+
+**Cross-disciplinary insight (statistics):**
+Both experiments confirm the same fundamental truth: at ~2000 steps with
+7M params on 10B tokens of text, we are MASSIVELY underfitting. The model
+has seen 0.16% of the data. Any technique that trades steps for quality
+(grad accum, BigramHash overhead) hurts because we need MORE optimization
+steps, not better ones.
+
+The only techniques that help locally are those that improve PER-STEP
+quality WITHOUT slowing down: XSA, VR, z-loss, softcap 50, sp2048.
+Everything else (regularization, noise reduction, context mixing overhead)
+hurts because it reduces step count.
+
+**Implication:** The remaining local improvements must be ZERO OVERHEAD.
+Any technique with >5% throughput cost will fail locally.
