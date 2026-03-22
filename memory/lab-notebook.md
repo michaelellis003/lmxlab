@@ -6845,3 +6845,35 @@ theory strongly predicts orthogonal ≥ Gaussian, so we should use it.
 The cost is zero (just different initialization before freezing).
 
 **Updated best config:** Add ORTHO_RANDOM_FC=1 to the stack.
+
+### 2026-03-22 [INTERPRET] HYP-077/078: Orthogonal fc + pruning
+
+**HYP-077 (Orthogonal random fc):** 1.6408 BPB — marginal +0.003 over
+Gaussian. Consistent with theory (orthogonal = optimal JL projection).
+
+**HYP-078 (Post-hoc magnitude pruning):**
+| Prune % | BPB | Artifact | Loss |
+|---------|-----|----------|------|
+| 0% | 1.6408 | 6.9MB | — |
+| 20% | 1.7176 | 6.4MB | -0.077 |
+| 30% | 2.2515 | 6.0MB | -0.611 |
+
+**Pruning is catastrophic.** Confirms the Monarch finding: at 7M params,
+weights are NOT sparse. Every weight carries unique information. The
+artifact compression savings (0.5-0.9MB) are far less valuable than the
+quality loss.
+
+**Cross-disciplinary insight (compressed sensing vs information theory):**
+Compressed sensing requires SPARSE signals (k-sparse in some basis).
+Our weight matrices are NOT sparse — they're DENSE and FULL-RANK.
+There's no basis in which the weights are sparse, so compressed sensing
+/ sparse recovery doesn't apply.
+
+The random fc finding worked because it reduces the NUMBER of estimated
+params (James-Stein), not the MAGNITUDE. Pruning reduces magnitude but
+keeps the number of params the same — fundamentally different.
+
+**FINAL DEFINITIVE LOCAL CONFIG:**
+sp2048 + XSA_START_LAYER=4 + VALUE_RESID=1 + Z_LOSS=1e-4 + LOGIT_SOFTCAP=50
++ FP16_EMBED=1 + NORMUON=1 + EVAL_STRIDE=256 + RANDOM_MLP_FC=1 + ORTHO_RANDOM_FC=1
+→ **1.6408 BPP** (best single run) / **1.6440 ± 0.002** (3-seed validated)

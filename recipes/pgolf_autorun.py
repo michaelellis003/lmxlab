@@ -1192,6 +1192,34 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-078: Post-hoc magnitude pruning (from compressed sensing / sparse recovery)
+    hyp078_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-078")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp078_runs)
+
+    # Use best config with orthogonal random fc
+    best_ortho = dict(best_random)
+    best_ortho["ORTHO_RANDOM_FC"] = "1"
+
+    configs = [
+        {
+            "env_overrides": {**best_ortho, "PRUNE_PCT": "20"},
+            "description": "Prune 20% smallest weights (save ~0.5MB artifact)",
+            "hypothesis": "HYP-078-prune20",
+        },
+        {
+            "env_overrides": {**best_ortho, "PRUNE_PCT": "30"},
+            "description": "Prune 30% smallest weights (save ~0.9MB artifact)",
+            "hypothesis": "HYP-078-prune30",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
