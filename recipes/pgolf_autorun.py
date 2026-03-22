@@ -829,6 +829,31 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-064: Gradient accumulation (bias-variance tradeoff from statistics)
+    # Core problem: "What is the optimal noise-averaging vs step-count tradeoff?"
+    hyp064_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-064")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp064_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "GRAD_ACCUM_STEPS": "2"},
+            "description": "Grad accum 2 (16K effective batch, 50% fewer steps)",
+            "hypothesis": "HYP-064-accum2",
+        },
+        {
+            "env_overrides": {**best_sp2048, "GRAD_ACCUM_STEPS": "4"},
+            "description": "Grad accum 4 (32K effective batch, 75% fewer steps)",
+            "hypothesis": "HYP-064-accum4",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

@@ -6241,3 +6241,60 @@ model is NOT miscalibrated in the usual sense — it's just uncertain about
 everything, and that uncertainty is correctly represented by T=1.0.
 Temperature scaling helps post-hoc for well-trained models on narrow
 tasks (classification), not for generative language models.
+
+### 2026-03-21 [PLAN] HYP-064: Gradient accumulation — bias-variance tradeoff
+
+**Core problem (cross-disciplinary framing):**
+"Given a noisy gradient estimator (variance ∝ 1/batch_size), what is the
+optimal number of samples to average before each parameter update?"
+
+**From statistics (bias-variance tradeoff):**
+- More samples per step → lower variance → better gradient direction
+- But fewer total steps → less exploration of loss landscape
+- Optimal: depends on gradient noise-to-signal ratio (NSR)
+- At high NSR (our 8K batch), MORE averaging may help because noise drowns signal
+
+**From numerical optimization (step size × noise theory):**
+- Optimal batch size b* ∝ gradient_noise_variance / gradient_signal
+- If b* > 8K, we should accumulate. If b* < 8K, we shouldn't.
+- Smith et al. (2018): "Don't Decay the Learning Rate, Increase the Batch Size"
+
+**Experiment:** Test GRAD_ACCUM_STEPS=2 (effective 16K batch, 50% fewer steps)
+and GRAD_ACCUM_STEPS=4 (effective 32K batch, 75% fewer steps).
+
+**Key insight:** This is NOT batch-size-dependent in the usual B-022 sense.
+B-022 says "Mac results at 8K don't transfer to GPU at 524K." But here
+we're testing whether the LOCAL optimal batch is 8K, 16K, or 32K.
+The question is about the LOCAL noise-to-signal ratio, which is measurable.
+
+**Predictions:**
+- H64-a: GRAD_ACCUM=2 improves (noise is the bottleneck, not step count)
+- H64-b: GRAD_ACCUM=1 is optimal (step count is the bottleneck)
+- H64-c: GRAD_ACCUM=4 improves even more (severe noise at 8K)
+
+### 2026-03-21 [INTERPRET] HYP-064: Gradient accumulation — steps > noise reduction
+
+| Grad Accum | Batch | BPB | Steps |
+|-----------|-------|-----|-------|
+| **1** | **8K** | **1.6344** | **~1900** |
+| 2 | 16K | 1.6484 | ~950 |
+| 4 | 32K | 1.6528 | ~475 |
+
+**Verdict: H64-b SUPPORTED.** Step count is the bottleneck, not noise.
+More steps (even noisy) > fewer steps (clean).
+
+**Cross-disciplinary interpretation:**
+- **Statistics (bias-variance):** We're in the high-bias (underfitting) regime.
+  Variance reduction doesn't help because the model hasn't converged.
+- **Numerical optimization:** In linear convergence (far from optimum),
+  progress ∝ step_count. Noise reduction only helps near convergence.
+- **Information theory:** Each noisy gradient step provides ~I(gradient; loss_landscape)
+  bits of information. At 8K batch, this is reduced by noise, but 2x steps provides
+  2x the total information minus the noise penalty. Net: more steps wins.
+
+**GPU implication:** On GPU with 524K batch (64x less noise), the bias-variance
+tradeoff shifts. The optimal batch might actually be SMALLER than 524K on GPU
+if we could get more steps. But the competition fixes batch at 524K (8 DDP
+workers × 65K tokens each).
+
+**Belief update: B-022 re-confirmed from optimization theory perspective.**
