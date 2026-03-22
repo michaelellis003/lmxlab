@@ -956,6 +956,30 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-069: Proper train/val split with more training data
+    # Old: 8M train + 2M val from SAME val shard (1.95 epochs, data overlap)
+    # New: 20M train from TRAIN shard + 2M val from VAL shard (0.78 epochs, no overlap)
+    hyp069_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-069")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp069_runs)
+
+    best_sp2048_v2 = dict(best_sp2048)
+    best_sp2048_v2["DATA_PATH"] = "./data/datasets/fineweb10B_sp2048_local_v2"
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048_v2},
+            "description": "Proper train/val split: 20M train tokens, 0 data overlap",
+            "hypothesis": "HYP-069-properdata",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

@@ -6518,3 +6518,32 @@ approaches.
 
 **Belief update:** Separate Q and K projections are load-bearing.
 The ~262K extra params per block are well-spent on asymmetric attention.
+
+### 2026-03-21 [INTERPRET] HYP-069: Proper train/val split — reveals data leakage
+
+**Old data (val shard split):** 1.6344 BPB (8M train from val shard, 2M val from same shard)
+**Proper data (separate shards):** 1.6495 BPB (20M train from train shard, 2M val from val shard)
+
+**Delta: -0.015 BPB with proper separation.**
+
+**Root cause: Train/val data leakage.** The old local dataset split the val
+shard into 2M val + 8M train. Since both come from consecutive FineWeb
+documents in the same shard, the training data contains documents from the
+same distribution (and potentially same topic clusters) as the val data.
+This inflated our BPB by ~0.015.
+
+**Implication for ALL previous results:**
+- All BPB numbers from this session used the leaked dataset
+- The RELATIVE comparisons are still valid (same leak for all)
+- But absolute BPB should be adjusted by ~+0.015 for proper generalization
+
+**Updated true best local BPB: ~1.65 (with proper train/val separation)**
+
+**Cross-disciplinary insight (statistics / experimental design):**
+Data leakage is the #1 cause of overly optimistic results in ML.
+From clinical trials: "intention to treat" requires strict separation
+of treatment and outcome groups. Our old setup was like testing a drug
+on the same patients who participated in the trial design.
+
+**Action: Update local dataset to use proper separation going forward.**
+All future experiments should use fineweb10B_sp2048_local_v2.
