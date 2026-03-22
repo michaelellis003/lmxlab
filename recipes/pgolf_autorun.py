@@ -1173,6 +1173,25 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-077: Orthogonal random fc (optimal JL projection from numerical LA)
+    hyp077_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-077")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp077_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_random, "ORTHO_RANDOM_FC": "1"},
+            "description": "Orthogonal random fc (uncorrelated features, optimal JL)",
+            "hypothesis": "HYP-077-orthofc",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

@@ -6826,3 +6826,22 @@ marginal approximation gain from one more feature EQUALS the marginal
 estimation cost of one more trainable param.
 
 **Best v2 BPB unchanged: 1.6440 ± 0.002 (MLP 2x + random fc)**
+
+### 2026-03-22 [INTERPRET] HYP-077: Orthogonal random fc — marginal improvement
+
+**Orthogonal vs Gaussian random fc (single seed):**
+- Gaussian random fc: 1.6440 ± 0.002 (3-seed validated)
+- Orthogonal random fc: 1.6408 (single seed)
+- Delta: +0.003 (within noise, but consistent with theory)
+
+**From numerical linear algebra:** Orthogonal matrices satisfy the JL lemma
+with TIGHTER constants than Gaussian. Orthogonal features have exactly
+zero correlation, while Gaussian features have O(1/√d) residual correlation.
+This means orthogonal features are LESS redundant — each feature captures
+independent information.
+
+**Verdict:** MARGINAL — the +0.003 could be noise (need multi-seed). But
+theory strongly predicts orthogonal ≥ Gaussian, so we should use it.
+The cost is zero (just different initialization before freezing).
+
+**Updated best config:** Add ORTHO_RANDOM_FC=1 to the stack.
