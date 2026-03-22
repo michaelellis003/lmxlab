@@ -980,6 +980,44 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-070: Re-validate key findings on proper v2 dataset
+    hyp070_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-070")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp070_runs)
+
+    # Baseline WITHOUT our innovations (v2 data)
+    v2_base_plain = {
+        "UNIQUE_BLOCKS": "3",
+        "NUM_HEADS": "4",
+        "NUM_KV_HEADS": "4",
+        "NUM_LAYERS": "6",
+        "EVAL_STRIDE": "256",
+        "NORMUON": "1",
+        "VOCAB_SIZE": "2048",
+        "TOKENIZER_PATH": "./data/tokenizers/fineweb_2048_bpe.model",
+        "DATA_PATH": "./data/datasets/fineweb10B_sp2048_local_v2",
+        "VAL_BATCH_SIZE": "65536",
+    }
+
+    configs = [
+        {
+            "env_overrides": {**v2_base_plain},
+            "description": "v2 baseline: sp2048, NO XSA/VR/z-loss/softcap50",
+            "hypothesis": "HYP-070-v2plain",
+        },
+        {
+            "env_overrides": {**best_sp2048_v2},
+            "description": "v2 full stack: sp2048 + XSA+VR+z-loss+softcap50",
+            "hypothesis": "HYP-070-v2full",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

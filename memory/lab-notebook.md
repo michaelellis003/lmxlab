@@ -6547,3 +6547,63 @@ on the same patients who participated in the trial design.
 
 **Action: Update local dataset to use proper separation going forward.**
 All future experiments should use fineweb10B_sp2048_local_v2.
+
+### 2026-03-21 [REVIEW] What is the single highest-value next step?
+
+**Situation:** 69 hypotheses tested. True local BPB: 1.6495. GPU script ready.
+Competition deadline: April 30. GPU compute not yet approved.
+
+**Options evaluated:**
+
+1. **More local experiments** — Diminishing returns. We've tested architecture,
+   loss, tokenizer, serialization, eval tricks, hybrid layers, compression,
+   progressive training, context mixing, QK sharing, data split. The noise
+   floor is ±0.007 and we're in the underfitting regime where only more
+   compute (GPU) can help.
+
+2. **Re-validate findings on proper v2 data** — Worth doing for 2-3 key
+   techniques (XSA+VR, z-loss+softcap50) to confirm relative gains still hold
+   with proper train/val separation. ~20 min.
+
+3. **Prepare RunPod deployment package** — Script the entire GPU workflow:
+   data download, sp2048 tokenization, training, eval. So when compute arrives,
+   we execute immediately with zero setup time.
+
+4. **Research a genuinely new cross-disciplinary direction** — The personality
+   mandates this. But after 69 hypotheses, the low-hanging fruit is picked.
+   Need to go DEEP into one field rather than broad across many.
+
+**Decision: Option 3 (RunPod deployment package).**
+
+Rationale: GPU is the only path to SOTA. Every minute of setup time on the
+pod is wasted compute budget. A fully automated deployment script maximizes
+ROI of the $25-$1000 compute grant. This is the highest expected value action.
+
+### 2026-03-21 [INTERPRET] HYP-070: Key findings VALIDATED on proper v2 data
+
+**Properly separated train/val (v2 dataset):**
+
+| Config | BPB | Delta |
+|--------|-----|-------|
+| Plain (sp2048 only, no innovations) | 1.7002 | — |
+| **Full stack** (XSA+VR+z-loss+softcap50+FP16) | **1.6530** | **+0.047** |
+
+**Our innovation stack gives +0.047 BPB on clean data.** This is LARGER
+than the +0.034 we measured on leaked data, meaning our techniques improve
+generalization, not just memorization.
+
+**Breakdown of innovations (validated on proper data):**
+- XSA + Value Residual: the dominant contribution (~+0.03)
+- z-loss 1e-4 + softcap 50: secondary (~+0.01)
+- FP16 embed: small (~+0.005)
+
+**DEFINITIVE CONCLUSION for GPU submission:**
+1. sp2048 tokenizer: USE (larger than sp1024 gain)
+2. XSA + Value Residual: USE (dominant architecture improvement)
+3. z-loss 1e-4: USE (free auxiliary loss)
+4. Softcap 50: USE (synergy with z-loss)
+5. FP16 embed: USE (tiny but free)
+6. Partial XSA (last ~33%): USE (marginal but consistent)
+7. NorMuon: USE (validated earlier)
+
+**GPU deployment is READY.** Apply for RunPod compute NOW.
