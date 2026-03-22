@@ -1037,6 +1037,32 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-072: Weight decay (James-Stein shrinkage, from estimation theory)
+    # WD gradient = λ*θ is batch-independent. But relative strength vs CE gradient
+    # scales with sqrt(batch). At 8K, use λ = 0.04/8 ≈ 0.005 to match GPU effect.
+    hyp072_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-072")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp072_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048_v2, "WEIGHT_DECAY": "0.005"},
+            "description": "Weight decay 0.005 (≈0.04 at 64K batch equivalent)",
+            "hypothesis": "HYP-072-wd005",
+        },
+        {
+            "env_overrides": {**best_sp2048_v2, "WEIGHT_DECAY": "0.001"},
+            "description": "Weight decay 0.001 (very mild shrinkage)",
+            "hypothesis": "HYP-072-wd001",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

@@ -6624,3 +6624,29 @@ act as preconditioners. Adding another layer of preconditioning (affine
 norm) on top doesn't further reduce the condition number.
 
 **Best v2 BPB unchanged: 1.6530 (full innovation stack).**
+
+### 2026-03-21 [INTERPRET] HYP-072: Weight decay — catastrophic with Muon
+
+| WD | BPB | Artifact | 
+|----|-----|----------|
+| 0 | 1.6530 | 7.0MB |
+| 0.001 | 2.315 | 2.0MB |
+| 0.005 | 2.470 | 1.9MB |
+
+**CATASTROPHIC.** Even WD=0.001 crushes weights to near-zero (artifact 2MB
+vs normal 7MB). The model can't learn under any WD with Muon at 8K batch.
+
+**Cross-disciplinary insight (estimation theory + optimization):**
+James-Stein shrinkage assumes a STANDARD estimator (uniform noise).
+Muon is NOT standard — its Newton-Schulz orthogonalization changes
+the gradient geometry. When WD adds λ*θ to Muon's orthogonalized
+gradients, the shrinkage is AMPLIFIED because Muon normalizes away
+the CE gradient scale, making WD dominate.
+
+**On GPU with WD=0.04:** This works because (1) Adam/AdamW handles WD
+differently (divides by running variance, controlling WD strength),
+and (2) 524K batch gives much stronger CE signal. The competition's
+WD=0.04 is calibrated for Adam at 524K, not Muon at 8K.
+
+**If we want WD with Muon:** Need WD ~0.00001 or apply WD only to
+Adam-optimized params (embeddings, scalars), not Muon-optimized matrices.
