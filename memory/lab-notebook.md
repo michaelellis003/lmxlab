@@ -6710,3 +6710,47 @@ validation. But the theoretical support from 3 fields makes this credible.
 
 **GPU implication:** Random MLP fc might NOT help on GPU (more data = less
 variance, so learned fc becomes worth it). But at our local scale, it's free.
+
+### 2026-03-22 [PLAN] HYP-074: Random attention V projection (extending JL insight)
+
+**From kernel methods:** In attention, V is the "feature map" (what gets
+weighted), while Q/K are the "kernel" (what determines weights). Just as
+random MLP fc works because the feature map doesn't need to be learned,
+random V might work because attention selects the RIGHT random features.
+
+**Also test:** Random c_k (key projection). If Q has q_gain and RoPE to
+differentiate it, maybe K can be random since attention scores are
+normalized by softmax anyway.
+
+**NOT testing:** Random c_q — Q has the most "steering" role via q_gain.
+Random proj — already zero-init, effectively "random" at start.
+
+### 2026-03-22 [INTERPRET] HYP-074: Random attention projections — fc only is optimal
+
+| Config | BPB | Frozen % |
+|--------|-----|---------|
+| All learned | 1.6530 | 0% |
+| **Random fc** | **1.6423** | 21% |
+| Random fc + K | 1.6440 | 32% |
+| Random fc + V + K | 1.6478 | 43% |
+| Random fc + V | 1.6492 | 32% |
+
+**Random fc is the sweet spot.** More freezing degrades quality because:
+
+1. **MLP fc is a FEATURE EXPANSION** (512→1024 with relu²): Random projections
+   are theoretically optimal for this (JL lemma for feature maps). The
+   nonlinearity creates useful random features from the random projection.
+
+2. **Attention V is CONTENT RETRIEVAL** (512→512): Values carry semantic
+   content that must be learned. Random V loses content information.
+
+3. **Attention K is SIMILARITY KEYS** (512→512): Keys determine what each
+   position "offers" for retrieval. Random K is nearly neutral because
+   RoPE+RMSNorm already provide structured key representations. But adding
+   random K on top of random fc gives diminishing returns.
+
+**Cross-disciplinary conclusion:** The random features theory (JL + Rahimi &
+Recht) applies specifically to FEATURE EXPANSION layers (dim→larger_dim
+with nonlinearity), NOT to same-dim projections or content-carrying projections.
+
+**Best v2 BPB: 1.6423 (random fc only).**

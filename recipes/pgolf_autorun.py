@@ -1082,6 +1082,39 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-074: Random attention projections (extending JL/random features insight)
+    hyp074_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-074")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp074_runs)
+
+    # Base: best config WITH random MLP fc (HYP-073 winner)
+    best_random = dict(best_sp2048_v2)
+    best_random["RANDOM_MLP_FC"] = "1"
+
+    configs = [
+        {
+            "env_overrides": {**best_random, "RANDOM_ATTN_V": "1"},
+            "description": "Random MLP fc + random V projection (extend JL to attention)",
+            "hypothesis": "HYP-074-randomv",
+        },
+        {
+            "env_overrides": {**best_random, "RANDOM_ATTN_K": "1"},
+            "description": "Random MLP fc + random K projection (extend JL to keys)",
+            "hypothesis": "HYP-074-randomk",
+        },
+        {
+            "env_overrides": {**best_random, "RANDOM_ATTN_V": "1", "RANDOM_ATTN_K": "1"},
+            "description": "Random MLP fc + V + K (maximum JL freezing)",
+            "hypothesis": "HYP-074-randomvk",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
