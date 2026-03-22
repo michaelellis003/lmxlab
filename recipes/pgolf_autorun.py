@@ -1063,6 +1063,25 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-073: Random MLP features (from random matrix theory / kernel methods)
+    hyp073_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-073")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp073_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048_v2, "RANDOM_MLP_FC": "1"},
+            "description": "Random MLP fc (freeze input proj, learn output only)",
+            "hypothesis": "HYP-073-randomfc",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
