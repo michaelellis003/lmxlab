@@ -32,10 +32,24 @@ resource "google_project_service" "compute" {
   service = "compute.googleapis.com"
 }
 
-# --- Firewall: allow SSH ---
-resource "google_compute_firewall" "allow_ssh" {
-  name    = "pgolf-allow-ssh"
-  network = "default"
+resource "google_project_service" "iap" {
+  project = google_project.pgolf.project_id
+  service = "iap.googleapis.com"
+}
+
+# --- VPC Network ---
+resource "google_compute_network" "pgolf_net" {
+  name                    = "pgolf-network"
+  project                 = google_project.pgolf.project_id
+  auto_create_subnetworks = true  # Auto-creates subnets in all regions
+
+  depends_on = [google_project_service.compute]
+}
+
+# --- Firewall: allow SSH via IAP tunnel ---
+resource "google_compute_firewall" "allow_iap_ssh" {
+  name    = "pgolf-allow-iap-ssh"
+  network = google_compute_network.pgolf_net.name
   project = google_project.pgolf.project_id
 
   allow {
@@ -43,15 +57,37 @@ resource "google_compute_firewall" "allow_ssh" {
     ports    = ["22"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["35.235.240.0/20"]  # Google IAP IP range
   target_tags   = ["pgolf-gpu"]
+}
 
-  depends_on = [google_project_service.compute]
+# --- Cloud Router + NAT (for outbound internet without external IP) ---
+resource "google_compute_router" "pgolf_router" {
+  name    = "pgolf-router"
+  network = google_compute_network.pgolf_net.name
+  project = google_project.pgolf.project_id
+  region  = var.region
+}
+
+resource "google_compute_router_nat" "pgolf_nat" {
+  name                               = "pgolf-nat"
+  router                             = google_compute_router.pgolf_router.name
+  project                            = google_project.pgolf.project_id
+  region                             = var.region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 }
 
 # --- GPU VM ---
+# g2 (L4) has GPU built into machine type — no guest_accelerator needed
+# a2 (A100) / a3 (H100) need guest_accelerator
+locals {
+  needs_guest_accelerator = startswith(var.machine_type, "a2-") || startswith(var.machine_type, "a3-")
+  vm_name                 = "pgolf-gpu"
+}
+
 resource "google_compute_instance" "pgolf_gpu" {
-  name         = "pgolf-a100"
+  name         = local.vm_name
   machine_type = var.machine_type
   zone         = var.zone
   project      = google_project.pgolf.project_id
@@ -66,22 +102,26 @@ resource "google_compute_instance" "pgolf_gpu" {
     instance_termination_action = var.spot ? "STOP" : null
   }
 
-  guest_accelerator {
-    type  = var.gpu_type
-    count = 1
+  dynamic "guest_accelerator" {
+    for_each = local.needs_guest_accelerator ? [1] : []
+    content {
+      type  = var.gpu_type
+      count = 1
+    }
   }
 
   boot_disk {
     initialize_params {
-      image = "deeplearning-platform-release/pytorch-latest-gpu"
+      image = "projects/deeplearning-platform-release/global/images/family/pytorch-2-7-cu128-ubuntu-2204-nvidia-570"
       size  = var.disk_size_gb
       type  = "pd-balanced"
     }
   }
 
   network_interface {
-    network = "default"
-    access_config {} # Public IP for SSH
+    network    = google_compute_network.pgolf_net.name
+    subnetwork = "projects/${google_project.pgolf.project_id}/regions/${var.region}/subnetworks/pgolf-network"
+    # No access_config = no external IP (use IAP tunnel for SSH instead)
   }
 
   metadata = {
@@ -91,7 +131,6 @@ resource "google_compute_instance" "pgolf_gpu" {
   metadata_startup_script = <<-EOT
     #!/bin/bash
     echo "=== pgolf GPU instance starting ==="
-    # Install sentencepiece for tokenizer training
     pip install -q sentencepiece 2>/dev/null || true
     echo "Startup complete at $(date)"
   EOT
@@ -103,14 +142,14 @@ resource "google_compute_instance" "pgolf_gpu" {
   }
 }
 
-output "instance_ip" {
-  value       = google_compute_instance.pgolf_gpu.network_interface[0].access_config[0].nat_ip
-  description = "Public IP of the GPU instance"
+output "ssh_command" {
+  value       = "gcloud compute ssh ${local.vm_name} --project=${var.project_id} --zone=${var.zone} --tunnel-through-iap"
+  description = "SSH command to connect via IAP tunnel (no external IP)"
 }
 
-output "ssh_command" {
-  value       = "gcloud compute ssh pgolf-a100 --project=${var.project_id} --zone=${var.zone}"
-  description = "SSH command to connect"
+output "delete_command" {
+  value       = "gcloud compute instances delete ${local.vm_name} --project=${var.project_id} --zone=${var.zone} --quiet"
+  description = "DELETE VM to stop ALL charges (including disk)"
 }
 
 output "estimated_cost" {

@@ -30,13 +30,13 @@ variable "zone" {
 variable "gpu_type" {
   description = "GPU accelerator type"
   type        = string
-  default     = "nvidia-h100-80gb"  # H100 80GB — same as competition, results transfer directly
+  default     = "nvidia-l4"  # L4 24GB — available NOW, $0.70/hr, for validation only
 }
 
 variable "machine_type" {
   description = "GCP machine type"
   type        = string
-  default     = "a3-highgpu-1g"  # 1x H100, 26 vCPUs, 234GB RAM, ~$7.35/hr
+  default     = "g2-standard-8"  # 1x L4, 8 vCPUs, 32GB RAM, ~$0.70/hr
 }
 
 variable "spot" {
@@ -48,5 +48,5 @@ variable "spot" {
 variable "disk_size_gb" {
   description = "Boot disk size in GB"
   type        = number
-  default     = 200  # Need space for FineWeb data (~45GB) + tokenization
+  default     = 100  # Validation only — just sp1024 data (~20GB) + code
 }
