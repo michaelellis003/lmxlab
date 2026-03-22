@@ -800,6 +800,35 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-063: Eval-time temperature scaling (compression theory insight)
+    hyp063_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-063")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp063_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "EVAL_TEMP": "0.9"},
+            "description": "Eval temp 0.9 (sharpen — model may be underconfident)",
+            "hypothesis": "HYP-063-temp09",
+        },
+        {
+            "env_overrides": {**best_sp2048, "EVAL_TEMP": "0.8"},
+            "description": "Eval temp 0.8 (sharpen more)",
+            "hypothesis": "HYP-063-temp08",
+        },
+        {
+            "env_overrides": {**best_sp2048, "EVAL_TEMP": "1.1"},
+            "description": "Eval temp 1.1 (soften — model may be overconfident)",
+            "hypothesis": "HYP-063-temp11",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

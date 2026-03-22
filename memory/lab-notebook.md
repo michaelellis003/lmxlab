@@ -6190,3 +6190,54 @@ that compression requires redundancy. At 7M params, we're already near
 the information-theoretic minimum for this model class. The path to
 better BPP is NOT compression but MORE PARAMETERS (via int6/int4
 quantization to fit more params in 16MB) or BETTER ARCHITECTURE.
+
+### 2026-03-21 [PLAN] HYP-063: Eval-time temperature scaling (from compression theory)
+
+**Insight from compression perspective:** BPB = cross-entropy / ln(2) / bytes_per_token.
+Cross-entropy is minimized when the model's predicted probabilities match the true
+data distribution. If the model is miscalibrated (overconfident or underconfident),
+a post-hoc temperature T can correct this.
+
+**Method:** After training, evaluate with different temperatures:
+logits_scaled = logits / T
+Then compute CE loss with scaled logits.
+
+T < 1.0 = sharpen predictions (model is underconfident)
+T > 1.0 = soften predictions (model is overconfident)
+
+**Implementation:** Add EVAL_TEMP env var to training script.
+Grid search: T ∈ {0.7, 0.8, 0.9, 0.95, 1.0, 1.05, 1.1, 1.2}
+
+**Zero cost:** No retraining, no extra params, no artifact change.
+Just a scalar applied at eval time.
+
+**Expected gain:** +0.01-0.05 BPB if model is miscalibrated.
+
+### 2026-03-21 [INTERPRET] HYP-063: Temperature scaling — T=1.0 is already optimal
+
+| Eval Temp | BPB | Delta |
+|-----------|-----|-------|
+| 0.8 | 1.7034 | -0.069 |
+| 0.9 | 1.7046 | -0.070 |
+| **1.0** | **1.6344** | **—** |
+| 1.1 | 1.6662 | -0.032 |
+
+**Verdict:** FALSIFIED. Temperature scaling hurts in both directions.
+The model's logit calibration (via softcap + z-loss) is already optimal.
+
+**Why T<1.0 hurts badly:** Sharpening increases confidence on all predictions.
+For correct predictions, this helps. But for incorrect predictions (which
+dominate in an undertrained model), sharpening increases the penalty
+disproportionately. CE = -log(p_correct), so overconfident wrong predictions
+are catastrophic.
+
+**Why T>1.0 hurts less:** Softening reduces confidence, which is more
+forgiving for wrong predictions but wastes probability mass on uniform.
+The 0.032 penalty is much smaller than sharpening's 0.070.
+
+**Cross-disciplinary lesson:** Temperature scaling works for CALIBRATION
+(matching predicted probabilities to actual frequencies). Our undertrained
+model is NOT miscalibrated in the usual sense — it's just uncertain about
+everything, and that uncertainty is correctly represented by T=1.0.
+Temperature scaling helps post-hoc for well-trained models on narrow
+tasks (classification), not for generative language models.
