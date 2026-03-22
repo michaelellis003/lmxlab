@@ -1115,6 +1115,40 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-075: Multi-seed validation of random fc + full stack (v2 data)
+    hyp075_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-075")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp075_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_random, "SEED": "42"},
+            "description": "Random fc + full stack, seed 42 (validation)",
+            "hypothesis": "HYP-075-seed42",
+        },
+        {
+            "env_overrides": {**best_random, "SEED": "43"},
+            "description": "Random fc + full stack, seed 43 (validation)",
+            "hypothesis": "HYP-075-seed43",
+        },
+        {
+            "env_overrides": {**best_sp2048_v2, "SEED": "42"},
+            "description": "No random fc (baseline), seed 42 (control)",
+            "hypothesis": "HYP-075-ctrl42",
+        },
+        {
+            "env_overrides": {**best_sp2048_v2, "SEED": "43"},
+            "description": "No random fc (baseline), seed 43 (control)",
+            "hypothesis": "HYP-075-ctrl43",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
