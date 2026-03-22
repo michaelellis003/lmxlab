@@ -1239,6 +1239,28 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-080: Palindrome weight sharing (from symmetry theory / U-Net)
+    hyp080_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-080")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp080_runs)
+
+    best_ortho = dict(best_random)
+    best_ortho["ORTHO_RANDOM_FC"] = "1"
+
+    configs = [
+        {
+            "env_overrides": {**best_ortho, "SHARING_PATTERN": "palindrome"},
+            "description": "Palindrome sharing (0,1,2,2,1,0) — skip-aligned symmetry",
+            "hypothesis": "HYP-080-palindrome",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",

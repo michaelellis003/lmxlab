@@ -6895,3 +6895,20 @@ position-dependent context mixing. The MLP doesn't need additional
 position awareness — it receives position-aware inputs from attention.
 
 **Best v2 BPP unchanged: 1.6408 (ortho random fc).**
+
+### 2026-03-22 [INTERPRET] HYP-080: Palindrome sharing — neutral
+
+**Palindrome (0,1,2,2,1,0):** 1.6448 BPB vs cyclic 1.6408 = -0.004 (noise)
+
+**The skip-symmetry hypothesis is not borne out.** Palindrome aligns each
+skip connection with the same block (encoder block i → decoder block i),
+but this doesn't measurably help. The model adapts to either pattern
+via the learned residual mix and scale parameters.
+
+**From group theory:** The palindrome sharing has reflection symmetry
+(Z₂ group action on the layer sequence). Cyclic sharing has translation
+symmetry (Z₃ group action, mod 3). Both are valid symmetries for the
+weight sharing constraint. The data doesn't strongly prefer either —
+suggesting the sharing pattern is not a major bottleneck.
+
+**Best v2 BPP unchanged: 1.6408 (cyclic + ortho random fc).**
