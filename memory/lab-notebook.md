@@ -6877,3 +6877,21 @@ keeps the number of params the same — fundamentally different.
 sp2048 + XSA_START_LAYER=4 + VALUE_RESID=1 + Z_LOSS=1e-4 + LOGIT_SOFTCAP=50
 + FP16_EMBED=1 + NORMUON=1 + EVAL_STRIDE=256 + RANDOM_MLP_FC=1 + ORTHO_RANDOM_FC=1
 → **1.6408 BPP** (best single run) / **1.6440 ± 0.002** (3-seed validated)
+
+### 2026-03-22 [INTERPRET] HYP-079: Position MLP bias — neutral
+
+**Position MLP bias:** 1.6445 BPP (vs 1.6408 ortho random fc = -0.004)
+Artifact: 8.2MB (1.4MB extra from 3 × 1024 × 512 pos biases)
+
+**Neutral.** Position information is already available to the MLP through
+the attention mechanism (RoPE encodes position in attention patterns,
+which shapes the MLP's input). Adding explicit position bias is redundant.
+
+**From signal processing:** Time-varying filters (position-dependent MLP)
+are useful when the input statistics CHANGE with position. In language,
+the statistics DO vary (sentence-initial tokens behave differently from
+mid-sentence tokens). But this variation is ALREADY captured by attention's
+position-dependent context mixing. The MLP doesn't need additional
+position awareness — it receives position-aware inputs from attention.
+
+**Best v2 BPP unchanged: 1.6408 (ortho random fc).**

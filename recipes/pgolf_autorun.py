@@ -1220,6 +1220,25 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-079: Position-dependent MLP bias (time-varying filter from signal processing)
+    hyp079_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-079")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp079_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_random, "ORTHO_RANDOM_FC": "1", "POS_MLP_BIAS": "1"},
+            "description": "Position-dependent MLP bias (position-aware nonlinear transform)",
+            "hypothesis": "HYP-079-posmlp",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
