@@ -6465,3 +6465,56 @@ discretization changes. For language modeling, the "operator" (what the
 model is trying to learn) changes with context length. Short context =
 n-gram-like model. Long context = discourse-level model. They're
 fundamentally different tasks, not different resolutions of the same task.
+
+### 2026-03-21 [PLAN] HYP-068: Shared Q-K projections (from metric learning)
+
+**Core problem (linear algebra / metric learning):**
+"Is the attention bilinear form Q^T K = x^T W_q^T W_k x better served by
+TWO independent matrices (W_q, W_k) or ONE shared matrix (W_qk)?"
+
+**From metric learning (Mahalanobis distance):**
+With W_q = W_k = W, attention becomes x^T W^T W x = ||Wx||^2, a learned
+metric. This is provably sufficient for measuring similarity — the
+Mahalanobis distance is the optimal distance metric for Gaussian data.
+
+**Key insight:** RoPE already breaks Q-K symmetry (different rotations per
+position). And q_gain scales Q independently. So even with shared weights,
+Q ≠ K at runtime. The question is whether the LEARNED WEIGHT MATRICES
+need to be different.
+
+**Parameter savings:** 512×512 = 262K params per block × 3 blocks = 786K
+freed. That's 11% of total params — could reallocate to wider MLP.
+
+**Implementation:** Set c_k = c_q (share weight tensor) in CausalSelfAttention.
+Zero code change to forward pass — Q and K are still computed separately
+via the shared weight, then modified by RoPE and q_gain.
+
+**Quality gates:**
+- Gate 1: YES — would change attention design if it works
+- Gate 2: YES — parameter savings matter more at small scale
+- Gate 3: NOVEL — QK sharing isn't standard (most share KV, not QK)
+- Gate 4: UNCERTAIN — could go either way
+- Gate 5: YES — clean iso-step experiment
+- Gate 6: YES — never tested
+
+### 2026-03-21 [INTERPRET] HYP-068: Shared Q-K weights — attention needs asymmetry
+
+**Shared QK:** 1.7255 BPB — worse by 0.091 (12.5σ, highly significant).
+
+**From metric learning (Mahalanobis distance):**
+With shared Q=K weights, attention becomes a symmetric similarity metric:
+score(i,j) = x_i^T W^T W x_j = score(j,i) (before causal masking).
+This loses the ASYMMETRY between "what I'm looking for" (query) and
+"what I contain" (key).
+
+**Cross-disciplinary lesson (from information retrieval):**
+In document retrieval, queries and documents are fundamentally different
+objects. A query like "how to bake bread" and a document about bread
+have different representations despite being "related." Sharing Q-K
+weights forces the model to use the same representation for both roles.
+This is like forcing a search engine to use the same embedding for
+queries and documents — well-known to underperform dual-encoder
+approaches.
+
+**Belief update:** Separate Q and K projections are load-bearing.
+The ~262K extra params per block are well-spent on asymmetric attention.

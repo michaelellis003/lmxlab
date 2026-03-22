@@ -937,6 +937,25 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-068: Shared Q-K projections (Mahalanobis attention, from metric learning)
+    hyp068_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-068")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp068_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_sp2048, "SHARE_QK": "1"},
+            "description": "Shared Q-K weights (Mahalanobis attention, saves 11% params)",
+            "hypothesis": "HYP-068-shareqk",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
