@@ -1149,6 +1149,30 @@ def propose(
     if n < len(configs):
         return configs[n]
 
+    # HYP-076: Wider random MLP (more random features = better kernel approx)
+    hyp076_runs = [
+        r for r in past_results
+        if r.get("config", {}).get("hypothesis", "").startswith("HYP-076")
+        and r.get("wall_time_s", 0) > 500
+    ]
+    n = len(hyp076_runs)
+
+    configs = [
+        {
+            "env_overrides": {**best_random, "MLP_MULT": "3"},
+            "description": "Random fc + MLP 3x (1536 random features vs 1024)",
+            "hypothesis": "HYP-076-mlp3x",
+        },
+        {
+            "env_overrides": {**best_random, "MLP_MULT": "4"},
+            "description": "Random fc + MLP 4x (2048 random features vs 1024)",
+            "hypothesis": "HYP-076-mlp4x",
+        },
+    ]
+
+    if n < len(configs):
+        return configs[n]
+
     return {
         "env_overrides": {"ITERATIONS": "5000"},
         "description": "done",
