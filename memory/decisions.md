@@ -324,3 +324,35 @@ skip connections, relu^2, NorMuon) are all iso-step comparisons.
 SWA and QAT(INT8) tested and found unhelpful locally. Everything
 else is confounded by the 64x batch size mismatch.
 **Source:** B-022, HYP-024 through HYP-031 results
+
+---
+
+## DEC-016: Cross-Disciplinary Research Approach (MANDATORY)
+
+**Date:** 2026-03-21
+**Status:** accepted
+**Context:** The best research progress comes from importing ideas
+from other fields, not just reading transformer/LLM papers. Our
+weight sharing insight came from depth recurrence, but we could
+have found it faster by searching "parameter reuse in iterative
+solvers" in numerical methods literature.
+**Decision:** Every literature review MUST include at least 2
+searches outside ML/deep learning. Before searching, identify the
+CORE PROBLEM in abstract terms (e.g. "approximate a function with
+K parameters under memory constraint M") and search for how other
+fields solved analogous problems.
+**Required fields to search:**
+- Numerical linear algebra (low-rank approximation, matrix compression)
+- Approximation theory (polynomials, splines, wavelets)
+- Statistics (shrinkage, regularization, small-sample inference)
+- Information theory (rate-distortion, source coding)
+- Signal processing (filter banks, compression)
+- Numerical methods (multigrid, iterative solvers, preconditioning)
+- Computer science (data structures, hashing, streaming algorithms)
+**Rationale:** Cross-pollination is how breakthroughs happen.
+Attention IS dictionary lookup. Weight sharing IS multigrid.
+Quantization IS lossy coding. The ML community often reinvents
+solutions that other fields perfected decades ago.
+**Trade-off:** Adds ~10 minutes per literature review. Worth it
+for the chance of finding a fundamentally better approach.
+**Source:** User directive (2026-03-21)

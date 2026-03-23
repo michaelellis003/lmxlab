@@ -7143,3 +7143,25 @@ well-optimized. Our innovations were solving problems the baseline doesn't have.
 2. Depth experiments (9L vs 11L vs 13L at iso-params)
 3. Int6 quantization (math, not regime-dependent)
 4. Competition meta-recipe reproduction first, then iterate
+
+### 2026-03-23 [PLAN] Batch-invariant experiments on 22M competition config
+
+**New methodology:** Test on the ACTUAL competition config (11L/9u/8h/MLP3x/22M)
+locally with multi-checkpoint learning curves. Log BPP every 1000 steps up to
+~9000 steps (10 PFLOPs, ~32 min per run). Compare across 2 seeds.
+
+**Experiments (in priority order):**
+1. sp2048 vs sp1024 on 22M
+2. Head dim: 4h (dim=128) vs 8h (dim=64) on 22M
+3. RoPE base: 10K vs 100K
+4. AttnRes + VR at 11L unique
+5. GQA ratio: 4h/4kv vs 8h/4kv
+6. Activation: relu² vs SwiGLU
+
+**Config:** UNIQUE_BLOCKS=9, NUM_LAYERS=9, NUM_HEADS=8, NUM_KV_HEADS=4,
+MODEL_DIM=512, MLP_MULT=3, TRAIN_SEQ_LEN=1024, ITERATIONS=9000,
+MAX_WALLCLOCK_SECONDS=3600, TRAIN_BATCH_TOKENS=8192, GRAD_ACCUM_STEPS=1,
+VAL_LOSS_EVERY=1000
+
+**Each run:** ~32 min, 9 checkpoints, 10 PFLOPs
+**Total:** ~12 runs × 32 min = 6.4 hours (can parallelize seeds)
