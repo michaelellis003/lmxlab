@@ -7031,3 +7031,88 @@ SSH unstable under memory pressure). These need the H100 with more VRAM.
 **Budget remaining:** ~$19.12 of $20
 
 **H100 quota:** Re-request on March 24 (48hr billing history).
+
+### 2026-03-23 [REVIEW] CRITICAL: Why did local findings fail to transfer to L4?
+
+**The facts:**
+- Local innovations: +0.059 BPP over local baseline (validated, 3-seed)
+- L4 GPU result: Full stack was -0.009 BPP WORSE than L4 baseline
+
+**ROOT CAUSE ANALYSIS:**
+
+**Problem 1: Different model configs (BIGGEST ISSUE)**
+We tested innovations on LOCAL config (6L/3u/4h/MLP2x/sp2048/7M params)
+but ran GPU with COMPETITION config (11L/9u/8h/MLP3x/sp1024/22M params).
+These are completely different models. Our innovations were TUNED for the
+local config and don't necessarily transfer to the competition config.
+
+**Problem 2: Different baselines**
+Local baseline: No WD, no SWA, 8K batch, very noisy gradients
+GPU baseline: WD=0.02, SWA=0.5, 32K batch, cleaner gradients
+Our innovations (z-loss, softcap tuning) may be REDUNDANT with WD+SWA
+which already handle the same problems (logit scale, weight smoothing).
+
+**Problem 3: Throughput cost at different scales**
+XSA adds ~5% per-step overhead. Locally at 1900 steps, this costs ~95 steps.
+On L4 at 3050 steps, this costs ~150 steps. On H100 at 7400 steps, ~370 steps.
+The ABSOLUTE step cost grows with scale, while the per-step quality gain
+is fixed. At some scale, the cost exceeds the benefit.
+
+**Problem 4: We never tested the GPU config locally**
+We could have run 11L/9u/8h/MLP3x locally at 200 iso-steps to validate
+our innovations on the ACTUAL config they'd be deployed on. We tested
+at 6L/3u/4h instead because it was faster locally.
+
+**LESSONS LEARNED:**
+1. ALWAYS test on the SAME config you'll deploy on
+2. Innovations that help a WEAK baseline may not help a STRONG baseline
+3. Throughput cost matters more at scale (more total steps to lose)
+4. Local iso-step tests should use the TARGET architecture
+
+### 2026-03-23 [DECISION] New scaling strategy based on transfer failure
+
+**OLD APPROACH (failed):**
+1. Optimize on Mac (6L/3u/4h/7M, 8K batch)
+2. Select best innovations from 80+ experiments
+3. Port to GPU config (11L/9u/8h/22M, 32K batch)
+4. Hope they transfer → THEY DIDN'T
+
+**NEW APPROACH:**
+
+**Rule 1: Test on the TARGET config**
+Run the COMPETITION config (11L/9u/8h/MLP3x/22M params) locally.
+Yes, it gets fewer steps (~800 in 600s vs ~1900 for 6L). But the
+results WILL transfer because it's the same model.
+
+**Rule 2: Use iso-step comparisons at 200 steps**
+200 steps takes ~45s locally on the 22M model. Compare baseline
+vs innovation at 200 iso-steps. This removes throughput confounds
+and tests pure per-step quality on the ACTUAL architecture.
+
+**Rule 3: Only test UNIVERSAL techniques**
+From scaling law literature, these transfer across scales:
+- ✅ Depth/width ratio (architecture geometry)
+- ✅ Activation function choice (relu² vs SwiGLU)
+- ✅ Attention head configuration
+- ✅ Quantization (int6/int8 — math doesn't change)
+- ✅ Tokenizer choice (sp2048)
+These DON'T transfer:
+- ❌ Regularization strength (batch-dependent)
+- ❌ Architectural constraints (skip patterns, VR, XSA)
+- ❌ Loss function tuning (z-loss weight, softcap)
+- ❌ Optimizer schedule (warmdown, momentum)
+
+**Rule 4: Account for optimizer's curse**
+With N experiments, expect ~sqrt(N) * noise_floor of selection bias.
+At 80 experiments and σ=0.007, bias ≈ sqrt(80) * 0.007 ≈ 0.06 BPP.
+Our measured +0.059 is EXACTLY in this range — likely 50% signal, 50% noise.
+
+**Rule 5: Start from the competition baseline, not our own**
+Take PR #198's config as the starting point. Add ONE innovation at a
+time. If it helps on 200 iso-steps with the 22M model, it transfers.
+
+**IMMEDIATE ACTION ITEMS:**
+1. Set up 200-step iso-step comparison framework on the 22M competition config
+2. Re-test XSA, VR, z-loss individually at 200 steps on 22M
+3. Only carry forward techniques that show >0.01 BPP at iso-step on 22M
+4. Re-request H100 quota on March 24 for final validation
