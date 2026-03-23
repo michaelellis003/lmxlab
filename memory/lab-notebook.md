@@ -7116,3 +7116,30 @@ time. If it helps on 200 iso-steps with the 22M model, it transfers.
 2. Re-test XSA, VR, z-loss individually at 200 steps on 22M
 3. Only carry forward techniques that show >0.01 BPP at iso-step on 22M
 4. Re-request H100 quota on March 24 for final validation
+
+### 2026-03-23 [INTERPRET] L4 GPU validation — ALL innovations failed
+
+**Final L4 results (32K effective batch, sp1024, 11L/9u/8h/22M params):**
+
+| Config | BPB | Steps | vs Baseline |
+|--------|-----|-------|-------------|
+| Baseline (default + SWA) | 1.4784 | 3050 | — |
+| Full stack (XSA+VR+z-loss+softcap50) | 1.4873 | 2897 | **-0.009** |
+| Control (SWA only) | 1.4814 | 3025 | -0.003 |
+| Full + random fc | ~1.52* | 3170 | **-0.043** |
+
+*Eval killed early, pre-quant BPP used.
+
+**EVERY local innovation failed to transfer.** Root causes identified above.
+
+**GCP cost total: $3.27 (well under $20 budget)**
+VM deleted, zero ongoing charges.
+
+**KEY LESSON: The competition baseline (11L + SWA + WD + MLP3x) is already
+well-optimized. Our innovations were solving problems the baseline doesn't have.**
+
+**What WOULD be valuable on H100:**
+1. sp2048 tokenizer (+0.034 is a DATA change, not architecture — should transfer)
+2. Depth experiments (9L vs 11L vs 13L at iso-params)
+3. Int6 quantization (math, not regime-dependent)
+4. Competition meta-recipe reproduction first, then iterate
