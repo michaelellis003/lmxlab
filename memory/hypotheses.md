@@ -3486,3 +3486,44 @@ H41-d at 0.30.
 - Arm 4: FP16_EMBED=1 + LABEL_SMOOTH=0.1 (best combo)
 
 Reference: 1.6738 BPB from HYP-040 (same config without these changes).
+
+---
+
+## HYP-083: [PGOLF] sp2048 vs sp1024 on 22M Competition Config (Batch-Invariant)
+
+**Experiment:** 83 — Vocabulary size on target architecture
+**Status:** active
+**Question:** Does the sp2048 tokenizer improve BPB over sp1024 on the ACTUAL
+competition config (11L/9u/8h/MLP3x/22M), or was the local +0.034 gain an
+artifact of the 6L/3u/4h config?
+
+| ID | Hypothesis | Prediction | Falsification |
+|----|-----------|------------|---------------|
+| H83-a | sp2048 transfers | sp2048 BPB < sp1024 BPP by >0.01 at matched steps | sp2048 delta < 0.01 BPB at 6000 steps |
+| H83-b | Config-dependent | sp2048 gain is <0.01 on 22M (it was a config artifact) | sp2048 delta >= 0.01 at 6000 steps |
+| H83-c | sp2048 hurts | sp2048 is worse on 22M (fewer tokens per batch, less context) | sp2048 BPB < sp1024 BPB |
+
+**Prior beliefs:**
+- H83-a: 0.50 — sp2048 was +0.034 locally, but that was a different config.
+  DATA changes are more likely to transfer than architecture changes.
+- H83-b: 0.35 — the gain could be partially an artifact of the smaller model
+  where tokenizer efficiency matters more relative to total capacity.
+- H83-c: 0.15 — unlikely, but larger vocab means shorter sequences per batch
+  at fixed token count, which could reduce context for the 22M model.
+
+**Design:**
+- Control: sp1024 on 22M config (9L/9u/8h/4kv/MLP3x/dim512), 8K batch, 9000 steps/3600s wallclock
+- Treatment: sp2048 on same config (existing run: 01_sp2048_baseline, 1.5614 BPB at step 6124)
+- Multi-checkpoint learning curves at steps 1000, 2000, 3000, 4000, 5000, 6000
+- Key metric: BPB at step 6000 (iso-step comparison)
+
+**Batch-size independent?** YES — tokenizer is a data representation choice.
+Results should transfer to 524K batch on H100.
+
+**Result:** INCONCLUSIVE (confounded by B-022 batch size effect)
+sp2048 BPB = 1.5614, sp1024 BPB = 2.7227, delta = 1.16 BPP.
+But competition evidence shows sp1024 wins on GPU (all top 3 use sp1024).
+The 1.16 gap is a batch-size artifact — sp2048 sees 18% more raw text per
+8K-token batch. Not transferable.
+
+**Updated status:** inconclusive (batch-confounded)

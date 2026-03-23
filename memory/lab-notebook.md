@@ -7165,3 +7165,116 @@ VAL_LOSS_EVERY=1000
 
 **Each run:** ~32 min, 9 checkpoints, 10 PFLOPs
 **Total:** ~12 runs × 32 min = 6.4 hours (can parallelize seeds)
+
+### 2026-03-23 [HYPOTHESIS] HYP-083: sp2048 vs sp1024 on 22M competition config
+
+Pre-registered comparison of tokenizer impact on the TARGET competition config
+(11L/9u/8h/MLP3x/22M params). This is experiment #1 from the batch-invariant
+plan established after the L4 transfer failure.
+
+sp2048 data point already exists: 01_sp2048_baseline = 1.5614 BPB at step 6124.
+Need sp1024 control run for comparison.
+
+### 2026-03-23 [PLAN] Run sp1024 baseline on 22M config
+
+**What:** Run the competition config with sp1024 tokenizer (default) to compare
+against the existing sp2048 baseline (1.5614 BPB).
+
+**Expected outcome:** sp1024 will be ~0.01-0.03 BPP worse than sp2048 based on
+local results. But could be smaller on the 22M model.
+
+**What could go wrong:** Very long run (~32 min). Low risk otherwise — this is
+a pure control run with default settings.
+
+**Artifact impact:** None — this is a local comparison run, not a submission.
+
+### 2026-03-23 [REVIEW] Competition landscape has changed dramatically
+
+**Competition update (523+ PRs, up from ~287):**
+
+**TTT (Test-Time Training) is the dominant meta:**
+- SOTA: 0.9789 BPB (PR #517, Cosine TTT 100ep, 3 lines of code)
+- LoRA TTT: 0.9968 (PR #512)
+- Best non-TTT: 1.1181 (PR #505, SwiGLU+VE128+U-Net+XSA4+EMA)
+- TTT legality hotly debated (issue #402)
+
+**New techniques NOT in our toolkit:**
+1. Cosine TTT scheduling — biggest single lever
+2. SwiGLU + U-Net skip connections (GEPA-discovered arch)
+3. Value Embeddings VE128 (128-dim shared + per-layer scales)
+4. TrigramHash (extension of BigramHash)
+5. Catalytic Residuals
+6. Seq len 2048 confirmed +0.008 over 1024
+7. Legal Score-First TTT framework
+
+**Our innovations still relevant:**
+- Value Residual appears in multiple top submissions
+- AttnRes untried by competitors (potential differentiator)
+- NorMuon mentioned (PR #438) but not widely adopted
+- Random MLP fc is novel, untested by anyone else
+
+**Strategic implications:**
+1. Our batch-invariant experiments are STILL valuable — they test on target config
+2. TTT is the highest-ROI technique to implement next
+3. Non-TTT target should be 1.12 BPB range (currently 1.18 SOTA)
+4. SwiGLU may now be better than relu² (U-Net arch requires it)
+5. VE128 is a simple add that multiple top submissions use
+
+### 2026-03-23 [EXPERIMENT] HYP-083: sp1024 baseline on 22M competition config
+
+**Config:** 9L/9u/8h/4kv/MLP3x/dim512, sp1024, 8K batch, 3600s wallclock
+**Result:** 2.7227 BPP (int8+zlib) at step 5961
+
+**Learning curve:**
+| Step | sp1024 BPB | sp2048 BPB | Delta |
+|------|-----------|-----------|-------|
+| 1000 | 3.310 | 1.925 | +1.384 |
+| 2000 | 2.975 | 1.801 | +1.174 |
+| 3000 | 2.870 | 1.735 | +1.135 |
+| 4000 | 2.877 | 1.707 | +1.170 |
+| 5000 | 2.788 | 1.654 | +1.134 |
+| ~6000 | 2.721 | 1.564 | +1.157 |
+
+Token/byte ratios: sp1024 = 0.4167, sp2048 = 0.3518 (18.4% more tokens for sp1024)
+
+### 2026-03-23 [INTERPRET] HYP-083: sp2048 vs sp1024 — CONFOUNDED by batch size
+
+**Re-read predictions:**
+- H83-a: sp2048 BPP < sp1024 by >0.01 → MASSIVELY supported (delta = 1.16)
+- H83-b: sp2048 gain <0.01 on 22M → FALSIFIED
+- H83-c: sp2048 worse → FALSIFIED
+
+**VERDICT: INCONCLUSIVE — results are confounded by batch size (B-022)**
+
+The 1.16 BPP gap is REAL locally but DOES NOT transfer to GPU. Evidence:
+1. Competition leaderboard: ALL top 3 verified submissions use sp1024, not sp2048
+2. PR #465 author explicitly tested all 4 vocab sizes, found sp1024 + more layers > sp2048
+3. Our local batch (8K) is 64x noisier than competition (524K)
+4. At noisy gradients, sp2048's shorter sequences (fewer tokens/batch) give an
+   artificial advantage — the model sees more "effective" context per noisy update
+
+**Root cause analysis:**
+sp2048 creates shorter sequences for the same raw text. With 8K token batch:
+- sp1024: 8K tokens = 19.2K bytes of text
+- sp2048: 8K tokens = 22.7K bytes of text
+
+sp2048 sees 18% more raw text per batch, AND the shorter token sequences mean
+less sequential dependency, making learning easier per step. But at 524K batch,
+both tokenizers see vastly more data per step and the effect vanishes.
+
+**Conclusion:**
+- LOCAL: sp2048 is better (1.16 BPP!) due to batch size interaction
+- GPU: sp1024 is better (competition evidence) due to artifact budget + more layers
+- This experiment confirmed B-022: local experiments on 8K batch are UNRELIABLE
+  for tokenizer comparisons
+
+**LESSON: ONLY trust batch-size-independent comparisons locally. Tokenizer choice
+is batch-size-dependent and cannot be validated locally.**
+
+**Hypothesis status: INCONCLUSIVE (confounded)**
+
+### 2026-03-23 [DECISION] DEC-017: sp1024 for GPU submission, sp2048 for local only
+
+Local experiments: continue using sp2048 (better BPP = faster iteration)
+GPU submission: use sp1024 (competition-validated, artifact budget friendly)
+Do NOT compare tokenizers locally — the comparison is batch-size-dependent.

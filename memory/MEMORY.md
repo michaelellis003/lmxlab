@@ -95,15 +95,17 @@ literature:
 - Literature favors H1b-d (null/scale, prior 0.65) and H1b-a
   (LR mismatch, prior 0.70)
 
-## Current State (2026-03-21)
-- **Parameter Golf competition**: 42 hypotheses tested, best local BPB **1.6679**
-- **Best config**: 6L+3u+4h/4kv + XSA_START_LAYER=4 + VR + NorMuon + stride=256
-  + FP16_EMBED=1 + Z_LOSS=1e-4
-- **Session findings**: XSA+VR super-additive (+0.073), z-loss +0.005, fp16 +0.001
-- **DEC-015**: Local Mac iteration complete, GPU needed for remaining work
-- **5 GPU submission variants** ready in `parameter-golf/records/track_10min_16mb/`
-- Competition SOTA: ~1.13 BPB (PR #287: XSA+EMA+Int6)
-- **Key techniques proven locally**: 4 heads (head_dim=128), 3 unique blocks,
-  relu^2, sliding window eval, NorMuon, XSA, Value Residual
+## Current State (2026-03-23)
+- **Parameter Golf competition**: 83 hypotheses tested, best local BPB **1.6440**
+- **Competition EXPLODED**: 523+ PRs, TTT is dominant meta (SOTA 0.9789 BPB)
+- **Best non-TTT**: 1.1181 BPB (PR #505: SwiGLU+VE128+U-Net+XSA4+EMA)
+- **L4 transfer FAILED**: All local innovations failed on competition config
+- **New strategy**: Test on actual 22M competition config locally
+- **HYP-083 (sp2048 vs sp1024)**: CONFOUNDED — 1.16 BPP gap is batch-size artifact
+- **DEC-017**: sp1024 for GPU submission, sp2048 for local only
+- **Key new techniques to implement**: TTT (cosine scheduling), VE128, SwiGLU+U-Net
 - Training script: `/Users/michaelellis/Projects/parameter-golf/train_gpt_mlx.py`
 - Recipe: `recipes/pgolf_autorun.py` (propose() is mutable)
+
+## References
+- [scaling-book-notes.md](scaling-book-notes.md) — JAX ML Scaling Book: formulas, H100 specs, pgolf relevance

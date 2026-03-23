@@ -3227,3 +3227,244 @@ No published work combines XSA with Value Residual Learning. Super-additive
 interaction (+0.073 vs +0.035 expected sum) likely driven by information
 factorization: XSA specializes attention in context, VR preserves token
 identity via first-layer V bypass. DWA is redundant when XSA is present.
+
+---
+
+## LIT-151: Scaling Laws with Vocabulary (Tao et al. 2024)
+
+**Title:** Scaling Laws with Vocabulary: Larger Models Deserve Larger Vocabularies
+**Authors:** Tao et al. (SAIL, Sea AI Lab)
+**Venue:** NeurIPS 2024 — **Grade A**
+**URL:** https://arxiv.org/abs/2407.13623
+
+**Key finding:** Optimal vocabulary size scales as N_v^opt ~ N_nv^0.83
+(power law with gamma=0.83). Vocabulary should scale SLOWER than non-vocab
+params. For their smallest model (33M non-vocab params), optimal vocab is
+37-43K. Extrapolating to 22M non-vocab params: ~30-35K optimal vocab.
+Both sp1024 and sp2048 are FAR below the compute-optimal vocab for a
+22M model. Going from 1024 to 2048 moves in the right direction but
+is still 15-17x below optimal.
+
+**Caveats:**
+- Their formula assumes compute-optimal training (Chinchilla regime).
+  pgolf is fixed-time, not fixed-FLOP.
+- Larger vocab = larger embedding table = fewer layers in 16MB budget.
+  The formula doesn't account for artifact size constraints.
+- Scale transfer tax: they tested 33M-3B, extrapolating down to 22M.
+
+**Relevance:** Strong theoretical support for sp2048 > sp1024, and even
+sp4096 > sp2048. But the 16MB artifact constraint creates a countervailing
+force (more vocab params = fewer model params).
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-152: Length-MAX Tokenizer (Dong & Su, 2025)
+
+**Title:** Length-MAX Tokenizer for Language Models
+**Authors:** Dong Dong and Weijie Su
+**Venue:** arXiv preprint — **Grade C**
+**URL:** https://arxiv.org/abs/2511.20849
+
+**Key finding:** Optimizing for average token LENGTH rather than frequency
+alone reduces token count by 13-18% vs BPE at same vocab size. This
+reduces training steps and inference latency. For 124M params, optimal
+vocab ~32K. Key insight: longer tokens compress better but are harder
+to predict, so there's an optimal length distribution.
+
+**Relevance:** Suggests that tokenizer QUALITY (merge strategy) matters
+as much as vocab SIZE. Our stock SentencePiece may not be optimal.
+But at 1024-2048 vocab, merge strategy differences are small.
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-153: Rate-Distortion Theory and Optimal Codebook Size
+
+**Title:** Quantization (Gray & Neuhoff, IEEE Trans. IT, 1998)
+**Authors:** Gray, R.M. and Neuhoff, D.L.
+**Venue:** IEEE Transactions on Information Theory — **Grade A**
+**URL:** https://www.math.ucdavis.edu/~saito/data/quantization/44it06-gray.pdf
+
+**Key finding (cross-disciplinary):** Rate-distortion theory shows that
+optimal codebook size K scales exponentially with source entropy and
+inversely with distortion tolerance: K ~ 2^(nR) where n is block length
+and R is rate. CRITICAL INSIGHT: vector quantization (blocking symbols
+into groups) always achieves better rate-distortion than scalar
+quantization. This is the information-theoretic analog of "larger vocab
+= fewer tokens = better compression."
+
+**Analogy to tokenization:** A tokenizer IS a vector quantizer over
+character sequences. Increasing vocab from 1024 to 2048 is equivalent
+to increasing the codebook size, which rate-distortion theory says
+should reduce distortion (prediction error) at the same rate (model
+capacity). The bound is: D(R) decreases monotonically with R (codebook
+size), but with diminishing returns. The marginal gain from 1K->2K is
+larger than 2K->4K.
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-154: Sparse Coding Dictionary Size
+
+**Title:** Online Dictionary Learning for Sparse Coding (Mairal et al. 2009)
+**Authors:** Mairal, Bach, Ponce, Sapiro
+**Venue:** ICML 2009 — **Grade A**
+**URL:** https://www.di.ens.fr/~fbach/mairal_icml09.pdf
+
+**Key finding (cross-disciplinary):** In sparse coding, overcomplete
+dictionaries (K > signal dimension L) consistently outperform complete
+ones. Typical ratio is K = 2-4x L. But the improvement has diminishing
+returns: going from K=L to K=2L is a large gain; K=2L to K=4L is
+smaller. The optimal dictionary size depends on (1) signal complexity,
+(2) sparsity constraint, and (3) available training data.
+
+**Analogy to tokenization:** The tokenizer vocabulary IS a dictionary
+for sparse coding of text. Each document is represented as a sparse
+sequence of dictionary elements. Overcomplete dictionaries (larger
+vocab) give better representations, but with diminishing returns.
+The "sparsity constraint" analog is sequence length: larger vocab
+means shorter sequences (sparser representation).
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-155: Parameter Golf PR #122 (sp2048 Record, 1.160 BPB)
+
+**Source:** openai/parameter-golf PR #122 — **Grade D**
+**Author:** sproos
+**URL:** https://github.com/openai/parameter-golf/pull/122
+
+**Key finding:** sp2048 + 8L + 3x MLP + int6 + fp16 embed + SWA +
+NorMuon + sliding window stride=64 achieved 1.160 BPB on 8xH100.
+The author traded 1 layer (9L->8L) for the larger vocab, noting:
+"It's really a question about whether we want more diversity in vocab
+or more resolution in representation." sp2048 required sacrificing
+a layer to fit in 16MB.
+
+**Relevance:** Direct evidence that sp2048 can beat sp1024 at the
+competition level, but the tradeoff is real: 1 fewer layer.
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-156: Parameter Golf PR #78 (sp8192 Record, 1.186 BPB)
+
+**Source:** openai/parameter-golf PR #78 — **Grade D**
+**Author:** sproos
+**URL:** https://github.com/openai/parameter-golf/pull/78
+
+**Key finding:** sp8192 with selective quantization (int6 weights,
+int8 embeddings) achieved 1.186 BPB. Had to sacrifice layers (8L
+instead of 9L) for the large embedding table. Step time increased
+from 43ms to 64ms (slower per step).
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-157: Parameter Golf PR #465 (sp1024 Record, 1.1508 BPB)
+
+**Source:** openai/parameter-golf PR #465 — **Grade D**
+**Author:** LoquiAuris
+**URL:** https://github.com/openai/parameter-golf/pull/465
+
+**Key finding:** sp1024 with 10L d=512 + int5-MLP + int6-attn +
+BigramHash + SmearGate achieved 1.1508 BPB. Author EXPLICITLY tested
+sp1024, sp2048, sp4096, sp8192 and concluded: "sp1024 with 10 layers
+at full d=512 width outperformed all sp8192 configurations. The layer
+count advantage (10L vs 6-8L) at d=512 exceeds the tokenizer
+efficiency gain on H100 with full training."
+
+**CRITICAL:** This is the strongest evidence AGAINST larger vocab in
+pgolf. The 16MB constraint makes the layer-vs-vocab tradeoff favor
+layers at current quantization levels. sp1024 wins because it
+allows more layers.
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-158: Parameter Golf PR #384 (Tokenizer Ablation, Null Result)
+
+**Source:** openai/parameter-golf PR #384 — **Grade D**
+**Author:** (Meta-TTT submission)
+**URL:** https://github.com/openai/parameter-golf/pull/384
+
+**Key finding:** Custom BPE tokenizer (split_digits=False, max_len=64)
+gave -5.7% fewer tokens/byte at v8192 but NO BPP IMPROVEMENT
+(+0.0006 worse). "Longer merged tokens are harder to predict per-token,
+offsetting compression gains. Explains why community converged on
+stock v1024."
+
+**CRITICAL INSIGHT:** Compression efficiency != prediction efficiency.
+Longer tokens are harder to predict, which can offset the sequence
+length reduction from larger vocab.
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-159: Parameter Golf PR #198 (SOTA 1.1318, sp1024)
+
+**Source:** openai/parameter-golf PR #198 — **Grade D**
+**URL:** https://github.com/openai/parameter-golf/pull/198
+
+**Key finding:** Current VERIFIED SOTA (1.1318 BPB) uses sp1024 with
+11 layers. More layers (11L) at sp1024 is better than fewer layers at
+larger vocab. Baseline also uses sp1024.
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-160: Parameter Golf PR #236 (Second Place 1.1400, sp1024)
+
+**Source:** openai/parameter-golf PR #236 — **Grade D**
+**URL:** https://github.com/openai/parameter-golf/pull/236
+
+**Key finding:** Second place (1.1400 BPB) also uses sp1024. Key
+finding was that SMALLER batch (524K vs 786K) gives more steps and
+wins in fixed-time training.
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-161: Parameter Golf PR #251 (sp4096 Record, 1.1596 BPB)
+
+**Source:** openai/parameter-golf PR #251 — **Grade D**
+**URL:** https://github.com/openai/parameter-golf/pull/251
+
+**Key finding:** sp4096 + 11L d=432 + MLP3x achieved 1.1596 BPB.
+Note the narrower dim (432 vs 512) to fit the larger embedding table.
+This is 0.028 BPB worse than the sp1024 SOTA (1.1318), suggesting
+the vocab-vs-width tradeoff favors width at this parameter budget.
+
+**Cited in:** Vocab size literature review (2026-03-23)
+
+---
+
+## LIT-162: Parameter Golf Leaderboard Vocab Distribution
+
+**Source:** Analysis of top parameter-golf submissions — **Grade D**
+
+**Key finding (meta-analysis):** Among top submissions:
+- SOTA #198 (1.1318): sp1024, 11L
+- #236 (1.1400): sp1024, 11L
+- #465 (1.1508): sp1024, 10L
+- #122 (1.160): sp2048, 8L
+- #251 (1.1596): sp4096, 11L d=432
+- #217 (1.1753): sp4096, 10L d=496
+- #78 (1.186): sp8192, 8L
+
+**Pattern:** The top 3 submissions all use sp1024. Larger vocab
+submissions cluster 0.02-0.05 BPB worse. The competition has
+empirically converged on sp1024 as optimal for the 16MB constraint.
+
+**Cited in:** Vocab size literature review (2026-03-23)
