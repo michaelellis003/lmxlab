@@ -66,9 +66,48 @@ type: reference
 4. Weight sharing: reduces model size → faster reads → might help memory-bound regime
 5. Int6/Int8 quantization: halves param reads → 2x speedup for memory-bound ops
 
+## Attention Share of Compute
+- Attention FLOPs / Matmul FLOPs = T / (8D)
+- For our D=512, seq_len=2048: **attention is 50% of matmul FLOPs** — significant!
+- Flash attention matters even at short context for our model
+
+## Transformer Component FLOPs (per layer, training)
+| Component | FLOPs | Parameters |
+|-----------|-------|------------|
+| MLP (SwiGLU, 3 matrices) | 18BTDF | 3DF |
+| MLP (relu², 2 matrices) | 12BTDF | 2DF |
+| Attention (QKVO projections) | 12BTD(N+K)H | 2D(N+K)H |
+| Attention (dot-product) | 12BT²NH (causal: 6BT²NH) | — |
+| Unembedding | 6BTDV | DV |
+
+## GPU Networking (8xH100 Node)
+- NVLink 4.0: 450 GB/s per GPU, 3.6 TB/s node bisection
+- AllReduce of our gradients: ~54MB → ~0.15ms (negligible vs compute)
+- DP compute-bound threshold: >2,200 tokens/GPU (we have 65.5K — well above)
+- Cross-node InfiniBand: 400 GB/s per node (not relevant for us)
+
+## GPU Memory Hierarchy
+| Level | Size | Bandwidth |
+|-------|------|-----------|
+| Registers | 256KB/SM (33MB total) | Fastest |
+| SMEM (L1) | 256KB/SM (33MB total) | ~19 TB/s |
+| L2 Cache | 50MB | ~5.5 TB/s |
+| HBM | 80GB | 3.35 TB/s |
+
+Note: Our 22M params (44MB bf16) nearly fit in L2 cache (50MB). This may explain
+why our model runs faster than HBM bandwidth would suggest.
+
+## Low Utilization Analysis
+- Measured: 81ms/step on 8xH100
+- Theoretical at 40% MFU: 32.5ms/step
+- Actual MFU: ~16% — 2.5x below typical large model training
+- Root causes: small matmul tiles (d=512), Python/framework overhead, grad accumulation
+
 ## Further Reading (Most Relevant)
 - [Making Deep Learning Go Brrrr](https://horace.io/brrr_intro.html) — GPU performance first principles
 - [Stanford CS336](https://stanford-cs336.github.io/spring2025/) — LLM training course
 - [HuggingFace Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook) — PyTorch parallelism
 - [Stas Bekman ML Engineering](https://github.com/stas00/ml-engineering) — Practical infra
 - [How to Optimize CUDA Matmul](https://siboehm.com/articles/22/CUDA-MMM) — Kernel optimization
+- [Rafi Witten High Perf LLMs 2024](https://github.com/rwitten/HighPerfLLMs2024) — TPU perf engineering
+- [Efficiently Scaling Transformer Inference](https://arxiv.org/abs/2211.05102) — Inference math
