@@ -52,7 +52,11 @@ N_SAMPLES = 64  # For pass@k estimation
 
 # Known grok steps from HYP-016
 GROK_STEPS = {
-    42: 18000, 43: 12000, 44: 60000, 45: 48000, 46: 22000,
+    42: 18000,
+    43: 12000,
+    44: 60000,
+    45: 48000,
+    46: 22000,
 }
 
 WARMUP_STEPS = 100
@@ -160,13 +164,13 @@ def build_val_examples(
         # Strategy: encode "a + b = " as prompt, get remaining
         prompt_text = f"{a} + {b} ="
         prompt_toks = tokenizer.encode(prompt_text)
-        answer_toks = toks[len(prompt_toks):]
+        answer_toks = toks[len(prompt_toks) :]
         # answer_toks should be [space_number, newline] or similar
         # The first answer token is what we care about
         if len(answer_toks) >= 1:
             answer_token_id = answer_toks[0]
             # Input for the model: everything up to answer position
-            input_toks = toks[:len(prompt_toks)]
+            input_toks = toks[: len(prompt_toks)]
             examples.append((input_toks, answer_token_id, (a, b, c)))
 
     return examples
@@ -198,7 +202,7 @@ def evaluate_sharpening(
     # Process in batches for efficiency
     batch_size = 64
     for start in range(0, len(val_examples), batch_size):
-        batch = val_examples[start:start + batch_size]
+        batch = val_examples[start : start + batch_size]
 
         # Pad inputs to same length
         max_len = max(len(ex[0]) for ex in batch)
@@ -256,9 +260,7 @@ def evaluate_sharpening(
     # pass@k estimation (unbiased estimator)
     pass_at_1 = greedy_correct / n_total
     # pass@64: fraction of examples where at least 1 of 64 is correct
-    pass_at_64 = sum(
-        1 for c in sample_correct_counts if c > 0
-    ) / n_total
+    pass_at_64 = sum(1 for c in sample_correct_counts if c > 0) / n_total
 
     return {
         "p_correct_mean": float(np.mean(p_arr)),
@@ -302,12 +304,8 @@ def run_single(
     rng = np.random.default_rng(seed)
 
     # Data
-    train_ds = ModularArithmeticDataset(
-        p=MODULUS, split="train", seed=42
-    )
-    val_ds = ModularArithmeticDataset(
-        p=MODULUS, split="test", seed=42
-    )
+    train_ds = ModularArithmeticDataset(p=MODULUS, split="train", seed=42)
+    val_ds = ModularArithmeticDataset(p=MODULUS, split="test", seed=42)
 
     # Build val examples for P(correct) measurement
     val_examples = build_val_examples(val_ds)
@@ -315,12 +313,8 @@ def run_single(
 
     # Optimizer
     warmup = optim.linear_schedule(0.0, LEARNING_RATE, WARMUP_STEPS)
-    constant = optim.linear_schedule(
-        LEARNING_RATE, LEARNING_RATE, max_steps
-    )
-    schedule = optim.join_schedules(
-        [warmup, constant], [WARMUP_STEPS]
-    )
+    constant = optim.linear_schedule(LEARNING_RATE, LEARNING_RATE, max_steps)
+    schedule = optim.join_schedules([warmup, constant], [WARMUP_STEPS])
     optimizer = optim.AdamW(
         learning_rate=schedule,
         weight_decay=WEIGHT_DECAY,
@@ -328,9 +322,7 @@ def run_single(
 
     def loss_fn(mdl, input_ids, target_ids):
         logits, _ = mdl(input_ids)
-        return nn.losses.cross_entropy(
-            logits, target_ids, reduction="mean"
-        )
+        return nn.losses.cross_entropy(logits, target_ids, reduction="mean")
 
     loss_and_grad = nn.value_and_grad(model, loss_fn)
 
@@ -373,12 +365,8 @@ def run_single(
 
                 print(f"  ** Evaluating at step {step}...")
 
-                eval_rng = np.random.default_rng(
-                    seed * 10000 + step
-                )
-                metrics = evaluate_sharpening(
-                    model, val_examples, eval_rng
-                )
+                eval_rng = np.random.default_rng(seed * 10000 + step)
+                metrics = evaluate_sharpening(model, val_examples, eval_rng)
 
                 cp = {
                     "step": step,
@@ -452,14 +440,14 @@ def analyze(results: list[dict]) -> None:
         cps = r["checkpoints"]
         vals = [cp["p_correct_mean"] for cp in cps]
         steps = [cp["step"] for cp in cps]
-        print(
-            f"\n  Seed {seed} (grok@{grok}):"
-        )
+        print(f"\n  Seed {seed} (grok@{grok}):")
         for s, v in zip(steps, vals, strict=False):
             bar = "#" * int(v * 50)
-            marker = " <-- GROK" if grok and s == (
-                (grok // EVAL_EVERY) * EVAL_EVERY
-            ) else ""
+            marker = (
+                " <-- GROK"
+                if grok and s == ((grok // EVAL_EVERY) * EVAL_EVERY)
+                else ""
+            )
             print(f"    step {s:>6d}: {v:.4f} {bar}{marker}")
 
     # 2. Transition width analysis
@@ -482,14 +470,10 @@ def analyze(results: list[dict]) -> None:
         if step_10 and step_90:
             width = step_90 - step_10
             print(
-                f"  Seed {seed}: 10%@{step_10} → "
-                f"90%@{step_90} = width {width}"
+                f"  Seed {seed}: 10%@{step_10} → 90%@{step_90} = width {width}"
             )
         else:
-            print(
-                f"  Seed {seed}: 10%@{step_10} → "
-                f"90%@{step_90} (incomplete)"
-            )
+            print(f"  Seed {seed}: 10%@{step_10} → 90%@{step_90} (incomplete)")
 
     # 3. Oscillation detection
     print("\n## Oscillation Check")
@@ -507,10 +491,7 @@ def analyze(results: list[dict]) -> None:
             d2 = vals[i] - vals[i - 1]
             if d1 * d2 < 0 and abs(d1) > 0.01 and abs(d2) > 0.01:
                 changes += 1
-        print(
-            f"  Seed {seed}: {changes} direction changes "
-            f"(>0.01 magnitude)"
-        )
+        print(f"  Seed {seed}: {changes} direction changes (>0.01 magnitude)")
 
     # 4. Correlation: sharpening rate vs grok_step
     print("\n## Sharpening Rate vs Grok Step")
@@ -528,24 +509,16 @@ def analyze(results: list[dict]) -> None:
         # Rate = max derivative of P(correct) between checkpoints
         max_rate = 0
         for i in range(1, len(vals)):
-            rate = (vals[i] - vals[i - 1]) / (
-                steps[i] - steps[i - 1]
-            )
+            rate = (vals[i] - vals[i - 1]) / (steps[i] - steps[i - 1])
             max_rate = max(max_rate, rate)
 
         rates.append(max_rate)
         grok_steps.append(grok)
-        print(
-            f"  Seed {seed}: max_rate={max_rate:.6f}/step, "
-            f"grok@{grok}"
-        )
+        print(f"  Seed {seed}: max_rate={max_rate:.6f}/step, grok@{grok}")
 
     if len(rates) >= 3:
         rho, p = spearmanr(rates, grok_steps)
-        print(
-            f"\n  Spearman(max_rate, grok_step): "
-            f"rho={rho:.3f}, p={p:.3f}"
-        )
+        print(f"\n  Spearman(max_rate, grok_step): rho={rho:.3f}, p={p:.3f}")
 
     # 5. Hypothesis adjudication
     print("\n## Hypothesis Adjudication")
@@ -585,21 +558,25 @@ def main():
         description="HYP-038: Sharpening dynamics"
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print config only",
     )
     parser.add_argument(
-        "--pilot", action="store_true",
+        "--pilot",
+        action="store_true",
         help="Run 1 seed, 4K steps",
     )
     parser.add_argument(
-        "--max-runs", type=int, default=len(SEEDS),
+        "--max-runs",
+        type=int,
+        default=len(SEEDS),
         help="Max seeds to run",
     )
     args = parser.parse_args()
 
     max_steps = MAX_STEPS
-    seeds = SEEDS[:args.max_runs]
+    seeds = SEEDS[: args.max_runs]
 
     if args.pilot:
         seeds = [SEEDS[0]]
