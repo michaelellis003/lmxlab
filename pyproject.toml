@@ -24,13 +24,15 @@ dependencies = [
     "mlx>=0.25",
     "numpy",
     "safetensors",
+    "scipy>=1.17.1",
+    "tiktoken>=0.12.0",
 ]
 
 [project.optional-dependencies]
 tokenizers = ["tiktoken"]
 hf = ["huggingface_hub", "transformers", "datasets"]
 analysis = ["matplotlib"]
-experiments = ["mlflow"]
+experiments = ["mlflow", "optuna"]
 dev = [
     "pytest>=8.0",
     "ruff>=0.7",

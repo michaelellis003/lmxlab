@@ -1,0 +1,342 @@
+[
+  {
+    "seed": 42,
+    "grok_step": 18000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 3.179999,
+        "defect_p25": 3.08451,
+        "defect_p75": 3.205868,
+        "train_loss": 1.8411
+      },
+      {
+        "step": 2000,
+        "defect_median": 1249.140744,
+        "defect_p25": 1138.087951,
+        "defect_p75": 1330.738426,
+        "train_loss": 1.3122
+      },
+      {
+        "step": 5000,
+        "defect_median": 909.873891,
+        "defect_p25": 547.708533,
+        "defect_p75": 1427.105257,
+        "train_loss": 1.1131
+      },
+      {
+        "step": 10000,
+        "defect_median": 110.374677,
+        "defect_p25": 105.550457,
+        "defect_p75": 133.077696,
+        "train_loss": 1.0937
+      }
+    ]
+  },
+  {
+    "seed": 43,
+    "grok_step": 12000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 2.89537,
+        "defect_p25": 2.768155,
+        "defect_p75": 2.899965,
+        "train_loss": 1.8404
+      },
+      {
+        "step": 2000,
+        "defect_median": 32.551214,
+        "defect_p25": 17.980954,
+        "defect_p75": 53.82376,
+        "train_loss": 1.6596
+      },
+      {
+        "step": 5000,
+        "defect_median": 58.467665,
+        "defect_p25": 50.631188,
+        "defect_p75": 86.03365,
+        "train_loss": 1.1111
+      },
+      {
+        "step": 10000,
+        "defect_median": 174.817849,
+        "defect_p25": 152.57928,
+        "defect_p75": 323.583956,
+        "train_loss": 1.0158
+      }
+    ]
+  },
+  {
+    "seed": 44,
+    "grok_step": 60000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 3.02905,
+        "defect_p25": 2.881412,
+        "defect_p75": 3.030467,
+        "train_loss": 1.8565
+      },
+      {
+        "step": 2000,
+        "defect_median": 3.394316,
+        "defect_p25": 3.286904,
+        "defect_p75": 3.438966,
+        "train_loss": 1.8462
+      },
+      {
+        "step": 5000,
+        "defect_median": 61.952778,
+        "defect_p25": 52.193069,
+        "defect_p75": 85.562651,
+        "train_loss": 1.0455
+      },
+      {
+        "step": 10000,
+        "defect_median": 95.979422,
+        "defect_p25": 91.655831,
+        "defect_p75": 133.566881,
+        "train_loss": 1.0273
+      }
+    ]
+  },
+  {
+    "seed": 45,
+    "grok_step": 48000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 3.251781,
+        "defect_p25": 2.250099,
+        "defect_p75": 3.529495,
+        "train_loss": 1.8465
+      },
+      {
+        "step": 2000,
+        "defect_median": 105.106166,
+        "defect_p25": 85.607531,
+        "defect_p75": 162.723447,
+        "train_loss": 1.2406
+      },
+      {
+        "step": 5000,
+        "defect_median": 77.790427,
+        "defect_p25": 69.337964,
+        "defect_p75": 172.100552,
+        "train_loss": 1.0567
+      },
+      {
+        "step": 10000,
+        "defect_median": 80.291736,
+        "defect_p25": 77.268079,
+        "defect_p75": 108.378884,
+        "train_loss": 1.0306
+      }
+    ]
+  },
+  {
+    "seed": 46,
+    "grok_step": 22000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 3.055645,
+        "defect_p25": 3.052927,
+        "defect_p75": 3.386007,
+        "train_loss": 1.8419
+      },
+      {
+        "step": 2000,
+        "defect_median": 3.580437,
+        "defect_p25": 3.116411,
+        "defect_p75": 3.615566,
+        "train_loss": 1.8372
+      },
+      {
+        "step": 5000,
+        "defect_median": 62.445313,
+        "defect_p25": 60.822327,
+        "defect_p75": 64.34561,
+        "train_loss": 1.0553
+      },
+      {
+        "step": 10000,
+        "defect_median": 8.778806,
+        "defect_p25": 8.345663,
+        "defect_p75": 10.726675,
+        "train_loss": 0.9216
+      }
+    ]
+  },
+  {
+    "seed": 47,
+    "grok_step": 12000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 3.143589,
+        "defect_p25": 3.004331,
+        "defect_p75": 3.335412,
+        "train_loss": 1.8425
+      },
+      {
+        "step": 2000,
+        "defect_median": 38.552151,
+        "defect_p25": 34.999109,
+        "defect_p75": 136.714594,
+        "train_loss": 1.4704
+      },
+      {
+        "step": 5000,
+        "defect_median": 236.85921,
+        "defect_p25": 152.295137,
+        "defect_p75": 299.427045,
+        "train_loss": 1.0649
+      },
+      {
+        "step": 10000,
+        "defect_median": 37.439561,
+        "defect_p25": 14.389944,
+        "defect_p75": 69.904111,
+        "train_loss": 0.9202
+      }
+    ]
+  },
+  {
+    "seed": 48,
+    "grok_step": 4000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 3.144812,
+        "defect_p25": 2.924558,
+        "defect_p75": 3.156525,
+        "train_loss": 1.8469
+      },
+      {
+        "step": 2000,
+        "defect_median": 104.387101,
+        "defect_p25": 50.735032,
+        "defect_p75": 119.740231,
+        "train_loss": 1.2746
+      },
+      {
+        "step": 5000,
+        "defect_median": 181.210042,
+        "defect_p25": 101.961224,
+        "defect_p75": 230.819808,
+        "train_loss": 1.1081
+      },
+      {
+        "step": 10000,
+        "defect_median": 115.787196,
+        "defect_p25": 94.446406,
+        "defect_p75": 167.372984,
+        "train_loss": 1.0472
+      }
+    ]
+  },
+  {
+    "seed": 49,
+    "grok_step": 48000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 45.007775,
+        "defect_p25": 21.01389,
+        "defect_p75": 59.164311,
+        "train_loss": 1.6277
+      },
+      {
+        "step": 2000,
+        "defect_median": 125.240078,
+        "defect_p25": 101.649749,
+        "defect_p75": 150.133663,
+        "train_loss": 1.1856
+      },
+      {
+        "step": 5000,
+        "defect_median": 148.718927,
+        "defect_p25": 133.556413,
+        "defect_p75": 327.79753,
+        "train_loss": 1.0976
+      },
+      {
+        "step": 10000,
+        "defect_median": 230.184303,
+        "defect_p25": 131.677945,
+        "defect_p75": 236.769022,
+        "train_loss": 1.0542
+      }
+    ]
+  },
+  {
+    "seed": 50,
+    "grok_step": 12000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 3.264483,
+        "defect_p25": 3.208512,
+        "defect_p75": 3.352768,
+        "train_loss": 1.8465
+      },
+      {
+        "step": 2000,
+        "defect_median": 3.254915,
+        "defect_p25": 3.054685,
+        "defect_p75": 4.109184,
+        "train_loss": 1.8331
+      },
+      {
+        "step": 5000,
+        "defect_median": 4.380962,
+        "defect_p25": 4.118095,
+        "defect_p75": 4.393471,
+        "train_loss": 0.9131
+      },
+      {
+        "step": 10000,
+        "defect_median": 4.90709,
+        "defect_p25": 4.845767,
+        "defect_p75": 4.931434,
+        "train_loss": 0.9231
+      }
+    ]
+  },
+  {
+    "seed": 51,
+    "grok_step": 36000,
+    "defect_checkpoints": [
+      {
+        "step": 1000,
+        "defect_median": 5.458117,
+        "defect_p25": 4.775643,
+        "defect_p75": 6.795268,
+        "train_loss": 1.773
+      },
+      {
+        "step": 2000,
+        "defect_median": 75.249589,
+        "defect_p25": 59.746905,
+        "defect_p75": 77.843097,
+        "train_loss": 1.1929
+      },
+      {
+        "step": 5000,
+        "defect_median": 194.185663,
+        "defect_p25": 142.776366,
+        "defect_p75": 258.583524,
+        "train_loss": 1.0326
+      },
+      {
+        "step": 10000,
+        "defect_median": 71.841765,
+        "defect_p25": 64.380889,
+        "defect_p75": 82.638511,
+        "train_loss": 1.1138
+      }
+    ]
+  }
+]

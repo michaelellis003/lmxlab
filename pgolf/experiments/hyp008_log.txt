@@ -1,0 +1,1099 @@
+HYP-008: SSM/Hybrid Test-Time Compute Scaling
+Grid: 12 runs
+  Architectures: ['llama', 'falcon_h1', 'jamba', 'bamba']
+  Seeds: [42, 43, 44]
+  K values: [1, 2, 4, 8, 16, 32, 64]
+  N samples: 64
+  Modulus: 97
+  FLOP budget: 2.88e+14 per run
+  Target steps: ~2000
+  LR: 0.0003
+  Dropout: 0.0 (fixed — HYP-007 finding)
+
+[1/12]
+============================================================
+Run: llama_s42
+  arch=llama, seed=42
+  params=9,877,248
+  flops/step=1.44e+11
+  flop_budget=2.88e+14
+  est_steps=2000
+init_val_loss=11.3161
+mx.metal.get_peak_memory is deprecated and will be removed in a future version. Use mx.get_peak_memory instead.
+step 100: 8.6 steps/s, 17601 tok/s
+step 100: 1.24 TFLOP/s (1.44e+13 total)
+step 100: loss=2.5466, lr=2.97e-04
+step 200: 8.5 steps/s, 17491 tok/s
+step 200: 1.23 TFLOP/s (2.88e+13 total)
+step 200: loss=1.5679, lr=3.00e-04
+step 300: 8.5 steps/s, 17352 tok/s
+step 300: 1.23 TFLOP/s (4.32e+13 total)
+step 300: loss=0.6097, lr=3.00e-04
+step 400: 8.9 steps/s, 18181 tok/s
+step 400: 1.24 TFLOP/s (5.75e+13 total)
+step 400: loss=0.2224, lr=3.00e-04
+step 500: 9.1 steps/s, 18542 tok/s
+step 500: 1.25 TFLOP/s (7.19e+13 total)
+  eval step 500: val=2.8253 best=2.8253
+step 500: loss=0.0914, lr=3.00e-04
+step 600: 8.9 steps/s, 18261 tok/s
+step 600: 1.26 TFLOP/s (8.63e+13 total)
+step 600: loss=0.0385, lr=3.00e-04
+step 700: 9.1 steps/s, 18636 tok/s
+step 700: 1.26 TFLOP/s (1.01e+14 total)
+step 700: loss=0.0174, lr=3.00e-04
+step 800: 9.0 steps/s, 18440 tok/s
+step 800: 1.27 TFLOP/s (1.15e+14 total)
+step 800: loss=0.0131, lr=3.00e-04
+step 900: 9.0 steps/s, 18422 tok/s
+step 900: 1.27 TFLOP/s (1.29e+14 total)
+step 900: loss=0.0048, lr=3.00e-04
+step 1000: 9.0 steps/s, 18424 tok/s
+step 1000: 1.27 TFLOP/s (1.44e+14 total)
+  eval step 1000: val=3.2881 best=2.8253
+step 1000: loss=0.0037, lr=3.00e-04
+step 1100: 8.9 steps/s, 18240 tok/s
+step 1100: 1.27 TFLOP/s (1.58e+14 total)
+step 1100: loss=0.0044, lr=3.00e-04
+step 1200: 9.0 steps/s, 18504 tok/s
+step 1200: 1.28 TFLOP/s (1.73e+14 total)
+step 1200: loss=0.0028, lr=3.00e-04
+step 1300: 9.1 steps/s, 18727 tok/s
+step 1300: 1.28 TFLOP/s (1.87e+14 total)
+step 1300: loss=0.0029, lr=3.00e-04
+step 1400: 8.9 steps/s, 18193 tok/s
+step 1400: 1.28 TFLOP/s (2.01e+14 total)
+step 1400: loss=0.0029, lr=3.00e-04
+step 1500: 8.6 steps/s, 17599 tok/s
+step 1500: 1.28 TFLOP/s (2.16e+14 total)
+  eval step 1500: val=3.3806 best=2.8253
+step 1500: loss=0.0026, lr=3.00e-04
+step 1600: 8.5 steps/s, 17384 tok/s
+step 1600: 1.27 TFLOP/s (2.30e+14 total)
+step 1600: loss=0.0020, lr=3.00e-04
+step 1700: 8.7 steps/s, 17873 tok/s
+step 1700: 1.27 TFLOP/s (2.45e+14 total)
+step 1700: loss=0.0024, lr=3.00e-04
+step 1800: 8.8 steps/s, 18041 tok/s
+step 1800: 1.27 TFLOP/s (2.59e+14 total)
+step 1800: loss=0.0017, lr=3.00e-04
+step 1900: 8.9 steps/s, 18268 tok/s
+step 1900: 1.27 TFLOP/s (2.73e+14 total)
+step 1900: loss=0.0022, lr=3.00e-04
+step 2000: 8.7 steps/s, 17894 tok/s
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 1.27 TFLOP/s (2.88e+14 total)
+  eval step 2000: val=3.4661 best=2.8253
+step 2000: loss=0.0017, lr=3.00e-04
+Throughput summary: 2000 steps in 226.4s (8.8 steps/s, 18090 tok/s)
+FLOPs summary: 0.2877 PFLOPs in 226.4s (1.27 TFLOP/s)
+final_val_loss=3.4661 best=2.8253
+Training complete: 2000 steps in 226.4s
+  Evaluating pass@k...
+  pass@k eval: 12.1s
+    pass_at_1: 0.0055
+    pass_at_2: 0.0094
+    pass_at_4: 0.0153
+    pass_at_8: 0.0242
+    pass_at_16: 0.0375
+    pass_at_32: 0.0578
+    pass_at_64: 0.0873
+
+  Steps:      2000
+  Train loss: 0.0017
+  Best val:   2.8253
+  Init val:   11.3161
+  Gap:        -2.8237
+  Wall time:  238.6s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[2/12]
+============================================================
+Run: llama_s43
+  arch=llama, seed=43
+  params=9,877,248
+  flops/step=1.44e+11
+  flop_budget=2.88e+14
+  est_steps=2000
+init_val_loss=11.3161
+step 100: 8.7 steps/s, 17786 tok/s
+step 100: 1.25 TFLOP/s (1.44e+13 total)
+step 100: loss=2.1750, lr=2.97e-04
+step 200: 8.6 steps/s, 17542 tok/s
+step 200: 1.24 TFLOP/s (2.88e+13 total)
+step 200: loss=1.5745, lr=3.00e-04
+step 300: 8.7 steps/s, 17869 tok/s
+step 300: 1.25 TFLOP/s (4.32e+13 total)
+step 300: loss=0.3076, lr=3.00e-04
+step 400: 8.8 steps/s, 17966 tok/s
+step 400: 1.25 TFLOP/s (5.75e+13 total)
+step 400: loss=0.1813, lr=3.00e-04
+step 500: 8.8 steps/s, 17926 tok/s
+step 500: 1.25 TFLOP/s (7.19e+13 total)
+  eval step 500: val=2.7263 best=2.7263
+step 500: loss=0.0543, lr=3.00e-04
+step 600: 8.8 steps/s, 17925 tok/s
+step 600: 1.25 TFLOP/s (8.63e+13 total)
+step 600: loss=0.0268, lr=3.00e-04
+step 700: 8.6 steps/s, 17668 tok/s
+step 700: 1.25 TFLOP/s (1.01e+14 total)
+step 700: loss=0.0194, lr=3.00e-04
+step 800: 8.8 steps/s, 17987 tok/s
+step 800: 1.25 TFLOP/s (1.15e+14 total)
+step 800: loss=0.0089, lr=3.00e-04
+step 900: 8.7 steps/s, 17766 tok/s
+step 900: 1.25 TFLOP/s (1.29e+14 total)
+step 900: loss=0.0066, lr=3.00e-04
+step 1000: 7.5 steps/s, 15414 tok/s
+step 1000: 1.23 TFLOP/s (1.44e+14 total)
+  eval step 1000: val=3.2460 best=2.7263
+step 1000: loss=0.0052, lr=3.00e-04
+step 1100: 7.8 steps/s, 15941 tok/s
+step 1100: 1.22 TFLOP/s (1.58e+14 total)
+step 1100: loss=0.0032, lr=3.00e-04
+step 1200: 6.1 steps/s, 12552 tok/s
+step 1200: 1.18 TFLOP/s (1.73e+14 total)
+step 1200: loss=0.0047, lr=3.00e-04
+step 1300: 7.8 steps/s, 15884 tok/s
+step 1300: 1.18 TFLOP/s (1.87e+14 total)
+step 1300: loss=0.0024, lr=3.00e-04
+step 1400: 7.9 steps/s, 16112 tok/s
+step 1400: 1.17 TFLOP/s (2.01e+14 total)
+step 1400: loss=0.0033, lr=3.00e-04
+step 1500: 6.2 steps/s, 12654 tok/s
+step 1500: 1.15 TFLOP/s (2.16e+14 total)
+  eval step 1500: val=3.3846 best=2.7263
+step 1500: loss=0.0047, lr=3.00e-04
+step 1600: 5.5 steps/s, 11271 tok/s
+step 1600: 1.12 TFLOP/s (2.30e+14 total)
+step 1600: loss=0.0021, lr=3.00e-04
+step 1700: 6.2 steps/s, 12728 tok/s
+step 1700: 1.10 TFLOP/s (2.45e+14 total)
+step 1700: loss=0.0008, lr=3.00e-04
+step 1800: 6.4 steps/s, 13090 tok/s
+step 1800: 1.09 TFLOP/s (2.59e+14 total)
+step 1800: loss=0.0007, lr=3.00e-04
+step 1900: 5.5 steps/s, 11339 tok/s
+step 1900: 1.07 TFLOP/s (2.73e+14 total)
+step 1900: loss=0.0028, lr=3.00e-04
+step 2000: 5.3 steps/s, 10809 tok/s
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 1.05 TFLOP/s (2.88e+14 total)
+  eval step 2000: val=3.4689 best=2.7263
+step 2000: loss=0.0028, lr=3.00e-04
+Throughput summary: 2000 steps in 274.6s (7.3 steps/s, 14914 tok/s)
+FLOPs summary: 0.2877 PFLOPs in 274.6s (1.05 TFLOP/s)
+final_val_loss=3.4689 best=2.7263
+Training complete: 2000 steps in 274.7s
+  Evaluating pass@k...
+  pass@k eval: 15.8s
+    pass_at_1: 0.0059
+    pass_at_2: 0.0092
+    pass_at_4: 0.0142
+    pass_at_8: 0.0216
+    pass_at_16: 0.0326
+    pass_at_32: 0.0497
+    pass_at_64: 0.0763
+
+  Steps:      2000
+  Train loss: 0.0028
+  Best val:   2.7263
+  Init val:   11.3161
+  Gap:        -2.7234
+  Wall time:  290.6s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[3/12]
+============================================================
+Run: llama_s44
+  arch=llama, seed=44
+  params=9,877,248
+  flops/step=1.44e+11
+  flop_budget=2.88e+14
+  est_steps=2000
+init_val_loss=11.3643
+step 100: 6.6 steps/s, 13424 tok/s
+step 100: 0.94 TFLOP/s (1.44e+13 total)
+step 100: loss=2.5276, lr=2.97e-04
+step 200: 8.8 steps/s, 17978 tok/s
+step 200: 1.08 TFLOP/s (2.88e+13 total)
+step 200: loss=1.5838, lr=3.00e-04
+step 300: 7.8 steps/s, 16066 tok/s
+step 300: 1.10 TFLOP/s (4.32e+13 total)
+step 300: loss=0.6701, lr=3.00e-04
+step 400: 7.8 steps/s, 15998 tok/s
+step 400: 1.10 TFLOP/s (5.75e+13 total)
+step 400: loss=0.2121, lr=3.00e-04
+step 500: 6.8 steps/s, 13896 tok/s
+step 500: 1.07 TFLOP/s (7.19e+13 total)
+  eval step 500: val=2.6416 best=2.6416
+step 500: loss=0.0904, lr=3.00e-04
+step 600: 6.8 steps/s, 13857 tok/s
+step 600: 1.06 TFLOP/s (8.63e+13 total)
+step 600: loss=0.0262, lr=3.00e-04
+step 700: 6.3 steps/s, 12846 tok/s
+step 700: 1.03 TFLOP/s (1.01e+14 total)
+step 700: loss=0.0171, lr=3.00e-04
+step 800: 6.5 steps/s, 13343 tok/s
+step 800: 1.02 TFLOP/s (1.15e+14 total)
+step 800: loss=0.0079, lr=3.00e-04
+step 900: 6.2 steps/s, 12800 tok/s
+step 900: 1.00 TFLOP/s (1.29e+14 total)
+step 900: loss=0.0100, lr=3.00e-04
+step 1000: 6.2 steps/s, 12733 tok/s
+step 1000: 0.99 TFLOP/s (1.44e+14 total)
+  eval step 1000: val=3.0377 best=2.6416
+step 1000: loss=0.0045, lr=3.00e-04
+step 1100: 4.2 steps/s, 8567 tok/s
+step 1100: 0.94 TFLOP/s (1.58e+14 total)
+step 1100: loss=0.0041, lr=3.00e-04
+step 1200: 6.4 steps/s, 13014 tok/s
+step 1200: 0.93 TFLOP/s (1.73e+14 total)
+step 1200: loss=0.0031, lr=3.00e-04
+step 1300: 6.3 steps/s, 12885 tok/s
+step 1300: 0.93 TFLOP/s (1.87e+14 total)
+step 1300: loss=0.0051, lr=3.00e-04
+step 1400: 6.5 steps/s, 13264 tok/s
+step 1400: 0.93 TFLOP/s (2.01e+14 total)
+step 1400: loss=0.0047, lr=3.00e-04
+step 1500: 6.2 steps/s, 12596 tok/s
+step 1500: 0.93 TFLOP/s (2.16e+14 total)
+  eval step 1500: val=3.1502 best=2.6416
+step 1500: loss=0.0022, lr=3.00e-04
+step 1600: 8.7 steps/s, 17796 tok/s
+step 1600: 0.94 TFLOP/s (2.30e+14 total)
+step 1600: loss=0.0040, lr=3.00e-04
+step 1700: 8.7 steps/s, 17904 tok/s
+step 1700: 0.96 TFLOP/s (2.45e+14 total)
+step 1700: loss=0.0030, lr=3.00e-04
+step 1800: 8.7 steps/s, 17769 tok/s
+step 1800: 0.97 TFLOP/s (2.59e+14 total)
+step 1800: loss=0.0015, lr=3.00e-04
+step 1900: 8.7 steps/s, 17888 tok/s
+step 1900: 0.98 TFLOP/s (2.73e+14 total)
+step 1900: loss=0.0007, lr=3.00e-04
+step 2000: 8.8 steps/s, 18042 tok/s
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 0.99 TFLOP/s (2.88e+14 total)
+  eval step 2000: val=3.2239 best=2.6416
+step 2000: loss=0.0027, lr=3.00e-04
+Throughput summary: 2000 steps in 289.7s (6.9 steps/s, 14141 tok/s)
+FLOPs summary: 0.2877 PFLOPs in 289.7s (0.99 TFLOP/s)
+final_val_loss=3.2239 best=2.6416
+Training complete: 2000 steps in 289.3s
+  Evaluating pass@k...
+  pass@k eval: 11.8s
+    pass_at_1: 0.0056
+    pass_at_2: 0.0095
+    pass_at_4: 0.0158
+    pass_at_8: 0.0253
+    pass_at_16: 0.0389
+    pass_at_32: 0.0587
+    pass_at_64: 0.0867
+
+  Steps:      2000
+  Train loss: 0.0027
+  Best val:   2.6416
+  Init val:   11.3643
+  Gap:        -2.6389
+  Wall time:  301.5s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[4/12]
+============================================================
+Run: falcon_h1_s42
+  arch=falcon_h1, seed=42
+  params=9,299,320
+  flops/step=1.73e+11
+  flop_budget=2.88e+14
+  est_steps=1667
+init_val_loss=11.3358
+step 100: 6.4 steps/s, 13028 tok/s
+step 100: 1.10 TFLOP/s (1.73e+13 total)
+step 100: loss=1.9925, lr=2.97e-04
+step 200: 6.4 steps/s, 13134 tok/s
+step 200: 1.10 TFLOP/s (3.45e+13 total)
+step 200: loss=0.1582, lr=3.00e-04
+step 300: 6.4 steps/s, 13150 tok/s
+step 300: 1.10 TFLOP/s (5.18e+13 total)
+step 300: loss=0.0295, lr=3.00e-04
+step 400: 6.4 steps/s, 13171 tok/s
+step 400: 1.11 TFLOP/s (6.91e+13 total)
+step 400: loss=0.0061, lr=3.00e-04
+step 500: 6.4 steps/s, 13154 tok/s
+step 500: 1.11 TFLOP/s (8.63e+13 total)
+  eval step 500: val=2.4039 best=2.4039
+step 500: loss=0.0074, lr=3.00e-04
+step 600: 6.4 steps/s, 13069 tok/s
+step 600: 1.11 TFLOP/s (1.04e+14 total)
+step 600: loss=0.0045, lr=3.00e-04
+step 700: 6.4 steps/s, 13155 tok/s
+step 700: 1.11 TFLOP/s (1.21e+14 total)
+step 700: loss=0.0038, lr=3.00e-04
+step 800: 6.4 steps/s, 13181 tok/s
+step 800: 1.11 TFLOP/s (1.38e+14 total)
+step 800: loss=0.0028, lr=3.00e-04
+step 900: 6.4 steps/s, 13127 tok/s
+step 900: 1.11 TFLOP/s (1.55e+14 total)
+step 900: loss=0.0028, lr=3.00e-04
+step 1000: 6.4 steps/s, 13121 tok/s
+step 1000: 1.11 TFLOP/s (1.73e+14 total)
+  eval step 1000: val=2.5341 best=2.4039
+step 1000: loss=0.0027, lr=3.00e-04
+step 1100: 6.4 steps/s, 13040 tok/s
+step 1100: 1.11 TFLOP/s (1.90e+14 total)
+step 1100: loss=0.0037, lr=3.00e-04
+step 1200: 6.4 steps/s, 13112 tok/s
+step 1200: 1.11 TFLOP/s (2.07e+14 total)
+step 1200: loss=0.0024, lr=3.00e-04
+step 1300: 6.4 steps/s, 13097 tok/s
+step 1300: 1.11 TFLOP/s (2.24e+14 total)
+step 1300: loss=0.0027, lr=3.00e-04
+step 1400: 6.3 steps/s, 12897 tok/s
+step 1400: 1.10 TFLOP/s (2.42e+14 total)
+step 1400: loss=0.0027, lr=3.00e-04
+step 1500: 6.4 steps/s, 13032 tok/s
+step 1500: 1.10 TFLOP/s (2.59e+14 total)
+  eval step 1500: val=2.6194 best=2.4039
+step 1500: loss=0.0023, lr=3.00e-04
+step 1600: 6.4 steps/s, 13006 tok/s
+step 1600: 1.10 TFLOP/s (2.76e+14 total)
+step 1600: loss=0.0018, lr=3.00e-04
+FLOP budget reached at step 1667 (0.288 PFLOPs)
+Throughput summary: 1667 steps in 260.8s (6.4 steps/s, 13092 tok/s)
+FLOPs summary: 0.2878 PFLOPs in 260.8s (1.10 TFLOP/s)
+final_val_loss=2.6413 best=2.4039
+Training complete: 1667 steps in 260.8s
+  Evaluating pass@k...
+  pass@k eval: 16.7s
+    pass_at_1: 0.0036
+    pass_at_2: 0.0057
+    pass_at_4: 0.0088
+    pass_at_8: 0.0133
+    pass_at_16: 0.0200
+    pass_at_32: 0.0299
+    pass_at_64: 0.0439
+
+  Steps:      1667
+  Train loss: 0.0012
+  Best val:   2.4039
+  Init val:   11.3358
+  Gap:        -2.4027
+  Wall time:  277.6s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[5/12]
+============================================================
+Run: falcon_h1_s43
+  arch=falcon_h1, seed=43
+  params=9,299,320
+  flops/step=1.73e+11
+  flop_budget=2.88e+14
+  est_steps=1667
+init_val_loss=11.3221
+step 100: 6.4 steps/s, 13025 tok/s
+step 100: 1.10 TFLOP/s (1.73e+13 total)
+step 100: loss=1.5554, lr=2.97e-04
+step 200: 6.4 steps/s, 13028 tok/s
+step 200: 1.10 TFLOP/s (3.45e+13 total)
+step 200: loss=0.0943, lr=3.00e-04
+step 300: 6.4 steps/s, 13060 tok/s
+step 300: 1.10 TFLOP/s (5.18e+13 total)
+step 300: loss=0.0098, lr=3.00e-04
+step 400: 6.4 steps/s, 13032 tok/s
+step 400: 1.10 TFLOP/s (6.91e+13 total)
+step 400: loss=0.0091, lr=3.00e-04
+step 500: 6.4 steps/s, 13052 tok/s
+step 500: 1.10 TFLOP/s (8.63e+13 total)
+  eval step 500: val=2.2331 best=2.2331
+step 500: loss=0.0058, lr=3.00e-04
+step 600: 6.4 steps/s, 13014 tok/s
+step 600: 1.10 TFLOP/s (1.04e+14 total)
+step 600: loss=0.0029, lr=3.00e-04
+step 700: 6.4 steps/s, 13088 tok/s
+step 700: 1.10 TFLOP/s (1.21e+14 total)
+step 700: loss=0.0049, lr=3.00e-04
+step 800: 6.4 steps/s, 13051 tok/s
+step 800: 1.10 TFLOP/s (1.38e+14 total)
+step 800: loss=0.0036, lr=3.00e-04
+step 900: 6.4 steps/s, 13046 tok/s
+step 900: 1.10 TFLOP/s (1.55e+14 total)
+step 900: loss=0.0047, lr=3.00e-04
+step 1000: 6.4 steps/s, 13072 tok/s
+step 1000: 1.10 TFLOP/s (1.73e+14 total)
+  eval step 1000: val=2.3325 best=2.2331
+step 1000: loss=0.0045, lr=3.00e-04
+step 1100: 6.3 steps/s, 12974 tok/s
+step 1100: 1.10 TFLOP/s (1.90e+14 total)
+step 1100: loss=0.0026, lr=3.00e-04
+step 1200: 6.4 steps/s, 13065 tok/s
+step 1200: 1.10 TFLOP/s (2.07e+14 total)
+step 1200: loss=0.0041, lr=3.00e-04
+step 1300: 6.4 steps/s, 13045 tok/s
+step 1300: 1.10 TFLOP/s (2.24e+14 total)
+step 1300: loss=0.0023, lr=3.00e-04
+step 1400: 6.4 steps/s, 13073 tok/s
+step 1400: 1.10 TFLOP/s (2.42e+14 total)
+step 1400: loss=0.0031, lr=3.00e-04
+step 1500: 6.4 steps/s, 13026 tok/s
+step 1500: 1.10 TFLOP/s (2.59e+14 total)
+  eval step 1500: val=2.4048 best=2.2331
+step 1500: loss=0.0043, lr=3.00e-04
+step 1600: 6.4 steps/s, 13146 tok/s
+step 1600: 1.10 TFLOP/s (2.76e+14 total)
+step 1600: loss=0.0020, lr=3.00e-04
+FLOP budget reached at step 1667 (0.288 PFLOPs)
+Throughput summary: 1667 steps in 261.5s (6.4 steps/s, 13057 tok/s)
+FLOPs summary: 0.2878 PFLOPs in 261.5s (1.10 TFLOP/s)
+final_val_loss=2.4280 best=2.2331
+Training complete: 1667 steps in 261.5s
+  Evaluating pass@k...
+  pass@k eval: 16.4s
+    pass_at_1: 0.0018
+    pass_at_2: 0.0034
+    pass_at_4: 0.0061
+    pass_at_8: 0.0103
+    pass_at_16: 0.0166
+    pass_at_32: 0.0262
+    pass_at_64: 0.0408
+
+  Steps:      1667
+  Train loss: 0.0028
+  Best val:   2.2331
+  Init val:   11.3221
+  Gap:        -2.2304
+  Wall time:  278.0s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[6/12]
+============================================================
+Run: falcon_h1_s44
+  arch=falcon_h1, seed=44
+  params=9,299,320
+  flops/step=1.73e+11
+  flop_budget=2.88e+14
+  est_steps=1667
+init_val_loss=11.4013
+step 100: 6.4 steps/s, 13168 tok/s
+step 100: 1.11 TFLOP/s (1.73e+13 total)
+step 100: loss=1.8150, lr=2.97e-04
+step 200: 6.5 steps/s, 13289 tok/s
+step 200: 1.12 TFLOP/s (3.45e+13 total)
+step 200: loss=0.1215, lr=3.00e-04
+step 300: 6.4 steps/s, 13181 tok/s
+step 300: 1.11 TFLOP/s (5.18e+13 total)
+step 300: loss=0.0140, lr=3.00e-04
+step 400: 6.3 steps/s, 12931 tok/s
+step 400: 1.11 TFLOP/s (6.91e+13 total)
+step 400: loss=0.0075, lr=3.00e-04
+step 500: 6.6 steps/s, 13487 tok/s
+step 500: 1.11 TFLOP/s (8.63e+13 total)
+  eval step 500: val=2.3168 best=2.3168
+step 500: loss=0.0047, lr=3.00e-04
+step 600: 6.6 steps/s, 13561 tok/s
+step 600: 1.12 TFLOP/s (1.04e+14 total)
+step 600: loss=0.0053, lr=3.00e-04
+step 700: 6.7 steps/s, 13621 tok/s
+step 700: 1.12 TFLOP/s (1.21e+14 total)
+step 700: loss=0.0039, lr=3.00e-04
+step 800: 6.5 steps/s, 13248 tok/s
+step 800: 1.12 TFLOP/s (1.38e+14 total)
+step 800: loss=0.0033, lr=3.00e-04
+step 900: 6.7 steps/s, 13626 tok/s
+step 900: 1.12 TFLOP/s (1.55e+14 total)
+step 900: loss=0.0027, lr=3.00e-04
+step 1000: 6.6 steps/s, 13482 tok/s
+step 1000: 1.13 TFLOP/s (1.73e+14 total)
+  eval step 1000: val=2.4415 best=2.3168
+step 1000: loss=0.0032, lr=3.00e-04
+step 1100: 6.4 steps/s, 13167 tok/s
+step 1100: 1.12 TFLOP/s (1.90e+14 total)
+step 1100: loss=0.0034, lr=3.00e-04
+step 1200: 6.4 steps/s, 13069 tok/s
+step 1200: 1.12 TFLOP/s (2.07e+14 total)
+step 1200: loss=0.0026, lr=3.00e-04
+step 1300: 6.3 steps/s, 12957 tok/s
+step 1300: 1.12 TFLOP/s (2.24e+14 total)
+step 1300: loss=0.0048, lr=3.00e-04
+step 1400: 6.4 steps/s, 13207 tok/s
+step 1400: 1.12 TFLOP/s (2.42e+14 total)
+step 1400: loss=0.0045, lr=3.00e-04
+step 1500: 6.6 steps/s, 13499 tok/s
+step 1500: 1.12 TFLOP/s (2.59e+14 total)
+  eval step 1500: val=2.5153 best=2.3168
+step 1500: loss=0.0021, lr=3.00e-04
+step 1600: 6.4 steps/s, 13208 tok/s
+step 1600: 1.12 TFLOP/s (2.76e+14 total)
+step 1600: loss=0.0038, lr=3.00e-04
+FLOP budget reached at step 1667 (0.288 PFLOPs)
+Throughput summary: 1667 steps in 256.9s (6.5 steps/s, 13289 tok/s)
+FLOPs summary: 0.2878 PFLOPs in 256.9s (1.12 TFLOP/s)
+final_val_loss=2.5379 best=2.3168
+Training complete: 1667 steps in 256.9s
+  Evaluating pass@k...
+  pass@k eval: 16.3s
+    pass_at_1: 0.0030
+    pass_at_2: 0.0049
+    pass_at_4: 0.0075
+    pass_at_8: 0.0112
+    pass_at_16: 0.0165
+    pass_at_32: 0.0245
+    pass_at_64: 0.0371
+
+  Steps:      1667
+  Train loss: 0.0025
+  Best val:   2.3168
+  Init val:   11.4013
+  Gap:        -2.3143
+  Wall time:  273.3s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[7/12]
+============================================================
+Run: jamba_s42
+  arch=jamba, seed=42
+  params=10,185,080
+  flops/step=1.71e+11
+  flop_budget=2.88e+14
+  est_steps=1678
+init_val_loss=11.3493
+step 100: 6.3 steps/s, 12868 tok/s
+step 100: 1.08 TFLOP/s (1.71e+13 total)
+step 100: loss=2.0166, lr=2.97e-04
+step 200: 6.1 steps/s, 12489 tok/s
+step 200: 1.06 TFLOP/s (3.43e+13 total)
+step 200: loss=0.1311, lr=3.00e-04
+step 300: 6.2 steps/s, 12635 tok/s
+step 300: 1.06 TFLOP/s (5.14e+13 total)
+step 300: loss=0.0215, lr=3.00e-04
+step 400: 6.1 steps/s, 12526 tok/s
+step 400: 1.06 TFLOP/s (6.86e+13 total)
+step 400: loss=0.0057, lr=3.00e-04
+step 500: 6.1 steps/s, 12415 tok/s
+step 500: 1.05 TFLOP/s (8.57e+13 total)
+  eval step 500: val=2.2994 best=2.2994
+step 500: loss=0.0069, lr=3.00e-04
+step 600: 6.2 steps/s, 12667 tok/s
+step 600: 1.05 TFLOP/s (1.03e+14 total)
+step 600: loss=0.0045, lr=3.00e-04
+step 700: 6.2 steps/s, 12756 tok/s
+step 700: 1.06 TFLOP/s (1.20e+14 total)
+step 700: loss=0.0037, lr=3.00e-04
+step 800: 6.2 steps/s, 12750 tok/s
+step 800: 1.06 TFLOP/s (1.37e+14 total)
+step 800: loss=0.0027, lr=3.00e-04
+step 900: 6.2 steps/s, 12776 tok/s
+step 900: 1.06 TFLOP/s (1.54e+14 total)
+step 900: loss=0.0027, lr=3.00e-04
+step 1000: 6.2 steps/s, 12694 tok/s
+step 1000: 1.06 TFLOP/s (1.71e+14 total)
+  eval step 1000: val=2.4256 best=2.2994
+step 1000: loss=0.0028, lr=3.00e-04
+step 1100: 6.2 steps/s, 12732 tok/s
+step 1100: 1.06 TFLOP/s (1.89e+14 total)
+step 1100: loss=0.0036, lr=3.00e-04
+step 1200: 6.3 steps/s, 12823 tok/s
+step 1200: 1.06 TFLOP/s (2.06e+14 total)
+step 1200: loss=0.0024, lr=3.00e-04
+step 1300: 6.4 steps/s, 13144 tok/s
+step 1300: 1.06 TFLOP/s (2.23e+14 total)
+step 1300: loss=0.0025, lr=3.00e-04
+step 1400: 6.3 steps/s, 12910 tok/s
+step 1400: 1.07 TFLOP/s (2.40e+14 total)
+step 1400: loss=0.0026, lr=3.00e-04
+step 1500: 6.2 steps/s, 12734 tok/s
+step 1500: 1.07 TFLOP/s (2.57e+14 total)
+  eval step 1500: val=2.5076 best=2.2994
+step 1500: loss=0.0023, lr=3.00e-04
+step 1600: 6.2 steps/s, 12709 tok/s
+step 1600: 1.07 TFLOP/s (2.74e+14 total)
+step 1600: loss=0.0018, lr=3.00e-04
+FLOP budget reached at step 1679 (0.288 PFLOPs)
+Throughput summary: 1679 steps in 270.1s (6.2 steps/s, 12730 tok/s)
+FLOPs summary: 0.2879 PFLOPs in 270.1s (1.07 TFLOP/s)
+final_val_loss=2.5320 best=2.2994
+Training complete: 1679 steps in 270.1s
+  Evaluating pass@k...
+  pass@k eval: 22.7s
+    pass_at_1: 0.0036
+    pass_at_2: 0.0051
+    pass_at_4: 0.0072
+    pass_at_8: 0.0100
+    pass_at_16: 0.0140
+    pass_at_32: 0.0202
+    pass_at_64: 0.0298
+
+  Steps:      1679
+  Train loss: 0.0022
+  Best val:   2.2994
+  Init val:   11.3493
+  Gap:        -2.2972
+  Wall time:  292.9s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[8/12]
+============================================================
+Run: jamba_s43
+  arch=jamba, seed=43
+  params=10,185,080
+  flops/step=1.71e+11
+  flop_budget=2.88e+14
+  est_steps=1678
+init_val_loss=11.3399
+step 100: 6.5 steps/s, 13220 tok/s
+step 100: 1.11 TFLOP/s (1.71e+13 total)
+step 100: loss=1.3480, lr=2.97e-04
+step 200: 6.2 steps/s, 12763 tok/s
+step 200: 1.09 TFLOP/s (3.43e+13 total)
+step 200: loss=0.0925, lr=3.00e-04
+step 300: 5.9 steps/s, 12099 tok/s
+step 300: 1.06 TFLOP/s (5.14e+13 total)
+step 300: loss=0.0110, lr=3.00e-04
+step 400: 6.2 steps/s, 12683 tok/s
+step 400: 1.06 TFLOP/s (6.86e+13 total)
+step 400: loss=0.0088, lr=3.00e-04
+step 500: 6.2 steps/s, 12634 tok/s
+step 500: 1.06 TFLOP/s (8.57e+13 total)
+  eval step 500: val=2.3067 best=2.3067
+step 500: loss=0.0068, lr=3.00e-04
+step 600: 6.0 steps/s, 12206 tok/s
+step 600: 1.05 TFLOP/s (1.03e+14 total)
+step 600: loss=0.0112, lr=3.00e-04
+step 700: 5.9 steps/s, 12180 tok/s
+step 700: 1.05 TFLOP/s (1.20e+14 total)
+step 700: loss=0.0147, lr=3.00e-04
+step 800: 6.1 steps/s, 12494 tok/s
+step 800: 1.05 TFLOP/s (1.37e+14 total)
+step 800: loss=0.0052, lr=3.00e-04
+step 900: 5.8 steps/s, 11822 tok/s
+step 900: 1.04 TFLOP/s (1.54e+14 total)
+step 900: loss=0.0050, lr=3.00e-04
+step 1000: 5.8 steps/s, 11901 tok/s
+step 1000: 1.04 TFLOP/s (1.71e+14 total)
+  eval step 1000: val=2.4632 best=2.3067
+step 1000: loss=0.0047, lr=3.00e-04
+step 1100: 5.9 steps/s, 12155 tok/s
+step 1100: 1.04 TFLOP/s (1.89e+14 total)
+step 1100: loss=0.0027, lr=3.00e-04
+step 1200: 6.1 steps/s, 12459 tok/s
+step 1200: 1.04 TFLOP/s (2.06e+14 total)
+step 1200: loss=0.0040, lr=3.00e-04
+step 1300: 6.2 steps/s, 12617 tok/s
+step 1300: 1.04 TFLOP/s (2.23e+14 total)
+step 1300: loss=0.0022, lr=3.00e-04
+step 1400: 6.2 steps/s, 12644 tok/s
+step 1400: 1.04 TFLOP/s (2.40e+14 total)
+step 1400: loss=0.0030, lr=3.00e-04
+step 1500: 6.2 steps/s, 12615 tok/s
+step 1500: 1.04 TFLOP/s (2.57e+14 total)
+  eval step 1500: val=2.5524 best=2.3067
+step 1500: loss=0.0043, lr=3.00e-04
+step 1600: 6.1 steps/s, 12574 tok/s
+step 1600: 1.04 TFLOP/s (2.74e+14 total)
+step 1600: loss=0.0019, lr=3.00e-04
+FLOP budget reached at step 1679 (0.288 PFLOPs)
+Throughput summary: 1679 steps in 276.4s (6.1 steps/s, 12443 tok/s)
+FLOPs summary: 0.2879 PFLOPs in 276.4s (1.04 TFLOP/s)
+final_val_loss=2.5789 best=2.3067
+Training complete: 1679 steps in 276.3s
+  Evaluating pass@k...
+  pass@k eval: 22.6s
+    pass_at_1: 0.0019
+    pass_at_2: 0.0034
+    pass_at_4: 0.0058
+    pass_at_8: 0.0093
+    pass_at_16: 0.0144
+    pass_at_32: 0.0222
+    pass_at_64: 0.0340
+
+  Steps:      1679
+  Train loss: 0.0014
+  Best val:   2.3067
+  Init val:   11.3399
+  Gap:        -2.3052
+  Wall time:  299.0s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[9/12]
+============================================================
+Run: jamba_s44
+  arch=jamba, seed=44
+  params=10,185,080
+  flops/step=1.71e+11
+  flop_budget=2.88e+14
+  est_steps=1678
+init_val_loss=11.3666
+step 100: 6.1 steps/s, 12574 tok/s
+step 100: 1.05 TFLOP/s (1.71e+13 total)
+step 100: loss=1.7854, lr=2.97e-04
+step 200: 5.9 steps/s, 12100 tok/s
+step 200: 1.03 TFLOP/s (3.43e+13 total)
+step 200: loss=0.1182, lr=3.00e-04
+step 300: 5.7 steps/s, 11765 tok/s
+step 300: 1.02 TFLOP/s (5.14e+13 total)
+step 300: loss=0.0189, lr=3.00e-04
+step 400: 6.1 steps/s, 12448 tok/s
+step 400: 1.02 TFLOP/s (6.86e+13 total)
+step 400: loss=0.0076, lr=3.00e-04
+step 500: 5.8 steps/s, 11938 tok/s
+step 500: 1.02 TFLOP/s (8.57e+13 total)
+  eval step 500: val=2.3231 best=2.3231
+step 500: loss=0.0046, lr=3.00e-04
+step 600: 5.9 steps/s, 12114 tok/s
+step 600: 1.02 TFLOP/s (1.03e+14 total)
+step 600: loss=0.0050, lr=3.00e-04
+step 700: 5.7 steps/s, 11762 tok/s
+step 700: 1.01 TFLOP/s (1.20e+14 total)
+step 700: loss=0.0037, lr=3.00e-04
+step 800: 5.8 steps/s, 11958 tok/s
+step 800: 1.01 TFLOP/s (1.37e+14 total)
+step 800: loss=0.0030, lr=3.00e-04
+step 900: 5.9 steps/s, 12170 tok/s
+step 900: 1.01 TFLOP/s (1.54e+14 total)
+step 900: loss=0.0025, lr=3.00e-04
+step 1000: 6.0 steps/s, 12299 tok/s
+step 1000: 1.01 TFLOP/s (1.71e+14 total)
+  eval step 1000: val=2.4575 best=2.3231
+step 1000: loss=0.0030, lr=3.00e-04
+step 1100: 5.8 steps/s, 11957 tok/s
+step 1100: 1.01 TFLOP/s (1.89e+14 total)
+step 1100: loss=0.0032, lr=3.00e-04
+step 1200: 6.0 steps/s, 12265 tok/s
+step 1200: 1.01 TFLOP/s (2.06e+14 total)
+step 1200: loss=0.0026, lr=3.00e-04
+step 1300: 6.0 steps/s, 12233 tok/s
+step 1300: 1.01 TFLOP/s (2.23e+14 total)
+step 1300: loss=0.0046, lr=3.00e-04
+step 1400: 5.9 steps/s, 12109 tok/s
+step 1400: 1.01 TFLOP/s (2.40e+14 total)
+step 1400: loss=0.0044, lr=3.00e-04
+step 1500: 6.0 steps/s, 12292 tok/s
+step 1500: 1.02 TFLOP/s (2.57e+14 total)
+  eval step 1500: val=2.5439 best=2.3231
+step 1500: loss=0.0020, lr=3.00e-04
+step 1600: 6.1 steps/s, 12396 tok/s
+step 1600: 1.02 TFLOP/s (2.74e+14 total)
+step 1600: loss=0.0039, lr=3.00e-04
+FLOP budget reached at step 1679 (0.288 PFLOPs)
+Throughput summary: 1679 steps in 283.0s (5.9 steps/s, 12152 tok/s)
+FLOPs summary: 0.2879 PFLOPs in 283.0s (1.02 TFLOP/s)
+final_val_loss=2.5718 best=2.3231
+Training complete: 1679 steps in 282.9s
+  Evaluating pass@k...
+  pass@k eval: 24.4s
+    pass_at_1: 0.0019
+    pass_at_2: 0.0033
+    pass_at_4: 0.0055
+    pass_at_8: 0.0089
+    pass_at_16: 0.0143
+    pass_at_32: 0.0225
+    pass_at_64: 0.0350
+
+  Steps:      1679
+  Train loss: 0.0030
+  Best val:   2.3231
+  Init val:   11.3666
+  Gap:        -2.3202
+  Wall time:  307.4s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[10/12]
+============================================================
+Run: bamba_s42
+  arch=bamba, seed=42
+  params=9,299,320
+  flops/step=1.73e+11
+  flop_budget=2.88e+14
+  est_steps=1667
+init_val_loss=11.3358
+step 100: 6.3 steps/s, 12986 tok/s
+step 100: 1.09 TFLOP/s (1.73e+13 total)
+step 100: loss=1.9925, lr=2.97e-04
+step 200: 6.5 steps/s, 13231 tok/s
+step 200: 1.11 TFLOP/s (3.45e+13 total)
+step 200: loss=0.1582, lr=3.00e-04
+step 300: 6.4 steps/s, 13075 tok/s
+step 300: 1.10 TFLOP/s (5.18e+13 total)
+step 300: loss=0.0295, lr=3.00e-04
+step 400: 6.2 steps/s, 12706 tok/s
+step 400: 1.10 TFLOP/s (6.91e+13 total)
+step 400: loss=0.0061, lr=3.00e-04
+step 500: 6.4 steps/s, 13149 tok/s
+step 500: 1.10 TFLOP/s (8.63e+13 total)
+  eval step 500: val=2.4039 best=2.4039
+step 500: loss=0.0074, lr=3.00e-04
+step 600: 6.4 steps/s, 13112 tok/s
+step 600: 1.10 TFLOP/s (1.04e+14 total)
+step 600: loss=0.0045, lr=3.00e-04
+step 700: 6.3 steps/s, 12909 tok/s
+step 700: 1.10 TFLOP/s (1.21e+14 total)
+step 700: loss=0.0038, lr=3.00e-04
+step 800: 6.5 steps/s, 13265 tok/s
+step 800: 1.10 TFLOP/s (1.38e+14 total)
+step 800: loss=0.0028, lr=3.00e-04
+step 900: 6.4 steps/s, 13197 tok/s
+step 900: 1.10 TFLOP/s (1.55e+14 total)
+step 900: loss=0.0028, lr=3.00e-04
+step 1000: 6.3 steps/s, 12913 tok/s
+step 1000: 1.10 TFLOP/s (1.73e+14 total)
+  eval step 1000: val=2.5340 best=2.4039
+step 1000: loss=0.0027, lr=3.00e-04
+step 1100: 6.4 steps/s, 13070 tok/s
+step 1100: 1.10 TFLOP/s (1.90e+14 total)
+step 1100: loss=0.0037, lr=3.00e-04
+step 1200: 6.4 steps/s, 13197 tok/s
+step 1200: 1.10 TFLOP/s (2.07e+14 total)
+step 1200: loss=0.0024, lr=3.00e-04
+step 1300: 6.3 steps/s, 12968 tok/s
+step 1300: 1.10 TFLOP/s (2.24e+14 total)
+step 1300: loss=0.0027, lr=3.00e-04
+step 1400: 6.4 steps/s, 13112 tok/s
+step 1400: 1.10 TFLOP/s (2.42e+14 total)
+step 1400: loss=0.0027, lr=3.00e-04
+step 1500: 6.4 steps/s, 13147 tok/s
+step 1500: 1.10 TFLOP/s (2.59e+14 total)
+  eval step 1500: val=2.6194 best=2.4039
+step 1500: loss=0.0023, lr=3.00e-04
+step 1600: 6.3 steps/s, 12829 tok/s
+step 1600: 1.10 TFLOP/s (2.76e+14 total)
+step 1600: loss=0.0018, lr=3.00e-04
+FLOP budget reached at step 1667 (0.288 PFLOPs)
+Throughput summary: 1667 steps in 261.4s (6.4 steps/s, 13059 tok/s)
+FLOPs summary: 0.2878 PFLOPs in 261.4s (1.10 TFLOP/s)
+final_val_loss=2.6413 best=2.4039
+Training complete: 1667 steps in 261.4s
+  Evaluating pass@k...
+  pass@k eval: 16.1s
+    pass_at_1: 0.0036
+    pass_at_2: 0.0057
+    pass_at_4: 0.0088
+    pass_at_8: 0.0133
+    pass_at_16: 0.0200
+    pass_at_32: 0.0299
+    pass_at_64: 0.0439
+
+  Steps:      1667
+  Train loss: 0.0012
+  Best val:   2.4039
+  Init val:   11.3358
+  Gap:        -2.4027
+  Wall time:  277.7s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[11/12]
+============================================================
+Run: bamba_s43
+  arch=bamba, seed=43
+  params=9,299,320
+  flops/step=1.73e+11
+  flop_budget=2.88e+14
+  est_steps=1667
+init_val_loss=11.3221
+step 100: 6.2 steps/s, 12782 tok/s
+step 100: 1.08 TFLOP/s (1.73e+13 total)
+step 100: loss=1.5554, lr=2.97e-04
+step 200: 6.2 steps/s, 12783 tok/s
+step 200: 1.08 TFLOP/s (3.45e+13 total)
+step 200: loss=0.0943, lr=3.00e-04
+step 300: 6.4 steps/s, 13106 tok/s
+step 300: 1.09 TFLOP/s (5.18e+13 total)
+step 300: loss=0.0098, lr=3.00e-04
+step 400: 6.4 steps/s, 13080 tok/s
+step 400: 1.09 TFLOP/s (6.91e+13 total)
+step 400: loss=0.0091, lr=3.00e-04
+step 500: 6.2 steps/s, 12705 tok/s
+step 500: 1.09 TFLOP/s (8.63e+13 total)
+  eval step 500: val=2.2331 best=2.2331
+step 500: loss=0.0058, lr=3.00e-04
+step 600: 6.4 steps/s, 13179 tok/s
+step 600: 1.09 TFLOP/s (1.04e+14 total)
+step 600: loss=0.0029, lr=3.00e-04
+step 700: 6.6 steps/s, 13524 tok/s
+step 700: 1.10 TFLOP/s (1.21e+14 total)
+step 700: loss=0.0049, lr=3.00e-04
+step 800: 6.5 steps/s, 13396 tok/s
+step 800: 1.10 TFLOP/s (1.38e+14 total)
+step 800: loss=0.0036, lr=3.00e-04
+step 900: 6.4 steps/s, 13178 tok/s
+step 900: 1.10 TFLOP/s (1.55e+14 total)
+step 900: loss=0.0047, lr=3.00e-04
+step 1000: 6.4 steps/s, 13118 tok/s
+step 1000: 1.10 TFLOP/s (1.73e+14 total)
+  eval step 1000: val=2.3325 best=2.2331
+step 1000: loss=0.0045, lr=3.00e-04
+step 1100: 6.3 steps/s, 12969 tok/s
+step 1100: 1.10 TFLOP/s (1.90e+14 total)
+step 1100: loss=0.0026, lr=3.00e-04
+step 1200: 6.3 steps/s, 12891 tok/s
+step 1200: 1.10 TFLOP/s (2.07e+14 total)
+step 1200: loss=0.0041, lr=3.00e-04
+step 1300: 6.4 steps/s, 13071 tok/s
+step 1300: 1.10 TFLOP/s (2.24e+14 total)
+step 1300: loss=0.0023, lr=3.00e-04
+step 1400: 6.4 steps/s, 13125 tok/s
+step 1400: 1.10 TFLOP/s (2.42e+14 total)
+step 1400: loss=0.0031, lr=3.00e-04
+step 1500: 6.4 steps/s, 13071 tok/s
+step 1500: 1.10 TFLOP/s (2.59e+14 total)
+  eval step 1500: val=2.4048 best=2.2331
+step 1500: loss=0.0043, lr=3.00e-04
+step 1600: 6.4 steps/s, 13052 tok/s
+step 1600: 1.10 TFLOP/s (2.76e+14 total)
+step 1600: loss=0.0020, lr=3.00e-04
+FLOP budget reached at step 1667 (0.288 PFLOPs)
+Throughput summary: 1667 steps in 261.3s (6.4 steps/s, 13063 tok/s)
+FLOPs summary: 0.2878 PFLOPs in 261.3s (1.10 TFLOP/s)
+final_val_loss=2.4280 best=2.2331
+Training complete: 1667 steps in 261.3s
+  Evaluating pass@k...
+  pass@k eval: 17.1s
+    pass_at_1: 0.0018
+    pass_at_2: 0.0034
+    pass_at_4: 0.0061
+    pass_at_8: 0.0103
+    pass_at_16: 0.0166
+    pass_at_32: 0.0262
+    pass_at_64: 0.0408
+
+  Steps:      1667
+  Train loss: 0.0028
+  Best val:   2.2331
+  Init val:   11.3221
+  Gap:        -2.2304
+  Wall time:  278.5s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[12/12]
+============================================================
+Run: bamba_s44
+  arch=bamba, seed=44
+  params=9,299,320
+  flops/step=1.73e+11
+  flop_budget=2.88e+14
+  est_steps=1667
+init_val_loss=11.4013
+step 100: 6.2 steps/s, 12755 tok/s
+step 100: 1.08 TFLOP/s (1.73e+13 total)
+step 100: loss=1.8150, lr=2.97e-04
+step 200: 6.4 steps/s, 13185 tok/s
+step 200: 1.09 TFLOP/s (3.45e+13 total)
+step 200: loss=0.1215, lr=3.00e-04
+step 300: 6.4 steps/s, 13189 tok/s
+step 300: 1.10 TFLOP/s (5.18e+13 total)
+step 300: loss=0.0140, lr=3.00e-04
+step 400: 6.5 steps/s, 13391 tok/s
+step 400: 1.11 TFLOP/s (6.91e+13 total)
+step 400: loss=0.0075, lr=3.00e-04
+step 500: 6.4 steps/s, 13116 tok/s
+step 500: 1.11 TFLOP/s (8.63e+13 total)
+  eval step 500: val=2.3168 best=2.3168
+step 500: loss=0.0047, lr=3.00e-04
+step 600: 6.5 steps/s, 13361 tok/s
+step 600: 1.11 TFLOP/s (1.04e+14 total)
+step 600: loss=0.0053, lr=3.00e-04
+step 700: 6.4 steps/s, 13066 tok/s
+step 700: 1.11 TFLOP/s (1.21e+14 total)
+step 700: loss=0.0039, lr=3.00e-04
+step 800: 5.9 steps/s, 12064 tok/s
+step 800: 1.10 TFLOP/s (1.38e+14 total)
+step 800: loss=0.0033, lr=3.00e-04
+step 900: 6.3 steps/s, 12818 tok/s
+step 900: 1.09 TFLOP/s (1.55e+14 total)
+step 900: loss=0.0027, lr=3.00e-04
+step 1000: 6.4 steps/s, 13073 tok/s
+step 1000: 1.10 TFLOP/s (1.73e+14 total)
+  eval step 1000: val=2.4415 best=2.3168
+step 1000: loss=0.0032, lr=3.00e-04
+step 1100: 6.4 steps/s, 13063 tok/s
+step 1100: 1.10 TFLOP/s (1.90e+14 total)
+step 1100: loss=0.0034, lr=3.00e-04
+step 1200: 6.4 steps/s, 13068 tok/s
+step 1200: 1.10 TFLOP/s (2.07e+14 total)
+step 1200: loss=0.0026, lr=3.00e-04
+step 1300: 6.1 steps/s, 12493 tok/s
+step 1300: 1.09 TFLOP/s (2.24e+14 total)
+step 1300: loss=0.0048, lr=3.00e-04
+step 1400: 4.9 steps/s, 10082 tok/s
+step 1400: 1.07 TFLOP/s (2.42e+14 total)
+step 1400: loss=0.0045, lr=3.00e-04
+step 1500: 6.1 steps/s, 12559 tok/s
+step 1500: 1.07 TFLOP/s (2.59e+14 total)
+  eval step 1500: val=2.5152 best=2.3168
+step 1500: loss=0.0021, lr=3.00e-04
+step 1600: 5.5 steps/s, 11280 tok/s
+step 1600: 1.06 TFLOP/s (2.76e+14 total)
+step 1600: loss=0.0038, lr=3.00e-04
+FLOP budget reached at step 1667 (0.288 PFLOPs)
+Throughput summary: 1667 steps in 272.9s (6.1 steps/s, 12511 tok/s)
+FLOPs summary: 0.2878 PFLOPs in 272.9s (1.05 TFLOP/s)
+final_val_loss=2.5379 best=2.3168
+Training complete: 1667 steps in 272.9s
+  Evaluating pass@k...
+  pass@k eval: 17.6s
+    pass_at_1: 0.0030
+    pass_at_2: 0.0049
+    pass_at_4: 0.0076
+    pass_at_8: 0.0113
+    pass_at_16: 0.0166
+    pass_at_32: 0.0245
+    pass_at_64: 0.0366
+
+  Steps:      1667
+  Train loss: 0.0025
+  Best val:   2.3168
+  Init val:   11.4013
+  Gap:        -2.3143
+  Wall time:  290.6s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+============================================================
+Summary
+============================================================
+Run                           Val    p@1    p@8   p@64
+------------------------------------------------------
+llama_s42                  2.8253  0.005  0.024  0.087
+llama_s43                  2.7263  0.006  0.022  0.076
+llama_s44                  2.6416  0.006  0.025  0.087
+falcon_h1_s42              2.4039  0.004  0.013  0.044
+falcon_h1_s43              2.2331  0.002  0.010  0.041
+falcon_h1_s44              2.3168  0.003  0.011  0.037
+jamba_s42                  2.2994  0.004  0.010  0.030
+jamba_s43                  2.3067  0.002  0.009  0.034
+jamba_s44                  2.3231  0.002  0.009  0.035
+bamba_s42                  2.4039  0.004  0.013  0.044
+bamba_s43                  2.2331  0.002  0.010  0.041
+bamba_s44                  2.3168  0.003  0.011  0.037
+
+======================================================================
+Analysis by Architecture
+======================================================================
+Arch             Val     p@1    p@16    p@64  p16/p1  p64/p1
+------------------------------------------------------------
+bamba         2.3179  0.0028  0.0177  0.0404     6.4x    14.5x
+falcon_h1     2.3180  0.0028  0.0177  0.0406     6.4x    14.6x
+jamba         2.3097  0.0025  0.0142  0.0329     5.8x    13.4x
+llama         2.7311  0.0056  0.0364  0.0834     6.4x    14.8x
+
+======================================================================
+Pass@k Curves (mean across seeds)
+======================================================================
+Arch             k=1     k=2     k=4     k=8    k=16    k=32    k=64
+--------------------------------------------------------------------
+bamba         0.0028  0.0047  0.0075  0.0116  0.0177  0.0269  0.0404
+falcon_h1     0.0028  0.0047  0.0075  0.0116  0.0177  0.0269  0.0406
+jamba         0.0025  0.0040  0.0062  0.0094  0.0142  0.0216  0.0329
+llama         0.0056  0.0093  0.0151  0.0237  0.0364  0.0554  0.0834
+
+Results saved to experiments/hyp008_results.json

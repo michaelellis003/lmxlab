@@ -1,0 +1,3940 @@
+/Users/michaelellis/Projects/lmt-metal/.venv/lib/python3.12/site-packages/mlflow/tracking/_tracking_service/utils.py:184: FutureWarning: The filesystem tracking backend (e.g., './mlruns') is deprecated as of February 2026. Consider transitioning to a database backend (e.g., 'sqlite:///mlflow.db') to take advantage of the latest MLflow features. See https://mlflow.org/docs/latest/self-hosting/migrate-from-file-store for migration guidance.
+  return FileStore(store_uri, store_uri)
+2026/03/12 21:30:21 INFO mlflow.tracking.fluent: Experiment with name 'HYP-001c-flop-matched' does not exist. Creating a new experiment.
+mx.metal.get_peak_memory is deprecated and will be removed in a future version. Use mx.get_peak_memory instead.
+Shakespeare: 1,115,394 characters
+Tokenizer: char-level, 65 tokens
+Tokens: 1,115,394 total, 1,003,854 train, 111,540 val (90/10 split)
+
+==============================================================================
+HYP-001c: FLOP-Matched GPT-to-LLaMA Ablation
+6 configs x 5 seeds = 30 runs
+FLOP budget: 1.000 PFLOPs per run
+Batch size: 8, Seq len: 256, Eval every 500 steps
+Per-config LRs from HYP-001b:
+  GPT baseline           LR=3e-04
+  + RMSNorm              LR=1e-04
+  + RoPE                 LR=3e-04
+  + SwiGLU FFN           LR=3e-04
+  + GQA                  LR=3e-04
+  + No bias (=LLaMA)     LR=1e-04
+Design fix: SwiGLU d_ff=341 (was 512 in HYP-001, per LIT-002)
+MLflow tracking: enabled
+==============================================================================
+
+--- Seed 42 ---
+  [1/30]step 500: 1.17 TFLOP/s (2.43e+13 total)
+step 500: loss=2.3750, lr=3.00e-04
+step 500 eval: loss=2.4520
+step 1000: 1.16 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.1983, lr=3.00e-04
+step 1000 eval: loss=2.2783
+step 1500: 1.15 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.9127, lr=3.00e-04
+step 1500 eval: loss=1.9941
+step 2000: 1.14 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.7269, lr=3.00e-04
+step 2000 eval: loss=1.8572
+step 2500: 1.14 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.4917, lr=3.00e-04
+step 2500 eval: loss=1.7681
+step 3000: 1.14 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.5247, lr=3.00e-04
+step 3000 eval: loss=1.7330
+step 3500: 1.14 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4293, lr=3.00e-04
+step 3500 eval: loss=1.6936
+step 4000: 1.14 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4175, lr=3.00e-04
+step 4000 eval: loss=1.6677
+step 4500: 1.14 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.4309, lr=3.00e-04
+step 4500 eval: loss=1.6462
+step 5000: 1.14 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.3941, lr=3.00e-04
+step 5000 eval: loss=1.6401
+step 5500: 1.13 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.2839, lr=3.00e-04
+step 5500 eval: loss=1.6202
+step 6000: 1.14 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3326, lr=3.00e-04
+step 6000 eval: loss=1.6219
+step 6500: 1.14 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.3286, lr=3.00e-04
+step 6500 eval: loss=1.6150
+step 7000: 1.14 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.2881, lr=3.00e-04
+step 7000 eval: loss=1.6040
+step 7500: 1.15 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.2990, lr=3.00e-04
+step 7500 eval: loss=1.6001
+step 8000: 1.15 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.1128, lr=3.00e-04
+step 8000 eval: loss=1.6036
+step 8500: 1.15 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.2511, lr=3.00e-04
+step 8500 eval: loss=1.6101
+step 9000: 1.15 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.2457, lr=3.00e-04
+step 9000 eval: loss=1.5990
+step 9500: 1.15 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2515, lr=3.00e-04
+step 9500 eval: loss=1.6150
+step 10000: 1.15 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.2399, lr=3.00e-04
+step 10000 eval: loss=1.6310
+step 10500: 1.15 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1253, lr=3.00e-04
+step 10500 eval: loss=1.6303
+step 11000: 1.15 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2153, lr=3.00e-04
+step 11000 eval: loss=1.6412
+step 11500: 1.15 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1915, lr=3.00e-04
+step 11500 eval: loss=1.6558
+step 12000: 1.15 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.2617, lr=3.00e-04
+step 12000 eval: loss=1.6626
+step 12500: 1.15 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1764, lr=3.00e-04
+step 12500 eval: loss=1.6760
+step 13000: 1.15 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.2164, lr=3.00e-04
+step 13000 eval: loss=1.7002
+step 13500: 1.15 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.0839, lr=3.00e-04
+step 13500 eval: loss=1.7072
+step 14000: 1.15 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0306, lr=3.00e-04
+step 14000 eval: loss=1.7511
+step 14500: 1.15 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.0366, lr=3.00e-04
+step 14500 eval: loss=1.7500
+step 15000: 1.15 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0438, lr=3.00e-04
+step 15000 eval: loss=1.7727
+step 15500: 1.15 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0817, lr=3.00e-04
+step 15500 eval: loss=1.7945
+step 16000: 1.15 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.0173, lr=3.00e-04
+step 16000 eval: loss=1.8247
+step 16500: 1.15 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0881, lr=3.00e-04
+step 16500 eval: loss=1.8489
+step 17000: 1.15 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.8648, lr=3.00e-04
+step 17000 eval: loss=1.8752
+step 17500: 1.15 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.9061, lr=3.00e-04
+step 17500 eval: loss=1.8985
+step 18000: 1.15 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.8908, lr=3.00e-04
+step 18000 eval: loss=1.9184
+step 18500: 1.15 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.9930, lr=3.00e-04
+step 18500 eval: loss=1.9482
+step 19000: 1.15 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.8995, lr=3.00e-04
+step 19000 eval: loss=1.9808
+step 19500: 1.15 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.9001, lr=3.00e-04
+step 19500 eval: loss=2.0201
+step 20000: 1.15 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.8976, lr=3.00e-04
+step 20000 eval: loss=2.0570
+step 20500: 1.15 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.9201, lr=3.00e-04
+step 20500 eval: loss=2.0831
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    GPT baseline           lr=3e-04 seed=42: train=0.7558, val=1.5990 (gap=+1.3694), acc=49.7%, mfu=17.6%, 20609 steps, 1.000 PFLOPs, 3,179,776 params, 874.4s
+  [2/30]step 500: 1.18 TFLOP/s (2.43e+13 total)
+step 500: loss=2.3676, lr=1.00e-04
+step 500 eval: loss=2.4463
+step 1000: 1.16 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.2761, lr=1.00e-04
+step 1000 eval: loss=2.3404
+step 1500: 1.16 TFLOP/s (7.28e+13 total)
+step 1500: loss=2.2014, lr=1.00e-04
+step 1500 eval: loss=2.2412
+step 2000: 1.16 TFLOP/s (9.70e+13 total)
+step 2000: loss=2.0109, lr=1.00e-04
+step 2000 eval: loss=2.1270
+step 2500: 1.16 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.7913, lr=1.00e-04
+step 2500 eval: loss=1.9921
+step 3000: 1.15 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.7577, lr=1.00e-04
+step 3000 eval: loss=1.9151
+step 3500: 1.16 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.6273, lr=1.00e-04
+step 3500 eval: loss=1.8446
+step 4000: 1.16 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.5716, lr=1.00e-04
+step 4000 eval: loss=1.8115
+step 4500: 1.17 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.5559, lr=1.00e-04
+step 4500 eval: loss=1.7595
+step 5000: 1.17 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.5502, lr=1.00e-04
+step 5000 eval: loss=1.7543
+step 5500: 1.17 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.3936, lr=1.00e-04
+step 5500 eval: loss=1.7242
+step 6000: 1.17 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.4230, lr=1.00e-04
+step 6000 eval: loss=1.7160
+step 6500: 1.18 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.4069, lr=1.00e-04
+step 6500 eval: loss=1.6914
+step 7000: 1.18 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3989, lr=1.00e-04
+step 7000 eval: loss=1.6864
+step 7500: 1.18 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.4220, lr=1.00e-04
+step 7500 eval: loss=1.6700
+step 8000: 1.18 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.1555, lr=1.00e-04
+step 8000 eval: loss=1.6649
+step 8500: 1.18 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.3640, lr=1.00e-04
+step 8500 eval: loss=1.6660
+step 9000: 1.18 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.3404, lr=1.00e-04
+step 9000 eval: loss=1.6552
+step 9500: 1.18 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.3437, lr=1.00e-04
+step 9500 eval: loss=1.6490
+step 10000: 1.18 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.3190, lr=1.00e-04
+step 10000 eval: loss=1.6637
+step 10500: 1.18 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1985, lr=1.00e-04
+step 10500 eval: loss=1.6574
+step 11000: 1.18 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2983, lr=1.00e-04
+step 11000 eval: loss=1.6657
+step 11500: 1.19 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.2327, lr=1.00e-04
+step 11500 eval: loss=1.6678
+step 12000: 1.19 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.3179, lr=1.00e-04
+step 12000 eval: loss=1.6930
+step 12500: 1.19 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.2464, lr=1.00e-04
+step 12500 eval: loss=1.6938
+step 13000: 1.19 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.2711, lr=1.00e-04
+step 13000 eval: loss=1.6989
+step 13500: 1.19 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.1527, lr=1.00e-04
+step 13500 eval: loss=1.7220
+step 14000: 1.19 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0768, lr=1.00e-04
+step 14000 eval: loss=1.7271
+step 14500: 1.19 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.1166, lr=9.99e-05
+step 14500 eval: loss=1.7371
+step 15000: 1.19 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0711, lr=9.99e-05
+step 15000 eval: loss=1.7497
+step 15500: 1.19 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.1430, lr=9.99e-05
+step 15500 eval: loss=1.7708
+step 16000: 1.19 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.0989, lr=9.99e-05
+step 16000 eval: loss=1.7851
+step 16500: 1.19 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.1639, lr=9.99e-05
+step 16500 eval: loss=1.8126
+step 17000: 1.19 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.9342, lr=9.99e-05
+step 17000 eval: loss=1.8312
+step 17500: 1.19 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.9792, lr=9.99e-05
+step 17500 eval: loss=1.8563
+step 18000: 1.19 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.9501, lr=9.99e-05
+step 18000 eval: loss=1.8798
+step 18500: 1.19 TFLOP/s (8.98e+14 total)
+step 18500: loss=1.0568, lr=9.99e-05
+step 18500 eval: loss=1.9012
+step 19000: 1.19 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.9832, lr=9.99e-05
+step 19000 eval: loss=1.9165
+step 19500: 1.19 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.9895, lr=9.99e-05
+step 19500 eval: loss=1.9468
+step 20000: 1.18 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.9446, lr=9.99e-05
+step 20000 eval: loss=1.9780
+step 20500: 1.18 TFLOP/s (9.95e+14 total)
+step 20500: loss=1.0301, lr=9.99e-05
+step 20500 eval: loss=2.0324
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RMSNorm              lr=1e-04 seed=42: train=0.8350, val=1.6490 (gap=+1.2104), acc=48.8%, mfu=18.2%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 845.6s
+  [3/30]step 500: 1.18 TFLOP/s (2.43e+13 total)
+step 500: loss=2.3673, lr=3.00e-04
+step 500 eval: loss=2.4667
+step 1000: 1.17 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.1856, lr=3.00e-04
+step 1000 eval: loss=2.2561
+step 1500: 1.16 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.8982, lr=3.00e-04
+step 1500 eval: loss=1.9934
+step 2000: 1.16 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.7230, lr=3.00e-04
+step 2000 eval: loss=1.8497
+step 2500: 1.16 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.5038, lr=3.00e-04
+step 2500 eval: loss=1.7569
+step 3000: 1.16 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.5226, lr=3.00e-04
+step 3000 eval: loss=1.7016
+step 3500: 1.16 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4100, lr=3.00e-04
+step 3500 eval: loss=1.6757
+step 4000: 1.16 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4080, lr=3.00e-04
+step 4000 eval: loss=1.6695
+step 4500: 1.16 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.4045, lr=3.00e-04
+step 4500 eval: loss=1.6327
+step 5000: 1.15 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.3731, lr=3.00e-04
+step 5000 eval: loss=1.6279
+step 5500: 1.15 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.2709, lr=3.00e-04
+step 5500 eval: loss=1.6273
+step 6000: 1.16 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3353, lr=3.00e-04
+step 6000 eval: loss=1.6182
+step 6500: 1.16 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.2993, lr=3.00e-04
+step 6500 eval: loss=1.6131
+step 7000: 1.16 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3099, lr=3.00e-04
+step 7000 eval: loss=1.6100
+step 7500: 1.16 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.3000, lr=3.00e-04
+step 7500 eval: loss=1.6095
+step 8000: 1.17 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.0791, lr=3.00e-04
+step 8000 eval: loss=1.6229
+step 8500: 1.17 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.2508, lr=3.00e-04
+step 8500 eval: loss=1.6167
+step 9000: 1.17 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.2574, lr=3.00e-04
+step 9000 eval: loss=1.6148
+step 9500: 1.17 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2801, lr=3.00e-04
+step 9500 eval: loss=1.6265
+step 10000: 1.17 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.2308, lr=3.00e-04
+step 10000 eval: loss=1.6403
+step 10500: 1.17 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1284, lr=3.00e-04
+step 10500 eval: loss=1.6443
+step 11000: 1.18 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2058, lr=3.00e-04
+step 11000 eval: loss=1.6675
+step 11500: 1.18 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1703, lr=3.00e-04
+step 11500 eval: loss=1.6785
+step 12000: 1.18 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.2313, lr=3.00e-04
+step 12000 eval: loss=1.6913
+step 12500: 1.18 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1681, lr=3.00e-04
+step 12500 eval: loss=1.7013
+step 13000: 1.18 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.1720, lr=3.00e-04
+step 13000 eval: loss=1.7198
+step 13500: 1.18 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.0773, lr=3.00e-04
+step 13500 eval: loss=1.7343
+step 14000: 1.18 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0148, lr=3.00e-04
+step 14000 eval: loss=1.7641
+step 14500: 1.18 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.0324, lr=3.00e-04
+step 14500 eval: loss=1.7678
+step 15000: 1.18 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0287, lr=3.00e-04
+step 15000 eval: loss=1.7876
+step 15500: 1.18 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0566, lr=3.00e-04
+step 15500 eval: loss=1.8259
+step 16000: 1.18 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.0418, lr=3.00e-04
+step 16000 eval: loss=1.8434
+step 16500: 1.18 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0764, lr=3.00e-04
+step 16500 eval: loss=1.8772
+step 17000: 1.18 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.8527, lr=3.00e-04
+step 17000 eval: loss=1.8964
+step 17500: 1.18 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.8862, lr=3.00e-04
+step 17500 eval: loss=1.9381
+step 18000: 1.19 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.8785, lr=3.00e-04
+step 18000 eval: loss=1.9744
+step 18500: 1.19 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.9417, lr=3.00e-04
+step 18500 eval: loss=2.0062
+step 19000: 1.19 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.8777, lr=3.00e-04
+step 19000 eval: loss=2.0249
+step 19500: 1.19 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.8872, lr=3.00e-04
+step 19500 eval: loss=2.0512
+step 20000: 1.19 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.8664, lr=3.00e-04
+step 20000 eval: loss=2.0861
+step 20500: 1.19 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.8877, lr=3.00e-04
+step 20500 eval: loss=2.1493
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RoPE                 lr=3e-04 seed=42: train=0.7560, val=1.6095 (gap=+1.4367), acc=49.2%, mfu=18.2%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 843.4s
+  [4/30]step 500: 1.25 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4111, lr=3.00e-04
+step 500 eval: loss=2.4530
+step 1000: 1.24 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.1949, lr=3.00e-04
+step 1000 eval: loss=2.2823
+step 1500: 1.23 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.7404, lr=3.00e-04
+step 1500 eval: loss=1.9709
+step 2000: 1.23 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.6849, lr=3.00e-04
+step 2000 eval: loss=1.7995
+step 2500: 1.23 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.5132, lr=3.00e-04
+step 2500 eval: loss=1.7167
+step 3000: 1.23 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.3782, lr=3.00e-04
+step 3000 eval: loss=1.6921
+step 3500: 1.22 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.3438, lr=3.00e-04
+step 3500 eval: loss=1.6536
+step 4000: 1.22 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.3908, lr=3.00e-04
+step 4000 eval: loss=1.6304
+step 4500: 1.22 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.2258, lr=3.00e-04
+step 4500 eval: loss=1.6125
+step 5000: 1.22 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.3069, lr=3.00e-04
+step 5000 eval: loss=1.5974
+step 5500: 1.22 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.3003, lr=3.00e-04
+step 5500 eval: loss=1.6101
+step 6000: 1.22 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.2849, lr=3.00e-04
+step 6000 eval: loss=1.6043
+step 6500: 1.22 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.3424, lr=3.00e-04
+step 6500 eval: loss=1.6162
+step 7000: 1.22 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.1603, lr=3.00e-04
+step 7000 eval: loss=1.6177
+step 7500: 1.22 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.2156, lr=3.00e-04
+step 7500 eval: loss=1.6140
+step 8000: 1.22 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2295, lr=3.00e-04
+step 8000 eval: loss=1.6180
+step 8500: 1.22 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.1140, lr=3.00e-04
+step 8500 eval: loss=1.6289
+step 9000: 1.22 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.1363, lr=3.00e-04
+step 9000 eval: loss=1.6561
+step 9500: 1.22 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.1234, lr=3.00e-04
+step 9500 eval: loss=1.6571
+step 10000: 1.22 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.0570, lr=3.00e-04
+step 10000 eval: loss=1.6756
+step 10500: 1.22 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1270, lr=3.00e-04
+step 10500 eval: loss=1.6860
+step 11000: 1.22 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.1416, lr=3.00e-04
+step 11000 eval: loss=1.7195
+step 11500: 1.22 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.0532, lr=3.00e-04
+step 11500 eval: loss=1.7462
+step 12000: 1.22 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.0529, lr=3.00e-04
+step 12000 eval: loss=1.7832
+step 12500: 1.22 TFLOP/s (6.06e+14 total)
+step 12500: loss=1.0591, lr=3.00e-04
+step 12500 eval: loss=1.7950
+step 13000: 1.22 TFLOP/s (6.31e+14 total)
+step 13000: loss=0.9783, lr=3.00e-04
+step 13000 eval: loss=1.8358
+step 13500: 1.22 TFLOP/s (6.55e+14 total)
+step 13500: loss=0.9903, lr=3.00e-04
+step 13500 eval: loss=1.8644
+step 14000: 1.22 TFLOP/s (6.79e+14 total)
+step 14000: loss=0.9515, lr=3.00e-04
+step 14000 eval: loss=1.9072
+step 14500: 1.22 TFLOP/s (7.03e+14 total)
+step 14500: loss=1.0008, lr=3.00e-04
+step 14500 eval: loss=1.9316
+step 15000: 1.22 TFLOP/s (7.28e+14 total)
+step 15000: loss=0.8953, lr=3.00e-04
+step 15000 eval: loss=1.9742
+step 15500: 1.22 TFLOP/s (7.52e+14 total)
+step 15500: loss=0.8709, lr=3.00e-04
+step 15500 eval: loss=2.0266
+step 16000: 1.22 TFLOP/s (7.76e+14 total)
+step 16000: loss=0.9422, lr=3.00e-04
+step 16000 eval: loss=2.0568
+step 16500: 1.22 TFLOP/s (8.00e+14 total)
+step 16500: loss=0.8453, lr=3.00e-04
+step 16500 eval: loss=2.1146
+step 17000: 1.22 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.8930, lr=3.00e-04
+step 17000 eval: loss=2.1446
+step 17500: 1.22 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.8723, lr=3.00e-04
+step 17500 eval: loss=2.1916
+step 18000: 1.22 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.7270, lr=3.00e-04
+step 18000 eval: loss=2.2408
+step 18500: 1.22 TFLOP/s (8.97e+14 total)
+step 18500: loss=0.8374, lr=3.00e-04
+step 18500 eval: loss=2.2960
+step 19000: 1.22 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.8208, lr=3.00e-04
+step 19000 eval: loss=2.3375
+step 19500: 1.22 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.7953, lr=3.00e-04
+step 19500 eval: loss=2.3771
+step 20000: 1.22 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.7427, lr=3.00e-04
+step 20000 eval: loss=2.4495
+step 20500: 1.22 TFLOP/s (9.94e+14 total)
+step 20500: loss=0.7221, lr=3.00e-04
+step 20500 eval: loss=2.5024
+FLOP budget reached at step 20617 (1.000 PFLOPs)
+    + SwiGLU FFN           lr=3e-04 seed=42: train=0.7301, val=1.5974 (gap=+1.8371), acc=48.4%, mfu=18.7%, 20617 steps, 1.000 PFLOPs, 3,175,932 params, 820.9s
+  [5/30]step 500: 1.16 TFLOP/s (2.18e+13 total)
+step 500: loss=2.4011, lr=3.00e-04
+step 500 eval: loss=2.4475
+step 1000: 1.14 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.1204, lr=3.00e-04
+step 1000 eval: loss=2.2379
+step 1500: 1.14 TFLOP/s (6.55e+13 total)
+step 1500: loss=1.6929, lr=3.00e-04
+step 1500 eval: loss=1.9455
+step 2000: 1.14 TFLOP/s (8.73e+13 total)
+step 2000: loss=1.6757, lr=3.00e-04
+step 2000 eval: loss=1.7854
+step 2500: 1.14 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.5004, lr=3.00e-04
+step 2500 eval: loss=1.7290
+step 3000: 1.14 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.3761, lr=3.00e-04
+step 3000 eval: loss=1.6926
+step 3500: 1.13 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.3350, lr=3.00e-04
+step 3500 eval: loss=1.6524
+step 4000: 1.13 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.3915, lr=3.00e-04
+step 4000 eval: loss=1.6388
+step 4500: 1.13 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.2248, lr=3.00e-04
+step 4500 eval: loss=1.6201
+step 5000: 1.13 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.3043, lr=3.00e-04
+step 5000 eval: loss=1.6118
+step 5500: 1.13 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.2918, lr=3.00e-04
+step 5500 eval: loss=1.6154
+step 6000: 1.13 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.2827, lr=3.00e-04
+step 6000 eval: loss=1.6163
+step 6500: 1.13 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.3525, lr=3.00e-04
+step 6500 eval: loss=1.6164
+step 7000: 1.13 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.1737, lr=3.00e-04
+step 7000 eval: loss=1.6132
+step 7500: 1.13 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.2226, lr=3.00e-04
+step 7500 eval: loss=1.6182
+step 8000: 1.13 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.2236, lr=3.00e-04
+step 8000 eval: loss=1.6223
+step 8500: 1.13 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.1316, lr=3.00e-04
+step 8500 eval: loss=1.6335
+step 9000: 1.13 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.1377, lr=3.00e-04
+step 9000 eval: loss=1.6503
+step 9500: 1.13 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.1222, lr=3.00e-04
+step 9500 eval: loss=1.6564
+step 10000: 1.13 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.0707, lr=3.00e-04
+step 10000 eval: loss=1.6776
+step 10500: 1.13 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.1255, lr=3.00e-04
+step 10500 eval: loss=1.6847
+step 11000: 1.13 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.1627, lr=3.00e-04
+step 11000 eval: loss=1.7033
+step 11500: 1.13 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.0790, lr=3.00e-04
+step 11500 eval: loss=1.7304
+step 12000: 1.13 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.0587, lr=3.00e-04
+step 12000 eval: loss=1.7825
+step 12500: 1.13 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.0267, lr=3.00e-04
+step 12500 eval: loss=1.7999
+step 13000: 1.13 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.0265, lr=3.00e-04
+step 13000 eval: loss=1.8387
+step 13500: 1.13 TFLOP/s (5.90e+14 total)
+step 13500: loss=0.9913, lr=3.00e-04
+step 13500 eval: loss=1.8576
+step 14000: 1.13 TFLOP/s (6.11e+14 total)
+step 14000: loss=0.9959, lr=3.00e-04
+step 14000 eval: loss=1.8863
+step 14500: 1.13 TFLOP/s (6.33e+14 total)
+step 14500: loss=1.0007, lr=3.00e-04
+step 14500 eval: loss=1.8991
+step 15000: 1.13 TFLOP/s (6.55e+14 total)
+step 15000: loss=0.9213, lr=3.00e-04
+step 15000 eval: loss=1.9449
+step 15500: 1.13 TFLOP/s (6.77e+14 total)
+step 15500: loss=0.8905, lr=3.00e-04
+step 15500 eval: loss=1.9748
+step 16000: 1.13 TFLOP/s (6.99e+14 total)
+step 16000: loss=0.9666, lr=3.00e-04
+step 16000 eval: loss=2.0185
+step 16500: 1.13 TFLOP/s (7.21e+14 total)
+step 16500: loss=0.8771, lr=3.00e-04
+step 16500 eval: loss=2.0537
+step 17000: 1.13 TFLOP/s (7.42e+14 total)
+step 17000: loss=0.9027, lr=3.00e-04
+step 17000 eval: loss=2.0907
+step 17500: 1.13 TFLOP/s (7.64e+14 total)
+step 17500: loss=0.8932, lr=3.00e-04
+step 17500 eval: loss=2.1459
+step 18000: 1.13 TFLOP/s (7.86e+14 total)
+step 18000: loss=0.7764, lr=3.00e-04
+step 18000 eval: loss=2.1718
+step 18500: 1.13 TFLOP/s (8.08e+14 total)
+step 18500: loss=0.8276, lr=3.00e-04
+step 18500 eval: loss=2.2266
+step 19000: 1.13 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.8535, lr=3.00e-04
+step 19000 eval: loss=2.2738
+step 19500: 1.13 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.8158, lr=3.00e-04
+step 19500 eval: loss=2.2999
+step 20000: 1.13 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.7692, lr=3.00e-04
+step 20000 eval: loss=2.3329
+step 20500: 1.13 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.7589, lr=3.00e-04
+step 20500 eval: loss=2.3979
+step 21000: 1.13 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.7465, lr=3.00e-04
+step 21000 eval: loss=2.4564
+step 21500: 1.13 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.7335, lr=3.00e-04
+step 21500 eval: loss=2.4827
+step 22000: 1.13 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.6942, lr=3.00e-04
+step 22000 eval: loss=2.5411
+step 22500: 1.13 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.5705, lr=3.00e-04
+step 22500 eval: loss=2.6009
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + GQA                  lr=3e-04 seed=42: train=0.6570, val=1.6118 (gap=+1.9975), acc=48.2%, mfu=17.4%, 22898 steps, 1.000 PFLOPs, 2,781,180 params, 884.8s
+  [6/30]step 500: 1.21 TFLOP/s (2.18e+13 total)
+step 500: loss=2.3984, lr=1.00e-04
+step 500 eval: loss=2.4417
+step 1000: 1.19 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.3153, lr=1.00e-04
+step 1000 eval: loss=2.3332
+step 1500: 1.18 TFLOP/s (6.55e+13 total)
+step 1500: loss=2.0506, lr=1.00e-04
+step 1500 eval: loss=2.2218
+step 2000: 1.18 TFLOP/s (8.73e+13 total)
+step 2000: loss=2.0005, lr=1.00e-04
+step 2000 eval: loss=2.0410
+step 2500: 1.18 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.7919, lr=1.00e-04
+step 2500 eval: loss=1.9383
+step 3000: 1.17 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.7594, lr=1.00e-04
+step 3000 eval: loss=1.8493
+step 3500: 1.17 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.5721, lr=1.00e-04
+step 3500 eval: loss=1.7979
+step 4000: 1.17 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.4845, lr=1.00e-04
+step 4000 eval: loss=1.7590
+step 4500: 1.17 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.4746, lr=1.00e-04
+step 4500 eval: loss=1.7290
+step 5000: 1.17 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.4380, lr=1.00e-04
+step 5000 eval: loss=1.7256
+step 5500: 1.17 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.3953, lr=1.00e-04
+step 5500 eval: loss=1.7017
+step 6000: 1.17 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.3323, lr=1.00e-04
+step 6000 eval: loss=1.6721
+step 6500: 1.17 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.3911, lr=1.00e-04
+step 6500 eval: loss=1.6735
+step 7000: 1.17 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.3349, lr=1.00e-04
+step 7000 eval: loss=1.6786
+step 7500: 1.17 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.3435, lr=1.00e-04
+step 7500 eval: loss=1.6597
+step 8000: 1.17 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.3309, lr=1.00e-04
+step 8000 eval: loss=1.6616
+step 8500: 1.17 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.2721, lr=1.00e-04
+step 8500 eval: loss=1.6669
+step 9000: 1.17 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.2223, lr=1.00e-04
+step 9000 eval: loss=1.6731
+step 9500: 1.17 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.2621, lr=1.00e-04
+step 9500 eval: loss=1.6672
+step 10000: 1.17 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.2676, lr=1.00e-04
+step 10000 eval: loss=1.6814
+step 10500: 1.17 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.2556, lr=1.00e-04
+step 10500 eval: loss=1.6841
+step 11000: 1.17 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.2607, lr=1.00e-04
+step 11000 eval: loss=1.6985
+step 11500: 1.17 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.2197, lr=1.00e-04
+step 11500 eval: loss=1.7046
+step 12000: 1.17 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.0774, lr=1.00e-04
+step 12000 eval: loss=1.7182
+step 12500: 1.17 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.2269, lr=1.00e-04
+step 12500 eval: loss=1.7290
+step 13000: 1.17 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.1123, lr=1.00e-04
+step 13000 eval: loss=1.7526
+step 13500: 1.17 TFLOP/s (5.90e+14 total)
+step 13500: loss=1.1293, lr=1.00e-04
+step 13500 eval: loss=1.7694
+step 14000: 1.17 TFLOP/s (6.11e+14 total)
+step 14000: loss=1.1184, lr=1.00e-04
+step 14000 eval: loss=1.7828
+step 14500: 1.17 TFLOP/s (6.33e+14 total)
+step 14500: loss=1.1149, lr=9.99e-05
+step 14500 eval: loss=1.8121
+step 15000: 1.17 TFLOP/s (6.55e+14 total)
+step 15000: loss=1.1369, lr=9.99e-05
+step 15000 eval: loss=1.8366
+step 15500: 1.17 TFLOP/s (6.77e+14 total)
+step 15500: loss=1.0643, lr=9.99e-05
+step 15500 eval: loss=1.8635
+step 16000: 1.17 TFLOP/s (6.99e+14 total)
+step 16000: loss=1.0069, lr=9.99e-05
+step 16000 eval: loss=1.8961
+step 16500: 1.17 TFLOP/s (7.21e+14 total)
+step 16500: loss=1.0705, lr=9.99e-05
+step 16500 eval: loss=1.9119
+step 17000: 1.17 TFLOP/s (7.42e+14 total)
+step 17000: loss=1.1184, lr=9.99e-05
+step 17000 eval: loss=1.9402
+step 17500: 1.17 TFLOP/s (7.64e+14 total)
+step 17500: loss=1.0165, lr=9.99e-05
+step 17500 eval: loss=1.9659
+step 18000: 1.17 TFLOP/s (7.86e+14 total)
+step 18000: loss=0.9018, lr=9.99e-05
+step 18000 eval: loss=1.9948
+step 18500: 1.17 TFLOP/s (8.08e+14 total)
+step 18500: loss=0.9718, lr=9.99e-05
+step 18500 eval: loss=2.0323
+step 19000: 1.17 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.9484, lr=9.99e-05
+step 19000 eval: loss=2.0711
+step 19500: 1.17 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.9399, lr=9.99e-05
+step 19500 eval: loss=2.1058
+step 20000: 1.17 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.9725, lr=9.99e-05
+step 20000 eval: loss=2.1267
+step 20500: 1.17 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.8383, lr=9.99e-05
+step 20500 eval: loss=2.1683
+step 21000: 1.17 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.8403, lr=9.99e-05
+step 21000 eval: loss=2.2094
+step 21500: 1.17 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.8535, lr=9.99e-05
+step 21500 eval: loss=2.2643
+step 22000: 1.17 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.8962, lr=9.99e-05
+step 22000 eval: loss=2.2914
+step 22500: 1.17 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.8416, lr=9.99e-05
+step 22500 eval: loss=2.3623
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + No bias (=LLaMA)     lr=1e-04 seed=42: train=0.8481, val=1.6597 (gap=+1.5267), acc=47.0%, mfu=18.0%, 22898 steps, 1.000 PFLOPs, 2,770,944 params, 856.1s
+
+--- Seed 43 ---
+  [7/30]step 500: 1.22 TFLOP/s (2.43e+13 total)
+step 500: loss=2.3996, lr=3.00e-04
+step 500 eval: loss=2.4497
+step 1000: 1.20 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.1809, lr=3.00e-04
+step 1000 eval: loss=2.2883
+step 1500: 1.20 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.9219, lr=3.00e-04
+step 1500 eval: loss=2.0034
+step 2000: 1.20 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.6625, lr=3.00e-04
+step 2000 eval: loss=1.8665
+step 2500: 1.19 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6720, lr=3.00e-04
+step 2500 eval: loss=1.7758
+step 3000: 1.19 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.6229, lr=3.00e-04
+step 3000 eval: loss=1.7401
+step 3500: 1.19 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4808, lr=3.00e-04
+step 3500 eval: loss=1.6989
+step 4000: 1.19 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4168, lr=3.00e-04
+step 4000 eval: loss=1.6564
+step 4500: 1.19 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.3475, lr=3.00e-04
+step 4500 eval: loss=1.6529
+step 5000: 1.19 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.4095, lr=3.00e-04
+step 5000 eval: loss=1.6276
+step 5500: 1.19 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.4495, lr=3.00e-04
+step 5500 eval: loss=1.6281
+step 6000: 1.19 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.2746, lr=3.00e-04
+step 6000 eval: loss=1.6196
+step 6500: 1.19 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.3238, lr=3.00e-04
+step 6500 eval: loss=1.6083
+step 7000: 1.19 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.2798, lr=3.00e-04
+step 7000 eval: loss=1.6034
+step 7500: 1.19 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.3034, lr=3.00e-04
+step 7500 eval: loss=1.6193
+step 8000: 1.19 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2671, lr=3.00e-04
+step 8000 eval: loss=1.6136
+step 8500: 1.19 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.2155, lr=3.00e-04
+step 8500 eval: loss=1.6096
+step 9000: 1.19 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.1682, lr=3.00e-04
+step 9000 eval: loss=1.6211
+step 9500: 1.19 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2224, lr=3.00e-04
+step 9500 eval: loss=1.6186
+step 10000: 1.19 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.1480, lr=3.00e-04
+step 10000 eval: loss=1.6276
+step 10500: 1.19 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1648, lr=3.00e-04
+step 10500 eval: loss=1.6298
+step 11000: 1.19 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2136, lr=3.00e-04
+step 11000 eval: loss=1.6422
+step 11500: 1.19 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1305, lr=3.00e-04
+step 11500 eval: loss=1.6569
+step 12000: 1.19 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1788, lr=3.00e-04
+step 12000 eval: loss=1.6625
+step 12500: 1.19 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1191, lr=3.00e-04
+step 12500 eval: loss=1.6925
+step 13000: 1.19 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.1440, lr=3.00e-04
+step 13000 eval: loss=1.7067
+step 13500: 1.19 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.1517, lr=3.00e-04
+step 13500 eval: loss=1.7224
+step 14000: 1.19 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0781, lr=3.00e-04
+step 14000 eval: loss=1.7431
+step 14500: 1.19 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.1003, lr=3.00e-04
+step 14500 eval: loss=1.7492
+step 15000: 1.19 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0278, lr=3.00e-04
+step 15000 eval: loss=1.7772
+step 15500: 1.19 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0448, lr=3.00e-04
+step 15500 eval: loss=1.8096
+step 16000: 1.19 TFLOP/s (7.76e+14 total)
+step 16000: loss=0.9662, lr=3.00e-04
+step 16000 eval: loss=1.8307
+step 16500: 1.19 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0683, lr=3.00e-04
+step 16500 eval: loss=1.8602
+step 17000: 1.19 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.0614, lr=3.00e-04
+step 17000 eval: loss=1.8812
+step 17500: 1.19 TFLOP/s (8.49e+14 total)
+step 17500: loss=1.0139, lr=3.00e-04
+step 17500 eval: loss=1.9168
+step 18000: 1.19 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.9854, lr=3.00e-04
+step 18000 eval: loss=1.9379
+step 18500: 1.19 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.8777, lr=3.00e-04
+step 18500 eval: loss=1.9680
+step 19000: 1.19 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.9479, lr=3.00e-04
+step 19000 eval: loss=2.0053
+step 19500: 1.19 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.9604, lr=3.00e-04
+step 19500 eval: loss=2.0295
+step 20000: 1.19 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.9086, lr=3.00e-04
+step 20000 eval: loss=2.0886
+step 20500: 1.19 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.7999, lr=3.00e-04
+step 20500 eval: loss=2.1191
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    GPT baseline           lr=3e-04 seed=43: train=0.7605, val=1.6034 (gap=+1.4130), acc=49.2%, mfu=18.3%, 20609 steps, 1.000 PFLOPs, 3,179,776 params, 842.1s
+  [8/30]step 500: 1.24 TFLOP/s (2.43e+13 total)
+step 500: loss=2.3825, lr=1.00e-04
+step 500 eval: loss=2.4222
+step 1000: 1.22 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.2357, lr=1.00e-04
+step 1000 eval: loss=2.3448
+step 1500: 1.21 TFLOP/s (7.28e+13 total)
+step 1500: loss=2.1676, lr=1.00e-04
+step 1500 eval: loss=2.2516
+step 2000: 1.21 TFLOP/s (9.70e+13 total)
+step 2000: loss=2.0222, lr=1.00e-04
+step 2000 eval: loss=2.1678
+step 2500: 1.21 TFLOP/s (1.21e+14 total)
+step 2500: loss=2.0003, lr=1.00e-04
+step 2500 eval: loss=2.0587
+step 3000: 1.21 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.8775, lr=1.00e-04
+step 3000 eval: loss=1.9753
+step 3500: 1.21 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.7145, lr=1.00e-04
+step 3500 eval: loss=1.9101
+step 4000: 1.21 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.6269, lr=1.00e-04
+step 4000 eval: loss=1.8536
+step 4500: 1.21 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.5308, lr=1.00e-04
+step 4500 eval: loss=1.8289
+step 5000: 1.21 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.5417, lr=1.00e-04
+step 5000 eval: loss=1.7855
+step 5500: 1.21 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.6087, lr=1.00e-04
+step 5500 eval: loss=1.7686
+step 6000: 1.21 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.4108, lr=1.00e-04
+step 6000 eval: loss=1.7447
+step 6500: 1.21 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.4273, lr=1.00e-04
+step 6500 eval: loss=1.7289
+step 7000: 1.20 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3981, lr=1.00e-04
+step 7000 eval: loss=1.7198
+step 7500: 1.20 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.4016, lr=1.00e-04
+step 7500 eval: loss=1.7078
+step 8000: 1.20 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.3842, lr=1.00e-04
+step 8000 eval: loss=1.7047
+step 8500: 1.20 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.3397, lr=1.00e-04
+step 8500 eval: loss=1.6887
+step 9000: 1.20 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.2486, lr=1.00e-04
+step 9000 eval: loss=1.6879
+step 9500: 1.20 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2866, lr=1.00e-04
+step 9500 eval: loss=1.6857
+step 10000: 1.20 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.2510, lr=1.00e-04
+step 10000 eval: loss=1.6855
+step 10500: 1.20 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.2307, lr=1.00e-04
+step 10500 eval: loss=1.6930
+step 11000: 1.20 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.3025, lr=1.00e-04
+step 11000 eval: loss=1.6934
+step 11500: 1.20 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.2402, lr=1.00e-04
+step 11500 eval: loss=1.7033
+step 12000: 1.20 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.2584, lr=1.00e-04
+step 12000 eval: loss=1.7057
+step 12500: 1.20 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.2389, lr=1.00e-04
+step 12500 eval: loss=1.7157
+step 13000: 1.20 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.2303, lr=1.00e-04
+step 13000 eval: loss=1.7168
+step 13500: 1.20 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.2469, lr=1.00e-04
+step 13500 eval: loss=1.7323
+step 14000: 1.20 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.1818, lr=1.00e-04
+step 14000 eval: loss=1.7520
+step 14500: 1.20 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.2061, lr=9.99e-05
+step 14500 eval: loss=1.7648
+step 15000: 1.20 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.1372, lr=9.99e-05
+step 15000 eval: loss=1.7863
+step 15500: 1.20 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.1387, lr=9.99e-05
+step 15500 eval: loss=1.8074
+step 16000: 1.20 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.0640, lr=9.99e-05
+step 16000 eval: loss=1.8089
+step 16500: 1.20 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.1673, lr=9.99e-05
+step 16500 eval: loss=1.8357
+step 17000: 1.20 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.1187, lr=9.99e-05
+step 17000 eval: loss=1.8609
+step 17500: 1.20 TFLOP/s (8.49e+14 total)
+step 17500: loss=1.1217, lr=9.99e-05
+step 17500 eval: loss=1.8805
+step 18000: 1.20 TFLOP/s (8.73e+14 total)
+step 18000: loss=1.0629, lr=9.99e-05
+step 18000 eval: loss=1.9061
+step 18500: 1.20 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.9603, lr=9.99e-05
+step 18500 eval: loss=1.9372
+step 19000: 1.20 TFLOP/s (9.22e+14 total)
+step 19000: loss=1.0632, lr=9.99e-05
+step 19000 eval: loss=1.9595
+step 19500: 1.20 TFLOP/s (9.46e+14 total)
+step 19500: loss=1.0054, lr=9.99e-05
+step 19500 eval: loss=1.9860
+step 20000: 1.20 TFLOP/s (9.70e+14 total)
+step 20000: loss=1.0065, lr=9.99e-05
+step 20000 eval: loss=2.0179
+step 20500: 1.20 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.8892, lr=9.99e-05
+step 20500 eval: loss=2.0527
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RMSNorm              lr=1e-04 seed=43: train=0.8596, val=1.6855 (gap=+1.2184), acc=47.6%, mfu=18.5%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 832.4s
+  [9/30]step 500: 1.24 TFLOP/s (2.43e+13 total)
+step 500: loss=2.3955, lr=3.00e-04
+step 500 eval: loss=2.4478
+step 1000: 1.22 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.1675, lr=3.00e-04
+step 1000 eval: loss=2.3026
+step 1500: 1.21 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.9176, lr=3.00e-04
+step 1500 eval: loss=1.9938
+step 2000: 1.21 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.6480, lr=3.00e-04
+step 2000 eval: loss=1.8500
+step 2500: 1.21 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6611, lr=3.00e-04
+step 2500 eval: loss=1.7621
+step 3000: 1.21 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.5908, lr=3.00e-04
+step 3000 eval: loss=1.7090
+step 3500: 1.21 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4645, lr=3.00e-04
+step 3500 eval: loss=1.6772
+step 4000: 1.21 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4120, lr=3.00e-04
+step 4000 eval: loss=1.6614
+step 4500: 1.21 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.3485, lr=3.00e-04
+step 4500 eval: loss=1.6452
+step 5000: 1.21 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.3988, lr=3.00e-04
+step 5000 eval: loss=1.6296
+step 5500: 1.21 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.4577, lr=3.00e-04
+step 5500 eval: loss=1.6134
+step 6000: 1.21 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.2683, lr=3.00e-04
+step 6000 eval: loss=1.6182
+step 6500: 1.21 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.3162, lr=3.00e-04
+step 6500 eval: loss=1.6099
+step 7000: 1.20 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.2677, lr=3.00e-04
+step 7000 eval: loss=1.5994
+step 7500: 1.20 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.2778, lr=3.00e-04
+step 7500 eval: loss=1.6113
+step 8000: 1.20 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2524, lr=3.00e-04
+step 8000 eval: loss=1.6153
+step 8500: 1.20 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.2223, lr=3.00e-04
+step 8500 eval: loss=1.6175
+step 9000: 1.20 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.1638, lr=3.00e-04
+step 9000 eval: loss=1.6211
+step 9500: 1.20 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2011, lr=3.00e-04
+step 9500 eval: loss=1.6223
+step 10000: 1.20 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.1176, lr=3.00e-04
+step 10000 eval: loss=1.6358
+step 10500: 1.20 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1470, lr=3.00e-04
+step 10500 eval: loss=1.6476
+step 11000: 1.20 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2123, lr=3.00e-04
+step 11000 eval: loss=1.6522
+step 11500: 1.20 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1196, lr=3.00e-04
+step 11500 eval: loss=1.6799
+step 12000: 1.20 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1296, lr=3.00e-04
+step 12000 eval: loss=1.6797
+step 12500: 1.20 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1385, lr=3.00e-04
+step 12500 eval: loss=1.7080
+step 13000: 1.20 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.1256, lr=3.00e-04
+step 13000 eval: loss=1.7181
+step 13500: 1.20 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.1513, lr=3.00e-04
+step 13500 eval: loss=1.7340
+step 14000: 1.20 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0690, lr=3.00e-04
+step 14000 eval: loss=1.7546
+step 14500: 1.20 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.0992, lr=3.00e-04
+step 14500 eval: loss=1.7825
+step 15000: 1.20 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0198, lr=3.00e-04
+step 15000 eval: loss=1.8081
+step 15500: 1.20 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0214, lr=3.00e-04
+step 15500 eval: loss=1.8332
+step 16000: 1.20 TFLOP/s (7.76e+14 total)
+step 16000: loss=0.9617, lr=3.00e-04
+step 16000 eval: loss=1.8473
+step 16500: 1.20 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0192, lr=3.00e-04
+step 16500 eval: loss=1.8893
+step 17000: 1.20 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.0609, lr=3.00e-04
+step 17000 eval: loss=1.9035
+step 17500: 1.20 TFLOP/s (8.49e+14 total)
+step 17500: loss=1.0038, lr=3.00e-04
+step 17500 eval: loss=1.9628
+step 18000: 1.20 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.9214, lr=3.00e-04
+step 18000 eval: loss=1.9895
+step 18500: 1.20 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.8556, lr=3.00e-04
+step 18500 eval: loss=1.9981
+step 19000: 1.20 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.9399, lr=3.00e-04
+step 19000 eval: loss=2.0565
+step 19500: 1.20 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.9118, lr=3.00e-04
+step 19500 eval: loss=2.1027
+step 20000: 1.20 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.8901, lr=3.00e-04
+step 20000 eval: loss=2.1350
+step 20500: 1.20 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.8006, lr=3.00e-04
+step 20500 eval: loss=2.1749
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RoPE                 lr=3e-04 seed=43: train=0.7487, val=1.5994 (gap=+1.4556), acc=49.3%, mfu=18.5%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 832.3s
+  [10/30]step 500: 1.26 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4637, lr=3.00e-04
+step 500 eval: loss=2.4523
+step 1000: 1.24 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.1748, lr=3.00e-04
+step 1000 eval: loss=2.2831
+step 1500: 1.23 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.8782, lr=3.00e-04
+step 1500 eval: loss=1.9677
+step 2000: 1.23 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.6209, lr=3.00e-04
+step 2000 eval: loss=1.8259
+step 2500: 1.23 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6176, lr=3.00e-04
+step 2500 eval: loss=1.7552
+step 3000: 1.22 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.4810, lr=3.00e-04
+step 3000 eval: loss=1.7072
+step 3500: 1.22 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.5284, lr=3.00e-04
+step 3500 eval: loss=1.6850
+step 4000: 1.22 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4353, lr=3.00e-04
+step 4000 eval: loss=1.6628
+step 4500: 1.22 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.4940, lr=3.00e-04
+step 4500 eval: loss=1.6411
+step 5000: 1.22 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.4164, lr=3.00e-04
+step 5000 eval: loss=1.6287
+step 5500: 1.22 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.3105, lr=3.00e-04
+step 5500 eval: loss=1.6282
+step 6000: 1.22 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3025, lr=3.00e-04
+step 6000 eval: loss=1.6313
+step 6500: 1.22 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.2987, lr=3.00e-04
+step 6500 eval: loss=1.6241
+step 7000: 1.22 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.2852, lr=3.00e-04
+step 7000 eval: loss=1.6285
+step 7500: 1.22 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.3299, lr=3.00e-04
+step 7500 eval: loss=1.6285
+step 8000: 1.22 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.1976, lr=3.00e-04
+step 8000 eval: loss=1.6296
+step 8500: 1.22 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.2183, lr=3.00e-04
+step 8500 eval: loss=1.6429
+step 9000: 1.22 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.2025, lr=3.00e-04
+step 9000 eval: loss=1.6329
+step 9500: 1.22 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2209, lr=3.00e-04
+step 9500 eval: loss=1.6519
+step 10000: 1.22 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.1801, lr=3.00e-04
+step 10000 eval: loss=1.6773
+step 10500: 1.22 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.2053, lr=3.00e-04
+step 10500 eval: loss=1.6885
+step 11000: 1.22 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.0738, lr=3.00e-04
+step 11000 eval: loss=1.7001
+step 11500: 1.22 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1399, lr=3.00e-04
+step 11500 eval: loss=1.7344
+step 12000: 1.22 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1387, lr=3.00e-04
+step 12000 eval: loss=1.7551
+step 12500: 1.22 TFLOP/s (6.06e+14 total)
+step 12500: loss=1.0764, lr=3.00e-04
+step 12500 eval: loss=1.7645
+step 13000: 1.22 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.1465, lr=3.00e-04
+step 13000 eval: loss=1.7991
+step 13500: 1.22 TFLOP/s (6.55e+14 total)
+step 13500: loss=0.9630, lr=3.00e-04
+step 13500 eval: loss=1.8162
+step 14000: 1.22 TFLOP/s (6.79e+14 total)
+step 14000: loss=0.9934, lr=3.00e-04
+step 14000 eval: loss=1.8746
+step 14500: 1.22 TFLOP/s (7.03e+14 total)
+step 14500: loss=1.0739, lr=3.00e-04
+step 14500 eval: loss=1.8874
+step 15000: 1.22 TFLOP/s (7.28e+14 total)
+step 15000: loss=0.9596, lr=3.00e-04
+step 15000 eval: loss=1.9139
+step 15500: 1.22 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0328, lr=3.00e-04
+step 15500 eval: loss=1.9491
+step 16000: 1.22 TFLOP/s (7.76e+14 total)
+step 16000: loss=0.9440, lr=3.00e-04
+step 16000 eval: loss=1.9959
+step 16500: 1.22 TFLOP/s (8.00e+14 total)
+step 16500: loss=0.9491, lr=3.00e-04
+step 16500 eval: loss=2.0463
+step 17000: 1.22 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.9252, lr=3.00e-04
+step 17000 eval: loss=2.0954
+step 17500: 1.22 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.8020, lr=3.00e-04
+step 17500 eval: loss=2.1276
+step 18000: 1.22 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.9431, lr=3.00e-04
+step 18000 eval: loss=2.1645
+step 18500: 1.22 TFLOP/s (8.97e+14 total)
+step 18500: loss=0.8800, lr=3.00e-04
+step 18500 eval: loss=2.2098
+step 19000: 1.22 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.8331, lr=3.00e-04
+step 19000 eval: loss=2.2471
+step 19500: 1.22 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.7942, lr=3.00e-04
+step 19500 eval: loss=2.3020
+step 20000: 1.22 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.7052, lr=3.00e-04
+step 20000 eval: loss=2.3415
+step 20500: 1.22 TFLOP/s (9.94e+14 total)
+step 20500: loss=0.7286, lr=3.00e-04
+step 20500 eval: loss=2.4624
+FLOP budget reached at step 20617 (1.000 PFLOPs)
+    + SwiGLU FFN           lr=3e-04 seed=43: train=0.6972, val=1.6241 (gap=+1.8233), acc=47.9%, mfu=18.8%, 20617 steps, 1.000 PFLOPs, 3,175,932 params, 820.4s
+  [11/30]step 500: 1.16 TFLOP/s (2.18e+13 total)
+step 500: loss=2.4519, lr=3.00e-04
+step 500 eval: loss=2.4444
+step 1000: 1.14 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.0849, lr=3.00e-04
+step 1000 eval: loss=2.1906
+step 1500: 1.14 TFLOP/s (6.55e+13 total)
+step 1500: loss=1.8060, lr=3.00e-04
+step 1500 eval: loss=1.9104
+step 2000: 1.14 TFLOP/s (8.73e+13 total)
+step 2000: loss=1.5693, lr=3.00e-04
+step 2000 eval: loss=1.7758
+step 2500: 1.13 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.5741, lr=3.00e-04
+step 2500 eval: loss=1.7341
+step 3000: 1.13 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.4423, lr=3.00e-04
+step 3000 eval: loss=1.6697
+step 3500: 1.13 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.4691, lr=3.00e-04
+step 3500 eval: loss=1.6495
+step 4000: 1.13 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.3945, lr=3.00e-04
+step 4000 eval: loss=1.6287
+step 4500: 1.13 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.4427, lr=3.00e-04
+step 4500 eval: loss=1.6204
+step 5000: 1.13 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.3900, lr=3.00e-04
+step 5000 eval: loss=1.6054
+step 5500: 1.13 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.2804, lr=3.00e-04
+step 5500 eval: loss=1.6121
+step 6000: 1.13 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.2435, lr=3.00e-04
+step 6000 eval: loss=1.5920
+step 6500: 1.13 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.2580, lr=3.00e-04
+step 6500 eval: loss=1.5973
+step 7000: 1.13 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.2273, lr=3.00e-04
+step 7000 eval: loss=1.6022
+step 7500: 1.13 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.3166, lr=3.00e-04
+step 7500 eval: loss=1.6084
+step 8000: 1.13 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.1776, lr=3.00e-04
+step 8000 eval: loss=1.6131
+step 8500: 1.13 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.1890, lr=3.00e-04
+step 8500 eval: loss=1.6307
+step 9000: 1.13 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.1721, lr=3.00e-04
+step 9000 eval: loss=1.6266
+step 9500: 1.13 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.1811, lr=3.00e-04
+step 9500 eval: loss=1.6336
+step 10000: 1.13 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.1629, lr=3.00e-04
+step 10000 eval: loss=1.6623
+step 10500: 1.13 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.1719, lr=3.00e-04
+step 10500 eval: loss=1.6562
+step 11000: 1.13 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.0953, lr=3.00e-04
+step 11000 eval: loss=1.6769
+step 11500: 1.13 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.1166, lr=3.00e-04
+step 11500 eval: loss=1.6967
+step 12000: 1.13 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.1146, lr=3.00e-04
+step 12000 eval: loss=1.7206
+step 12500: 1.13 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.0965, lr=3.00e-04
+step 12500 eval: loss=1.7331
+step 13000: 1.13 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.1642, lr=3.00e-04
+step 13000 eval: loss=1.7570
+step 13500: 1.13 TFLOP/s (5.90e+14 total)
+step 13500: loss=0.9391, lr=3.00e-04
+step 13500 eval: loss=1.8028
+step 14000: 1.13 TFLOP/s (6.11e+14 total)
+step 14000: loss=1.0036, lr=3.00e-04
+step 14000 eval: loss=1.8174
+step 14500: 1.13 TFLOP/s (6.33e+14 total)
+step 14500: loss=1.0706, lr=3.00e-04
+step 14500 eval: loss=1.8256
+step 15000: 1.13 TFLOP/s (6.55e+14 total)
+step 15000: loss=0.9741, lr=3.00e-04
+step 15000 eval: loss=1.8723
+step 15500: 1.13 TFLOP/s (6.77e+14 total)
+step 15500: loss=1.0403, lr=3.00e-04
+step 15500 eval: loss=1.8912
+step 16000: 1.13 TFLOP/s (6.99e+14 total)
+step 16000: loss=0.9583, lr=3.00e-04
+step 16000 eval: loss=1.9434
+step 16500: 1.13 TFLOP/s (7.21e+14 total)
+step 16500: loss=0.9725, lr=3.00e-04
+step 16500 eval: loss=1.9773
+step 17000: 1.13 TFLOP/s (7.42e+14 total)
+step 17000: loss=0.9283, lr=3.00e-04
+step 17000 eval: loss=1.9937
+step 17500: 1.13 TFLOP/s (7.64e+14 total)
+step 17500: loss=0.8450, lr=3.00e-04
+step 17500 eval: loss=2.0781
+step 18000: 1.13 TFLOP/s (7.86e+14 total)
+step 18000: loss=0.9307, lr=3.00e-04
+step 18000 eval: loss=2.0830
+step 18500: 1.13 TFLOP/s (8.08e+14 total)
+step 18500: loss=0.8912, lr=3.00e-04
+step 18500 eval: loss=2.1328
+step 19000: 1.13 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.8119, lr=3.00e-04
+step 19000 eval: loss=2.1590
+step 19500: 1.13 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.7759, lr=3.00e-04
+step 19500 eval: loss=2.2229
+step 20000: 1.13 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.7235, lr=3.00e-04
+step 20000 eval: loss=2.2436
+step 20500: 1.13 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.7774, lr=3.00e-04
+step 20500 eval: loss=2.3088
+step 21000: 1.13 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.7518, lr=3.00e-04
+step 21000 eval: loss=2.3763
+step 21500: 1.13 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.8056, lr=3.00e-04
+step 21500 eval: loss=2.3826
+step 22000: 1.13 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.7450, lr=3.00e-04
+step 22000 eval: loss=2.4042
+step 22500: 1.13 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.7099, lr=3.00e-04
+step 22500 eval: loss=2.4886
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + GQA                  lr=3e-04 seed=43: train=0.7131, val=1.5920 (gap=+1.8292), acc=48.3%, mfu=17.3%, 22898 steps, 1.000 PFLOPs, 2,781,180 params, 888.2s
+  [12/30]step 500: 1.20 TFLOP/s (2.18e+13 total)
+step 500: loss=2.3900, lr=1.00e-04
+step 500 eval: loss=2.4195
+step 1000: 1.18 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.2419, lr=1.00e-04
+step 1000 eval: loss=2.3202
+step 1500: 1.18 TFLOP/s (6.55e+13 total)
+step 1500: loss=2.1202, lr=1.00e-04
+step 1500 eval: loss=2.1973
+step 2000: 1.17 TFLOP/s (8.73e+13 total)
+step 2000: loss=1.9002, lr=1.00e-04
+step 2000 eval: loss=2.0517
+step 2500: 1.17 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.8007, lr=1.00e-04
+step 2500 eval: loss=1.9356
+step 3000: 1.17 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.6950, lr=1.00e-04
+step 3000 eval: loss=1.8451
+step 3500: 1.17 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.5965, lr=1.00e-04
+step 3500 eval: loss=1.7962
+step 4000: 1.17 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.5990, lr=1.00e-04
+step 4000 eval: loss=1.7604
+step 4500: 1.17 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.4232, lr=1.00e-04
+step 4500 eval: loss=1.7301
+step 5000: 1.17 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.4016, lr=1.00e-04
+step 5000 eval: loss=1.7124
+step 5500: 1.17 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.3580, lr=1.00e-04
+step 5500 eval: loss=1.6917
+step 6000: 1.17 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.2726, lr=1.00e-04
+step 6000 eval: loss=1.6876
+step 6500: 1.17 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.3628, lr=1.00e-04
+step 6500 eval: loss=1.6770
+step 7000: 1.17 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.4056, lr=1.00e-04
+step 7000 eval: loss=1.6668
+step 7500: 1.17 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.2551, lr=1.00e-04
+step 7500 eval: loss=1.6635
+step 8000: 1.17 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.3173, lr=1.00e-04
+step 8000 eval: loss=1.6677
+step 8500: 1.17 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.2795, lr=1.00e-04
+step 8500 eval: loss=1.6761
+step 9000: 1.17 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.2436, lr=1.00e-04
+step 9000 eval: loss=1.6667
+step 9500: 1.17 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.2960, lr=1.00e-04
+step 9500 eval: loss=1.6722
+step 10000: 1.17 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.2576, lr=1.00e-04
+step 10000 eval: loss=1.6783
+step 10500: 1.17 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.2845, lr=1.00e-04
+step 10500 eval: loss=1.6930
+step 11000: 1.17 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.1625, lr=1.00e-04
+step 11000 eval: loss=1.6939
+step 11500: 1.17 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.1739, lr=1.00e-04
+step 11500 eval: loss=1.7194
+step 12000: 1.17 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.1531, lr=1.00e-04
+step 12000 eval: loss=1.7314
+step 12500: 1.17 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.1416, lr=1.00e-04
+step 12500 eval: loss=1.7405
+step 13000: 1.17 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.1021, lr=1.00e-04
+step 13000 eval: loss=1.7493
+step 13500: 1.17 TFLOP/s (5.90e+14 total)
+step 13500: loss=1.1377, lr=1.00e-04
+step 13500 eval: loss=1.7785
+step 14000: 1.17 TFLOP/s (6.11e+14 total)
+step 14000: loss=1.1604, lr=1.00e-04
+step 14000 eval: loss=1.8009
+step 14500: 1.17 TFLOP/s (6.33e+14 total)
+step 14500: loss=1.0819, lr=9.99e-05
+step 14500 eval: loss=1.8117
+step 15000: 1.17 TFLOP/s (6.55e+14 total)
+step 15000: loss=1.0920, lr=9.99e-05
+step 15000 eval: loss=1.8392
+step 15500: 1.17 TFLOP/s (6.77e+14 total)
+step 15500: loss=1.0294, lr=9.99e-05
+step 15500 eval: loss=1.8634
+step 16000: 1.17 TFLOP/s (6.99e+14 total)
+step 16000: loss=1.0364, lr=9.99e-05
+step 16000 eval: loss=1.8950
+step 16500: 1.17 TFLOP/s (7.21e+14 total)
+step 16500: loss=1.0232, lr=9.99e-05
+step 16500 eval: loss=1.9166
+step 17000: 1.17 TFLOP/s (7.42e+14 total)
+step 17000: loss=1.0172, lr=9.99e-05
+step 17000 eval: loss=1.9447
+step 17500: 1.17 TFLOP/s (7.64e+14 total)
+step 17500: loss=1.0545, lr=9.99e-05
+step 17500 eval: loss=1.9761
+step 18000: 1.17 TFLOP/s (7.86e+14 total)
+step 18000: loss=0.9102, lr=9.99e-05
+step 18000 eval: loss=2.0160
+step 18500: 1.17 TFLOP/s (8.08e+14 total)
+step 18500: loss=0.9695, lr=9.99e-05
+step 18500 eval: loss=2.0540
+step 19000: 1.17 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.8972, lr=9.99e-05
+step 19000 eval: loss=2.0875
+step 19500: 1.17 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.9458, lr=9.99e-05
+step 19500 eval: loss=2.1208
+step 20000: 1.17 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.9055, lr=9.99e-05
+step 20000 eval: loss=2.1535
+step 20500: 1.17 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.8950, lr=9.99e-05
+step 20500 eval: loss=2.1920
+step 21000: 1.17 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.8834, lr=9.99e-05
+step 21000 eval: loss=2.2437
+step 21500: 1.17 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.9379, lr=9.99e-05
+step 21500 eval: loss=2.2674
+step 22000: 1.17 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.7793, lr=9.99e-05
+step 22000 eval: loss=2.3032
+step 22500: 1.17 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.7762, lr=9.99e-05
+step 22500 eval: loss=2.3408
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + No bias (=LLaMA)     lr=1e-04 seed=43: train=0.7972, val=1.6635 (gap=+1.6060), acc=46.9%, mfu=17.9%, 22898 steps, 1.000 PFLOPs, 2,770,944 params, 858.7s
+
+--- Seed 44 ---
+  [13/30]step 500: 1.22 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4184, lr=3.00e-04
+step 500 eval: loss=2.4589
+step 1000: 1.20 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.2941, lr=3.00e-04
+step 1000 eval: loss=2.3275
+step 1500: 1.20 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.9702, lr=3.00e-04
+step 1500 eval: loss=2.0294
+step 2000: 1.19 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.8412, lr=3.00e-04
+step 2000 eval: loss=1.8846
+step 2500: 1.19 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6387, lr=3.00e-04
+step 2500 eval: loss=1.8045
+step 3000: 1.19 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.5065, lr=3.00e-04
+step 3000 eval: loss=1.7466
+step 3500: 1.19 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4972, lr=3.00e-04
+step 3500 eval: loss=1.7142
+step 4000: 1.19 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.5032, lr=3.00e-04
+step 4000 eval: loss=1.6837
+step 4500: 1.19 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.4030, lr=3.00e-04
+step 4500 eval: loss=1.6677
+step 5000: 1.19 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.4918, lr=3.00e-04
+step 5000 eval: loss=1.6488
+step 5500: 1.19 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.3091, lr=3.00e-04
+step 5500 eval: loss=1.6447
+step 6000: 1.19 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3470, lr=3.00e-04
+step 6000 eval: loss=1.6350
+step 6500: 1.19 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.2902, lr=3.00e-04
+step 6500 eval: loss=1.6365
+step 7000: 1.19 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.2629, lr=3.00e-04
+step 7000 eval: loss=1.6291
+step 7500: 1.19 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.3991, lr=3.00e-04
+step 7500 eval: loss=1.6173
+step 8000: 1.19 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2274, lr=3.00e-04
+step 8000 eval: loss=1.6310
+step 8500: 1.19 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.2359, lr=3.00e-04
+step 8500 eval: loss=1.6290
+step 9000: 1.19 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.3166, lr=3.00e-04
+step 9000 eval: loss=1.6310
+step 9500: 1.19 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2497, lr=3.00e-04
+step 9500 eval: loss=1.6428
+step 10000: 1.19 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.2328, lr=3.00e-04
+step 10000 eval: loss=1.6391
+step 10500: 1.19 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.2296, lr=3.00e-04
+step 10500 eval: loss=1.6415
+step 11000: 1.19 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2100, lr=3.00e-04
+step 11000 eval: loss=1.6527
+step 11500: 1.19 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.2080, lr=3.00e-04
+step 11500 eval: loss=1.6784
+step 12000: 1.19 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1306, lr=3.00e-04
+step 12000 eval: loss=1.6758
+step 12500: 1.19 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1447, lr=3.00e-04
+step 12500 eval: loss=1.6951
+step 13000: 1.19 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.0917, lr=3.00e-04
+step 13000 eval: loss=1.7122
+step 13500: 1.19 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.0835, lr=3.00e-04
+step 13500 eval: loss=1.7357
+step 14000: 1.19 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.1338, lr=3.00e-04
+step 14000 eval: loss=1.7404
+step 14500: 1.19 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.1321, lr=3.00e-04
+step 14500 eval: loss=1.7669
+step 15000: 1.19 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.1439, lr=3.00e-04
+step 15000 eval: loss=1.7913
+step 15500: 1.19 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.1013, lr=3.00e-04
+step 15500 eval: loss=1.7974
+step 16000: 1.19 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.0515, lr=3.00e-04
+step 16000 eval: loss=1.8230
+step 16500: 1.19 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0685, lr=3.00e-04
+step 16500 eval: loss=1.8454
+step 17000: 1.19 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.0308, lr=3.00e-04
+step 17000 eval: loss=1.8966
+step 17500: 1.19 TFLOP/s (8.49e+14 total)
+step 17500: loss=1.0496, lr=3.00e-04
+step 17500 eval: loss=1.9165
+step 18000: 1.19 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.9982, lr=3.00e-04
+step 18000 eval: loss=1.9311
+step 18500: 1.19 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.8887, lr=3.00e-04
+step 18500 eval: loss=1.9563
+step 19000: 1.19 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.9605, lr=3.00e-04
+step 19000 eval: loss=1.9976
+step 19500: 1.19 TFLOP/s (9.46e+14 total)
+step 19500: loss=1.0230, lr=3.00e-04
+step 19500 eval: loss=2.0288
+step 20000: 1.19 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.9357, lr=3.00e-04
+step 20000 eval: loss=2.0650
+step 20500: 1.19 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.8493, lr=3.00e-04
+step 20500 eval: loss=2.0961
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    GPT baseline           lr=3e-04 seed=44: train=0.8207, val=1.6173 (gap=+1.3075), acc=49.2%, mfu=18.2%, 20609 steps, 1.000 PFLOPs, 3,179,776 params, 844.3s
+  [14/30]step 500: 1.23 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4009, lr=1.00e-04
+step 500 eval: loss=2.4471
+step 1000: 1.22 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.3228, lr=1.00e-04
+step 1000 eval: loss=2.3643
+step 1500: 1.21 TFLOP/s (7.28e+13 total)
+step 1500: loss=2.2175, lr=1.00e-04
+step 1500 eval: loss=2.2714
+step 2000: 1.21 TFLOP/s (9.70e+13 total)
+step 2000: loss=2.0871, lr=1.00e-04
+step 2000 eval: loss=2.1465
+step 2500: 1.21 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.8834, lr=1.00e-04
+step 2500 eval: loss=2.0164
+step 3000: 1.20 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.7434, lr=1.00e-04
+step 3000 eval: loss=1.9311
+step 3500: 1.20 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.6892, lr=1.00e-04
+step 3500 eval: loss=1.8729
+step 4000: 1.20 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.6490, lr=1.00e-04
+step 4000 eval: loss=1.8230
+step 4500: 1.20 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.5554, lr=1.00e-04
+step 4500 eval: loss=1.7897
+step 5000: 1.20 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.6112, lr=1.00e-04
+step 5000 eval: loss=1.7558
+step 5500: 1.20 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.4250, lr=1.00e-04
+step 5500 eval: loss=1.7280
+step 6000: 1.20 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.4276, lr=1.00e-04
+step 6000 eval: loss=1.7167
+step 6500: 1.20 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.3804, lr=1.00e-04
+step 6500 eval: loss=1.7013
+step 7000: 1.20 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3530, lr=1.00e-04
+step 7000 eval: loss=1.6887
+step 7500: 1.20 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.4452, lr=1.00e-04
+step 7500 eval: loss=1.6783
+step 8000: 1.20 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2941, lr=1.00e-04
+step 8000 eval: loss=1.6727
+step 8500: 1.20 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.3107, lr=1.00e-04
+step 8500 eval: loss=1.6680
+step 9000: 1.20 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.4027, lr=1.00e-04
+step 9000 eval: loss=1.6716
+step 9500: 1.20 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.3033, lr=1.00e-04
+step 9500 eval: loss=1.6676
+step 10000: 1.20 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.3106, lr=1.00e-04
+step 10000 eval: loss=1.6754
+step 10500: 1.20 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.2788, lr=1.00e-04
+step 10500 eval: loss=1.6665
+step 11000: 1.20 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2550, lr=1.00e-04
+step 11000 eval: loss=1.6805
+step 11500: 1.20 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.2654, lr=1.00e-04
+step 11500 eval: loss=1.6803
+step 12000: 1.20 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1943, lr=1.00e-04
+step 12000 eval: loss=1.6858
+step 12500: 1.20 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.2166, lr=1.00e-04
+step 12500 eval: loss=1.7004
+step 13000: 1.20 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.1276, lr=1.00e-04
+step 13000 eval: loss=1.7146
+step 13500: 1.20 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.1288, lr=1.00e-04
+step 13500 eval: loss=1.7221
+step 14000: 1.20 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.1777, lr=1.00e-04
+step 14000 eval: loss=1.7383
+step 14500: 1.20 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.1852, lr=9.99e-05
+step 14500 eval: loss=1.7466
+step 15000: 1.20 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.1836, lr=9.99e-05
+step 15000 eval: loss=1.7606
+step 15500: 1.20 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.1435, lr=9.99e-05
+step 15500 eval: loss=1.7825
+step 16000: 1.20 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.0995, lr=9.99e-05
+step 16000 eval: loss=1.7970
+step 16500: 1.20 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.1040, lr=9.99e-05
+step 16500 eval: loss=1.8206
+step 17000: 1.20 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.0781, lr=9.99e-05
+step 17000 eval: loss=1.8497
+step 17500: 1.20 TFLOP/s (8.49e+14 total)
+step 17500: loss=1.0761, lr=9.99e-05
+step 17500 eval: loss=1.8663
+step 18000: 1.20 TFLOP/s (8.73e+14 total)
+step 18000: loss=1.0347, lr=9.99e-05
+step 18000 eval: loss=1.8938
+step 18500: 1.19 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.9770, lr=9.99e-05
+step 18500 eval: loss=1.9091
+step 19000: 1.19 TFLOP/s (9.22e+14 total)
+step 19000: loss=1.0330, lr=9.99e-05
+step 19000 eval: loss=1.9467
+step 19500: 1.19 TFLOP/s (9.46e+14 total)
+step 19500: loss=1.0284, lr=9.99e-05
+step 19500 eval: loss=1.9700
+step 20000: 1.19 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.9749, lr=9.99e-05
+step 20000 eval: loss=2.0000
+step 20500: 1.19 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.9193, lr=9.99e-05
+step 20500 eval: loss=2.0317
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RMSNorm              lr=1e-04 seed=44: train=0.8715, val=1.6665 (gap=+1.1833), acc=48.3%, mfu=18.3%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 839.0s
+  [15/30]step 500: 1.22 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4170, lr=3.00e-04
+step 500 eval: loss=2.4624
+step 1000: 1.20 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.2135, lr=3.00e-04
+step 1000 eval: loss=2.2595
+step 1500: 1.19 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.9208, lr=3.00e-04
+step 1500 eval: loss=2.0108
+step 2000: 1.19 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.8091, lr=3.00e-04
+step 2000 eval: loss=1.8663
+step 2500: 1.19 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6285, lr=3.00e-04
+step 2500 eval: loss=1.7886
+step 3000: 1.19 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.4810, lr=3.00e-04
+step 3000 eval: loss=1.7369
+step 3500: 1.19 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4903, lr=3.00e-04
+step 3500 eval: loss=1.7034
+step 4000: 1.19 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4900, lr=3.00e-04
+step 4000 eval: loss=1.6774
+step 4500: 1.19 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.3759, lr=3.00e-04
+step 4500 eval: loss=1.6727
+step 5000: 1.19 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.4859, lr=3.00e-04
+step 5000 eval: loss=1.6422
+step 5500: 1.19 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.3156, lr=3.00e-04
+step 5500 eval: loss=1.6335
+step 6000: 1.18 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3314, lr=3.00e-04
+step 6000 eval: loss=1.6297
+step 6500: 1.18 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.2987, lr=3.00e-04
+step 6500 eval: loss=1.6293
+step 7000: 1.18 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.2547, lr=3.00e-04
+step 7000 eval: loss=1.6118
+step 7500: 1.18 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.3578, lr=3.00e-04
+step 7500 eval: loss=1.6104
+step 8000: 1.18 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2151, lr=3.00e-04
+step 8000 eval: loss=1.6140
+step 8500: 1.19 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.2211, lr=3.00e-04
+step 8500 eval: loss=1.6115
+step 9000: 1.19 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.3150, lr=3.00e-04
+step 9000 eval: loss=1.6230
+step 9500: 1.19 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2488, lr=3.00e-04
+step 9500 eval: loss=1.6238
+step 10000: 1.19 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.2637, lr=3.00e-04
+step 10000 eval: loss=1.6336
+step 10500: 1.19 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.2229, lr=3.00e-04
+step 10500 eval: loss=1.6427
+step 11000: 1.19 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2025, lr=3.00e-04
+step 11000 eval: loss=1.6429
+step 11500: 1.19 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1936, lr=3.00e-04
+step 11500 eval: loss=1.6700
+step 12000: 1.19 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1193, lr=3.00e-04
+step 12000 eval: loss=1.6684
+step 12500: 1.19 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1462, lr=3.00e-04
+step 12500 eval: loss=1.6826
+step 13000: 1.19 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.0582, lr=3.00e-04
+step 13000 eval: loss=1.7043
+step 13500: 1.19 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.0722, lr=3.00e-04
+step 13500 eval: loss=1.7288
+step 14000: 1.19 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.1082, lr=3.00e-04
+step 14000 eval: loss=1.7303
+step 14500: 1.19 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.1431, lr=3.00e-04
+step 14500 eval: loss=1.7578
+step 15000: 1.19 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.1331, lr=3.00e-04
+step 15000 eval: loss=1.7767
+step 15500: 1.19 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0882, lr=3.00e-04
+step 15500 eval: loss=1.8008
+step 16000: 1.19 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.0716, lr=3.00e-04
+step 16000 eval: loss=1.8184
+step 16500: 1.19 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0458, lr=3.00e-04
+step 16500 eval: loss=1.8310
+step 17000: 1.19 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.9974, lr=3.00e-04
+step 17000 eval: loss=1.8807
+step 17500: 1.19 TFLOP/s (8.49e+14 total)
+step 17500: loss=1.0019, lr=3.00e-04
+step 17500 eval: loss=1.9054
+step 18000: 1.19 TFLOP/s (8.73e+14 total)
+step 18000: loss=1.0064, lr=3.00e-04
+step 18000 eval: loss=1.9357
+step 18500: 1.19 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.9181, lr=3.00e-04
+step 18500 eval: loss=1.9543
+step 19000: 1.19 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.9561, lr=3.00e-04
+step 19000 eval: loss=1.9893
+step 19500: 1.19 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.9733, lr=3.00e-04
+step 19500 eval: loss=2.0380
+step 20000: 1.19 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.8928, lr=3.00e-04
+step 20000 eval: loss=2.0684
+step 20500: 1.19 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.8602, lr=3.00e-04
+step 20500 eval: loss=2.1145
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RoPE                 lr=3e-04 seed=44: train=0.7760, val=1.6104 (gap=+1.3849), acc=49.3%, mfu=18.3%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 838.7s
+  [16/30]step 500: 1.25 TFLOP/s (2.43e+13 total)
+step 500: loss=2.3597, lr=3.00e-04
+step 500 eval: loss=2.4631
+step 1000: 1.24 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.2361, lr=3.00e-04
+step 1000 eval: loss=2.3687
+step 1500: 1.23 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.8187, lr=3.00e-04
+step 1500 eval: loss=2.0131
+step 2000: 1.23 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.7577, lr=3.00e-04
+step 2000 eval: loss=1.8512
+step 2500: 1.23 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.5127, lr=3.00e-04
+step 2500 eval: loss=1.7554
+step 3000: 1.22 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.5596, lr=3.00e-04
+step 3000 eval: loss=1.7139
+step 3500: 1.22 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4553, lr=3.00e-04
+step 3500 eval: loss=1.6816
+step 4000: 1.22 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4728, lr=3.00e-04
+step 4000 eval: loss=1.6538
+step 4500: 1.22 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.3768, lr=3.00e-04
+step 4500 eval: loss=1.6357
+step 5000: 1.22 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.3168, lr=3.00e-04
+step 5000 eval: loss=1.6237
+step 5500: 1.22 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.3315, lr=3.00e-04
+step 5500 eval: loss=1.6251
+step 6000: 1.22 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3153, lr=3.00e-04
+step 6000 eval: loss=1.6175
+step 6500: 1.22 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.2761, lr=3.00e-04
+step 6500 eval: loss=1.6173
+step 7000: 1.22 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3283, lr=3.00e-04
+step 7000 eval: loss=1.6153
+step 7500: 1.22 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.3503, lr=3.00e-04
+step 7500 eval: loss=1.6189
+step 8000: 1.22 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2993, lr=3.00e-04
+step 8000 eval: loss=1.6157
+step 8500: 1.22 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.3076, lr=3.00e-04
+step 8500 eval: loss=1.6300
+step 9000: 1.22 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.2352, lr=3.00e-04
+step 9000 eval: loss=1.6278
+step 9500: 1.22 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2526, lr=3.00e-04
+step 9500 eval: loss=1.6478
+step 10000: 1.22 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.1484, lr=3.00e-04
+step 10000 eval: loss=1.6643
+step 10500: 1.22 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1921, lr=3.00e-04
+step 10500 eval: loss=1.6859
+step 11000: 1.22 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2016, lr=3.00e-04
+step 11000 eval: loss=1.6823
+step 11500: 1.22 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1200, lr=3.00e-04
+step 11500 eval: loss=1.7182
+step 12000: 1.22 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.0538, lr=3.00e-04
+step 12000 eval: loss=1.7389
+step 12500: 1.22 TFLOP/s (6.06e+14 total)
+step 12500: loss=1.0993, lr=3.00e-04
+step 12500 eval: loss=1.7512
+step 13000: 1.22 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.1070, lr=3.00e-04
+step 13000 eval: loss=1.7975
+step 13500: 1.22 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.0429, lr=3.00e-04
+step 13500 eval: loss=1.8181
+step 14000: 1.22 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0936, lr=3.00e-04
+step 14000 eval: loss=1.8452
+step 14500: 1.22 TFLOP/s (7.03e+14 total)
+step 14500: loss=1.0783, lr=3.00e-04
+step 14500 eval: loss=1.8722
+step 15000: 1.22 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0010, lr=3.00e-04
+step 15000 eval: loss=1.9114
+step 15500: 1.22 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0473, lr=3.00e-04
+step 15500 eval: loss=1.9506
+step 16000: 1.22 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.0055, lr=3.00e-04
+step 16000 eval: loss=1.9834
+step 16500: 1.22 TFLOP/s (8.00e+14 total)
+step 16500: loss=0.9243, lr=3.00e-04
+step 16500 eval: loss=2.0242
+step 17000: 1.22 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.9178, lr=3.00e-04
+step 17000 eval: loss=2.0675
+step 17500: 1.22 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.8667, lr=3.00e-04
+step 17500 eval: loss=2.1011
+step 18000: 1.22 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.8911, lr=3.00e-04
+step 18000 eval: loss=2.1370
+step 18500: 1.22 TFLOP/s (8.97e+14 total)
+step 18500: loss=0.8307, lr=3.00e-04
+step 18500 eval: loss=2.2045
+step 19000: 1.22 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.8682, lr=3.00e-04
+step 19000 eval: loss=2.2495
+step 19500: 1.22 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.8333, lr=3.00e-04
+step 19500 eval: loss=2.2995
+step 20000: 1.22 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.8052, lr=3.00e-04
+step 20000 eval: loss=2.3283
+step 20500: 1.22 TFLOP/s (9.94e+14 total)
+step 20500: loss=0.8079, lr=3.00e-04
+step 20500 eval: loss=2.3725
+FLOP budget reached at step 20617 (1.000 PFLOPs)
+    + SwiGLU FFN           lr=3e-04 seed=44: train=0.7006, val=1.6153 (gap=+1.7645), acc=48.2%, mfu=18.7%, 20617 steps, 1.000 PFLOPs, 3,175,932 params, 821.4s
+  [17/30]step 500: 1.16 TFLOP/s (2.18e+13 total)
+step 500: loss=2.3552, lr=3.00e-04
+step 500 eval: loss=2.4544
+step 1000: 1.14 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.1299, lr=3.00e-04
+step 1000 eval: loss=2.2580
+step 1500: 1.14 TFLOP/s (6.55e+13 total)
+step 1500: loss=1.7355, lr=3.00e-04
+step 1500 eval: loss=1.9632
+step 2000: 1.14 TFLOP/s (8.73e+13 total)
+step 2000: loss=1.7068, lr=3.00e-04
+step 2000 eval: loss=1.8216
+step 2500: 1.14 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.4639, lr=3.00e-04
+step 2500 eval: loss=1.7348
+step 3000: 1.13 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.5179, lr=3.00e-04
+step 3000 eval: loss=1.6898
+step 3500: 1.13 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.4373, lr=3.00e-04
+step 3500 eval: loss=1.6731
+step 4000: 1.13 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.4381, lr=3.00e-04
+step 4000 eval: loss=1.6404
+step 4500: 1.13 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.3511, lr=3.00e-04
+step 4500 eval: loss=1.6327
+step 5000: 1.13 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.2996, lr=3.00e-04
+step 5000 eval: loss=1.6188
+step 5500: 1.13 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.3296, lr=3.00e-04
+step 5500 eval: loss=1.6206
+step 6000: 1.13 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.2986, lr=3.00e-04
+step 6000 eval: loss=1.6020
+step 6500: 1.13 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.2488, lr=3.00e-04
+step 6500 eval: loss=1.6243
+step 7000: 1.13 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.3084, lr=3.00e-04
+step 7000 eval: loss=1.6320
+step 7500: 1.13 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.2853, lr=3.00e-04
+step 7500 eval: loss=1.6183
+step 8000: 1.13 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.2705, lr=3.00e-04
+step 8000 eval: loss=1.6201
+step 8500: 1.13 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.2588, lr=3.00e-04
+step 8500 eval: loss=1.6351
+step 9000: 1.13 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.2246, lr=3.00e-04
+step 9000 eval: loss=1.6499
+step 9500: 1.13 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.2186, lr=3.00e-04
+step 9500 eval: loss=1.6634
+step 10000: 1.13 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.1205, lr=3.00e-04
+step 10000 eval: loss=1.6817
+step 10500: 1.13 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.1746, lr=3.00e-04
+step 10500 eval: loss=1.6940
+step 11000: 1.13 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.1684, lr=3.00e-04
+step 11000 eval: loss=1.7068
+step 11500: 1.13 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.0814, lr=3.00e-04
+step 11500 eval: loss=1.7261
+step 12000: 1.13 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.0343, lr=3.00e-04
+step 12000 eval: loss=1.7564
+step 12500: 1.13 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.0769, lr=3.00e-04
+step 12500 eval: loss=1.7735
+step 13000: 1.13 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.0738, lr=3.00e-04
+step 13000 eval: loss=1.8069
+step 13500: 1.13 TFLOP/s (5.90e+14 total)
+step 13500: loss=1.0183, lr=3.00e-04
+step 13500 eval: loss=1.8215
+step 14000: 1.13 TFLOP/s (6.11e+14 total)
+step 14000: loss=1.0387, lr=3.00e-04
+step 14000 eval: loss=1.8563
+step 14500: 1.13 TFLOP/s (6.33e+14 total)
+step 14500: loss=1.0413, lr=3.00e-04
+step 14500 eval: loss=1.8891
+step 15000: 1.13 TFLOP/s (6.55e+14 total)
+step 15000: loss=0.9566, lr=3.00e-04
+step 15000 eval: loss=1.9384
+step 15500: 1.13 TFLOP/s (6.77e+14 total)
+step 15500: loss=1.0099, lr=3.00e-04
+step 15500 eval: loss=1.9666
+step 16000: 1.13 TFLOP/s (6.99e+14 total)
+step 16000: loss=0.9662, lr=3.00e-04
+step 16000 eval: loss=1.9858
+step 16500: 1.13 TFLOP/s (7.21e+14 total)
+step 16500: loss=0.9481, lr=3.00e-04
+step 16500 eval: loss=2.0193
+step 17000: 1.13 TFLOP/s (7.42e+14 total)
+step 17000: loss=0.9061, lr=3.00e-04
+step 17000 eval: loss=2.0692
+step 17500: 1.13 TFLOP/s (7.64e+14 total)
+step 17500: loss=0.8358, lr=3.00e-04
+step 17500 eval: loss=2.1212
+step 18000: 1.13 TFLOP/s (7.86e+14 total)
+step 18000: loss=0.8889, lr=3.00e-04
+step 18000 eval: loss=2.1467
+step 18500: 1.13 TFLOP/s (8.08e+14 total)
+step 18500: loss=0.8096, lr=3.00e-04
+step 18500 eval: loss=2.2056
+step 19000: 1.13 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.8665, lr=3.00e-04
+step 19000 eval: loss=2.2519
+step 19500: 1.13 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.8156, lr=3.00e-04
+step 19500 eval: loss=2.2741
+step 20000: 1.13 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.8095, lr=3.00e-04
+step 20000 eval: loss=2.3394
+step 20500: 1.13 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.8114, lr=3.00e-04
+step 20500 eval: loss=2.3714
+step 21000: 1.13 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.7899, lr=3.00e-04
+step 21000 eval: loss=2.4304
+step 21500: 1.13 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.7912, lr=3.00e-04
+step 21500 eval: loss=2.4440
+step 22000: 1.13 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.6634, lr=3.00e-04
+step 22000 eval: loss=2.5034
+step 22500: 1.13 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.6813, lr=3.00e-04
+step 22500 eval: loss=2.5420
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + GQA                  lr=3e-04 seed=44: train=0.6777, val=1.6020 (gap=+1.9460), acc=47.8%, mfu=17.4%, 22898 steps, 1.000 PFLOPs, 2,781,180 params, 885.6s
+  [18/30]step 500: 1.20 TFLOP/s (2.18e+13 total)
+step 500: loss=2.3943, lr=1.00e-04
+step 500 eval: loss=2.4239
+step 1000: 1.18 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.1789, lr=1.00e-04
+step 1000 eval: loss=2.3307
+step 1500: 1.18 TFLOP/s (6.55e+13 total)
+step 1500: loss=2.1367, lr=1.00e-04
+step 1500 eval: loss=2.2272
+step 2000: 1.18 TFLOP/s (8.73e+13 total)
+step 2000: loss=1.9522, lr=1.00e-04
+step 2000 eval: loss=2.1058
+step 2500: 1.18 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.8128, lr=1.00e-04
+step 2500 eval: loss=1.9907
+step 3000: 1.17 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.7490, lr=1.00e-04
+step 3000 eval: loss=1.9150
+step 3500: 1.17 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.6519, lr=1.00e-04
+step 3500 eval: loss=1.8587
+step 4000: 1.17 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.5214, lr=1.00e-04
+step 4000 eval: loss=1.8173
+step 4500: 1.17 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.6215, lr=1.00e-04
+step 4500 eval: loss=1.7726
+step 5000: 1.17 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.5075, lr=1.00e-04
+step 5000 eval: loss=1.7509
+step 5500: 1.17 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.3559, lr=1.00e-04
+step 5500 eval: loss=1.7275
+step 6000: 1.17 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.4341, lr=1.00e-04
+step 6000 eval: loss=1.7146
+step 6500: 1.17 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.4276, lr=1.00e-04
+step 6500 eval: loss=1.6928
+step 7000: 1.17 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.3901, lr=1.00e-04
+step 7000 eval: loss=1.6945
+step 7500: 1.17 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.3221, lr=1.00e-04
+step 7500 eval: loss=1.6925
+step 8000: 1.17 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.3572, lr=1.00e-04
+step 8000 eval: loss=1.6929
+step 8500: 1.17 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.3672, lr=1.00e-04
+step 8500 eval: loss=1.6886
+step 9000: 1.17 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.3429, lr=1.00e-04
+step 9000 eval: loss=1.6974
+step 9500: 1.17 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.2612, lr=1.00e-04
+step 9500 eval: loss=1.6972
+step 10000: 1.17 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.2942, lr=1.00e-04
+step 10000 eval: loss=1.7051
+step 10500: 1.17 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.2807, lr=1.00e-04
+step 10500 eval: loss=1.7021
+step 11000: 1.17 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.2233, lr=1.00e-04
+step 11000 eval: loss=1.7101
+step 11500: 1.17 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.2819, lr=1.00e-04
+step 11500 eval: loss=1.7356
+step 12000: 1.17 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.2553, lr=1.00e-04
+step 12000 eval: loss=1.7420
+step 12500: 1.17 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.2041, lr=1.00e-04
+step 12500 eval: loss=1.7474
+step 13000: 1.17 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.0777, lr=1.00e-04
+step 13000 eval: loss=1.7844
+step 13500: 1.17 TFLOP/s (5.90e+14 total)
+step 13500: loss=1.2190, lr=1.00e-04
+step 13500 eval: loss=1.7944
+step 14000: 1.17 TFLOP/s (6.11e+14 total)
+step 14000: loss=1.2021, lr=1.00e-04
+step 14000 eval: loss=1.8053
+step 14500: 1.17 TFLOP/s (6.33e+14 total)
+step 14500: loss=1.0785, lr=9.99e-05
+step 14500 eval: loss=1.8215
+step 15000: 1.17 TFLOP/s (6.55e+14 total)
+step 15000: loss=1.1328, lr=9.99e-05
+step 15000 eval: loss=1.8491
+step 15500: 1.17 TFLOP/s (6.77e+14 total)
+step 15500: loss=1.2124, lr=9.99e-05
+step 15500 eval: loss=1.8634
+step 16000: 1.17 TFLOP/s (6.99e+14 total)
+step 16000: loss=1.0095, lr=9.99e-05
+step 16000 eval: loss=1.8897
+step 16500: 1.17 TFLOP/s (7.21e+14 total)
+step 16500: loss=0.9745, lr=9.99e-05
+step 16500 eval: loss=1.9143
+step 17000: 1.17 TFLOP/s (7.42e+14 total)
+step 17000: loss=0.9738, lr=9.99e-05
+step 17000 eval: loss=1.9565
+step 17500: 1.17 TFLOP/s (7.64e+14 total)
+step 17500: loss=0.9521, lr=9.99e-05
+step 17500 eval: loss=1.9652
+step 18000: 1.17 TFLOP/s (7.86e+14 total)
+step 18000: loss=0.9028, lr=9.99e-05
+step 18000 eval: loss=2.0003
+step 18500: 1.17 TFLOP/s (8.08e+14 total)
+step 18500: loss=1.0080, lr=9.99e-05
+step 18500 eval: loss=2.0493
+step 19000: 1.17 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.9444, lr=9.99e-05
+step 19000 eval: loss=2.0695
+step 19500: 1.17 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.9494, lr=9.99e-05
+step 19500 eval: loss=2.0944
+step 20000: 1.17 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.9097, lr=9.99e-05
+step 20000 eval: loss=2.1350
+step 20500: 1.17 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.8736, lr=9.99e-05
+step 20500 eval: loss=2.1782
+step 21000: 1.17 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.8535, lr=9.99e-05
+step 21000 eval: loss=2.2173
+step 21500: 1.17 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.8665, lr=9.99e-05
+step 21500 eval: loss=2.2558
+step 22000: 1.17 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.8396, lr=9.99e-05
+step 22000 eval: loss=2.2960
+step 22500: 1.17 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.8682, lr=9.99e-05
+step 22500 eval: loss=2.3428
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + No bias (=LLaMA)     lr=1e-04 seed=44: train=0.7928, val=1.6886 (gap=+1.5690), acc=46.6%, mfu=17.9%, 22898 steps, 1.000 PFLOPs, 2,770,944 params, 857.2s
+
+--- Seed 45 ---
+  [19/30]step 500: 1.22 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4395, lr=3.00e-04
+step 500 eval: loss=2.4541
+step 1000: 1.21 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.1372, lr=3.00e-04
+step 1000 eval: loss=2.2803
+step 1500: 1.20 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.8974, lr=3.00e-04
+step 1500 eval: loss=2.0271
+step 2000: 1.20 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.7239, lr=3.00e-04
+step 2000 eval: loss=1.8760
+step 2500: 1.19 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6245, lr=3.00e-04
+step 2500 eval: loss=1.8127
+step 3000: 1.19 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.5221, lr=3.00e-04
+step 3000 eval: loss=1.7525
+step 3500: 1.19 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.5359, lr=3.00e-04
+step 3500 eval: loss=1.7254
+step 4000: 1.19 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4406, lr=3.00e-04
+step 4000 eval: loss=1.6921
+step 4500: 1.19 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.3834, lr=3.00e-04
+step 4500 eval: loss=1.6768
+step 5000: 1.19 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.3717, lr=3.00e-04
+step 5000 eval: loss=1.6547
+step 5500: 1.19 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.3416, lr=3.00e-04
+step 5500 eval: loss=1.6612
+step 6000: 1.19 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.4483, lr=3.00e-04
+step 6000 eval: loss=1.6341
+step 6500: 1.19 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.3567, lr=3.00e-04
+step 6500 eval: loss=1.6412
+step 7000: 1.19 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3958, lr=3.00e-04
+step 7000 eval: loss=1.6214
+step 7500: 1.19 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.3256, lr=3.00e-04
+step 7500 eval: loss=1.6239
+step 8000: 1.19 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.3261, lr=3.00e-04
+step 8000 eval: loss=1.6163
+step 8500: 1.19 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.3966, lr=3.00e-04
+step 8500 eval: loss=1.6117
+step 9000: 1.19 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.2664, lr=3.00e-04
+step 9000 eval: loss=1.6355
+step 9500: 1.19 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2246, lr=3.00e-04
+step 9500 eval: loss=1.6237
+step 10000: 1.19 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.1627, lr=3.00e-04
+step 10000 eval: loss=1.6309
+step 10500: 1.19 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1656, lr=3.00e-04
+step 10500 eval: loss=1.6406
+step 11000: 1.19 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.1401, lr=3.00e-04
+step 11000 eval: loss=1.6463
+step 11500: 1.19 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.2422, lr=3.00e-04
+step 11500 eval: loss=1.6592
+step 12000: 1.19 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1772, lr=3.00e-04
+step 12000 eval: loss=1.6717
+step 12500: 1.19 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1243, lr=3.00e-04
+step 12500 eval: loss=1.6889
+step 13000: 1.19 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.2288, lr=3.00e-04
+step 13000 eval: loss=1.7166
+step 13500: 1.19 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.1116, lr=3.00e-04
+step 13500 eval: loss=1.7302
+step 14000: 1.19 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.1447, lr=3.00e-04
+step 14000 eval: loss=1.7442
+step 14500: 1.19 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.1002, lr=3.00e-04
+step 14500 eval: loss=1.7601
+step 15000: 1.19 TFLOP/s (7.28e+14 total)
+step 15000: loss=0.9984, lr=3.00e-04
+step 15000 eval: loss=1.7859
+step 15500: 1.19 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0506, lr=3.00e-04
+step 15500 eval: loss=1.7981
+step 16000: 1.19 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.1292, lr=3.00e-04
+step 16000 eval: loss=1.8443
+step 16500: 1.19 TFLOP/s (8.01e+14 total)
+step 16500: loss=0.9820, lr=3.00e-04
+step 16500 eval: loss=1.8578
+step 17000: 1.19 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.9360, lr=3.00e-04
+step 17000 eval: loss=1.8950
+step 17500: 1.19 TFLOP/s (8.49e+14 total)
+step 17500: loss=1.0021, lr=3.00e-04
+step 17500 eval: loss=1.9078
+step 18000: 1.19 TFLOP/s (8.73e+14 total)
+step 18000: loss=1.0072, lr=3.00e-04
+step 18000 eval: loss=1.9451
+step 18500: 1.19 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.9458, lr=3.00e-04
+step 18500 eval: loss=1.9721
+step 19000: 1.19 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.8625, lr=3.00e-04
+step 19000 eval: loss=2.0081
+step 19500: 1.19 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.8724, lr=3.00e-04
+step 19500 eval: loss=2.0431
+step 20000: 1.19 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.8696, lr=3.00e-04
+step 20000 eval: loss=2.0764
+step 20500: 1.19 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.8585, lr=3.00e-04
+step 20500 eval: loss=2.1029
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    GPT baseline           lr=3e-04 seed=45: train=0.7448, val=1.6117 (gap=+1.4143), acc=49.1%, mfu=18.2%, 20609 steps, 1.000 PFLOPs, 3,179,776 params, 843.4s
+  [20/30]step 500: 1.23 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4205, lr=1.00e-04
+step 500 eval: loss=2.4504
+step 1000: 1.22 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.2367, lr=1.00e-04
+step 1000 eval: loss=2.3623
+step 1500: 1.21 TFLOP/s (7.28e+13 total)
+step 1500: loss=2.1274, lr=1.00e-04
+step 1500 eval: loss=2.2532
+step 2000: 1.21 TFLOP/s (9.70e+13 total)
+step 2000: loss=2.0136, lr=1.00e-04
+step 2000 eval: loss=2.1071
+step 2500: 1.21 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.8939, lr=1.00e-04
+step 2500 eval: loss=2.0167
+step 3000: 1.21 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.7509, lr=1.00e-04
+step 3000 eval: loss=1.9185
+step 3500: 1.21 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.7084, lr=1.00e-04
+step 3500 eval: loss=1.8648
+step 4000: 1.21 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.6133, lr=1.00e-04
+step 4000 eval: loss=1.8332
+step 4500: 1.20 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.5232, lr=1.00e-04
+step 4500 eval: loss=1.7835
+step 5000: 1.20 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.4968, lr=1.00e-04
+step 5000 eval: loss=1.7615
+step 5500: 1.20 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.4700, lr=1.00e-04
+step 5500 eval: loss=1.7422
+step 6000: 1.20 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.5532, lr=1.00e-04
+step 6000 eval: loss=1.7152
+step 6500: 1.20 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.4983, lr=1.00e-04
+step 6500 eval: loss=1.7083
+step 7000: 1.20 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.4883, lr=1.00e-04
+step 7000 eval: loss=1.6894
+step 7500: 1.20 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.4393, lr=1.00e-04
+step 7500 eval: loss=1.6892
+step 8000: 1.20 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.4363, lr=1.00e-04
+step 8000 eval: loss=1.6786
+step 8500: 1.20 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.4889, lr=1.00e-04
+step 8500 eval: loss=1.6852
+step 9000: 1.20 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.3419, lr=1.00e-04
+step 9000 eval: loss=1.6738
+step 9500: 1.20 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.3204, lr=1.00e-04
+step 9500 eval: loss=1.6681
+step 10000: 1.20 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.2186, lr=1.00e-04
+step 10000 eval: loss=1.6706
+step 10500: 1.20 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.2474, lr=1.00e-04
+step 10500 eval: loss=1.6653
+step 11000: 1.20 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2720, lr=1.00e-04
+step 11000 eval: loss=1.6713
+step 11500: 1.20 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.3096, lr=1.00e-04
+step 11500 eval: loss=1.6856
+step 12000: 1.20 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.2608, lr=1.00e-04
+step 12000 eval: loss=1.6858
+step 12500: 1.20 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.2105, lr=1.00e-04
+step 12500 eval: loss=1.6856
+step 13000: 1.20 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.2984, lr=1.00e-04
+step 13000 eval: loss=1.7024
+step 13500: 1.20 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.1736, lr=1.00e-04
+step 13500 eval: loss=1.7005
+step 14000: 1.20 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.2255, lr=1.00e-04
+step 14000 eval: loss=1.7217
+step 14500: 1.20 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.1849, lr=9.99e-05
+step 14500 eval: loss=1.7326
+step 15000: 1.20 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0838, lr=9.99e-05
+step 15000 eval: loss=1.7583
+step 15500: 1.20 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.1830, lr=9.99e-05
+step 15500 eval: loss=1.7711
+step 16000: 1.20 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.2289, lr=9.99e-05
+step 16000 eval: loss=1.7884
+step 16500: 1.20 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0549, lr=9.99e-05
+step 16500 eval: loss=1.7998
+step 17000: 1.20 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.0343, lr=9.99e-05
+step 17000 eval: loss=1.8282
+step 17500: 1.20 TFLOP/s (8.49e+14 total)
+step 17500: loss=1.1077, lr=9.99e-05
+step 17500 eval: loss=1.8443
+step 18000: 1.20 TFLOP/s (8.73e+14 total)
+step 18000: loss=1.1150, lr=9.99e-05
+step 18000 eval: loss=1.8726
+step 18500: 1.20 TFLOP/s (8.98e+14 total)
+step 18500: loss=1.0494, lr=9.99e-05
+step 18500 eval: loss=1.8840
+step 19000: 1.20 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.9877, lr=9.99e-05
+step 19000 eval: loss=1.9238
+step 19500: 1.20 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.9903, lr=9.99e-05
+step 19500 eval: loss=1.9438
+step 20000: 1.20 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.9229, lr=9.99e-05
+step 20000 eval: loss=1.9655
+step 20500: 1.20 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.9766, lr=9.99e-05
+step 20500 eval: loss=2.0033
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RMSNorm              lr=1e-04 seed=45: train=0.8565, val=1.6653 (gap=+1.1684), acc=48.4%, mfu=18.5%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 833.2s
+  [21/30]step 500: 1.23 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4312, lr=3.00e-04
+step 500 eval: loss=2.4534
+step 1000: 1.22 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.1253, lr=3.00e-04
+step 1000 eval: loss=2.2618
+step 1500: 1.21 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.8579, lr=3.00e-04
+step 1500 eval: loss=1.9934
+step 2000: 1.21 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.6598, lr=3.00e-04
+step 2000 eval: loss=1.8428
+step 2500: 1.21 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.5894, lr=3.00e-04
+step 2500 eval: loss=1.7777
+step 3000: 1.21 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.4965, lr=3.00e-04
+step 3000 eval: loss=1.7148
+step 3500: 1.21 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.5071, lr=3.00e-04
+step 3500 eval: loss=1.6901
+step 4000: 1.21 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4384, lr=3.00e-04
+step 4000 eval: loss=1.6786
+step 4500: 1.21 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.3905, lr=3.00e-04
+step 4500 eval: loss=1.6573
+step 5000: 1.21 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.3567, lr=3.00e-04
+step 5000 eval: loss=1.6364
+step 5500: 1.21 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.3484, lr=3.00e-04
+step 5500 eval: loss=1.6316
+step 6000: 1.21 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.4336, lr=3.00e-04
+step 6000 eval: loss=1.6210
+step 6500: 1.20 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.3497, lr=3.00e-04
+step 6500 eval: loss=1.6248
+step 7000: 1.20 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3915, lr=3.00e-04
+step 7000 eval: loss=1.6074
+step 7500: 1.20 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.3243, lr=3.00e-04
+step 7500 eval: loss=1.6236
+step 8000: 1.20 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.3502, lr=3.00e-04
+step 8000 eval: loss=1.6058
+step 8500: 1.20 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.3731, lr=3.00e-04
+step 8500 eval: loss=1.6206
+step 9000: 1.20 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.2584, lr=3.00e-04
+step 9000 eval: loss=1.6298
+step 9500: 1.20 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2146, lr=3.00e-04
+step 9500 eval: loss=1.6239
+step 10000: 1.20 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.1427, lr=3.00e-04
+step 10000 eval: loss=1.6304
+step 10500: 1.20 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1529, lr=3.00e-04
+step 10500 eval: loss=1.6370
+step 11000: 1.20 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.1637, lr=3.00e-04
+step 11000 eval: loss=1.6518
+step 11500: 1.20 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.2132, lr=3.00e-04
+step 11500 eval: loss=1.6607
+step 12000: 1.20 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1677, lr=3.00e-04
+step 12000 eval: loss=1.6729
+step 12500: 1.20 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1143, lr=3.00e-04
+step 12500 eval: loss=1.6857
+step 13000: 1.20 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.1745, lr=3.00e-04
+step 13000 eval: loss=1.7039
+step 13500: 1.20 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.0887, lr=3.00e-04
+step 13500 eval: loss=1.7257
+step 14000: 1.20 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.1198, lr=3.00e-04
+step 14000 eval: loss=1.7441
+step 14500: 1.20 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.1196, lr=3.00e-04
+step 14500 eval: loss=1.7597
+step 15000: 1.20 TFLOP/s (7.28e+14 total)
+step 15000: loss=0.9856, lr=3.00e-04
+step 15000 eval: loss=1.7770
+step 15500: 1.20 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0433, lr=3.00e-04
+step 15500 eval: loss=1.8029
+step 16000: 1.20 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.1312, lr=3.00e-04
+step 16000 eval: loss=1.8225
+step 16500: 1.20 TFLOP/s (8.01e+14 total)
+step 16500: loss=0.9592, lr=3.00e-04
+step 16500 eval: loss=1.8522
+step 17000: 1.20 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.9428, lr=3.00e-04
+step 17000 eval: loss=1.8772
+step 17500: 1.20 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.9965, lr=3.00e-04
+step 17500 eval: loss=1.8938
+step 18000: 1.20 TFLOP/s (8.73e+14 total)
+step 18000: loss=1.0231, lr=3.00e-04
+step 18000 eval: loss=1.9434
+step 18500: 1.20 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.9534, lr=3.00e-04
+step 18500 eval: loss=1.9629
+step 19000: 1.20 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.8935, lr=3.00e-04
+step 19000 eval: loss=2.0088
+step 19500: 1.20 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.8835, lr=3.00e-04
+step 19500 eval: loss=2.0165
+step 20000: 1.20 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.8437, lr=3.00e-04
+step 20000 eval: loss=2.0647
+step 20500: 1.20 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.8842, lr=3.00e-04
+step 20500 eval: loss=2.0971
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RoPE                 lr=3e-04 seed=45: train=0.7296, val=1.6058 (gap=+1.4088), acc=49.6%, mfu=18.5%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 832.3s
+  [22/30]step 500: 1.25 TFLOP/s (2.43e+13 total)
+step 500: loss=2.3660, lr=3.00e-04
+step 500 eval: loss=2.4482
+step 1000: 1.24 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.0932, lr=3.00e-04
+step 1000 eval: loss=2.2117
+step 1500: 1.23 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.7850, lr=3.00e-04
+step 1500 eval: loss=1.9692
+step 2000: 1.23 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.5910, lr=3.00e-04
+step 2000 eval: loss=1.8371
+step 2500: 1.23 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6201, lr=3.00e-04
+step 2500 eval: loss=1.7634
+step 3000: 1.23 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.5023, lr=3.00e-04
+step 3000 eval: loss=1.7342
+step 3500: 1.22 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4379, lr=3.00e-04
+step 3500 eval: loss=1.6897
+step 4000: 1.22 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4825, lr=3.00e-04
+step 4000 eval: loss=1.6675
+step 4500: 1.22 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.4933, lr=3.00e-04
+step 4500 eval: loss=1.6527
+step 5000: 1.22 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.4144, lr=3.00e-04
+step 5000 eval: loss=1.6376
+step 5500: 1.22 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.4194, lr=3.00e-04
+step 5500 eval: loss=1.6364
+step 6000: 1.22 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3802, lr=3.00e-04
+step 6000 eval: loss=1.6213
+step 6500: 1.22 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.3093, lr=3.00e-04
+step 6500 eval: loss=1.6252
+step 7000: 1.22 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3579, lr=3.00e-04
+step 7000 eval: loss=1.6217
+step 7500: 1.22 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.2632, lr=3.00e-04
+step 7500 eval: loss=1.6289
+step 8000: 1.22 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2499, lr=3.00e-04
+step 8000 eval: loss=1.6344
+step 8500: 1.22 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.3089, lr=3.00e-04
+step 8500 eval: loss=1.6444
+step 9000: 1.22 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.2186, lr=3.00e-04
+step 9000 eval: loss=1.6391
+step 9500: 1.22 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2355, lr=3.00e-04
+step 9500 eval: loss=1.6629
+step 10000: 1.22 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.2456, lr=3.00e-04
+step 10000 eval: loss=1.6764
+step 10500: 1.22 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1540, lr=3.00e-04
+step 10500 eval: loss=1.6890
+step 11000: 1.22 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.1997, lr=3.00e-04
+step 11000 eval: loss=1.6865
+step 11500: 1.22 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1070, lr=3.00e-04
+step 11500 eval: loss=1.7191
+step 12000: 1.22 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1768, lr=3.00e-04
+step 12000 eval: loss=1.7461
+step 12500: 1.22 TFLOP/s (6.06e+14 total)
+step 12500: loss=1.0593, lr=3.00e-04
+step 12500 eval: loss=1.7622
+step 13000: 1.22 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.0546, lr=3.00e-04
+step 13000 eval: loss=1.8019
+step 13500: 1.22 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.1025, lr=3.00e-04
+step 13500 eval: loss=1.8197
+step 14000: 1.22 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0328, lr=3.00e-04
+step 14000 eval: loss=1.8597
+step 14500: 1.22 TFLOP/s (7.03e+14 total)
+step 14500: loss=1.0303, lr=3.00e-04
+step 14500 eval: loss=1.8760
+step 15000: 1.22 TFLOP/s (7.28e+14 total)
+step 15000: loss=0.9907, lr=3.00e-04
+step 15000 eval: loss=1.9247
+step 15500: 1.22 TFLOP/s (7.52e+14 total)
+step 15500: loss=0.8682, lr=3.00e-04
+step 15500 eval: loss=1.9556
+step 16000: 1.22 TFLOP/s (7.76e+14 total)
+step 16000: loss=0.9972, lr=3.00e-04
+step 16000 eval: loss=1.9979
+step 16500: 1.22 TFLOP/s (8.00e+14 total)
+step 16500: loss=0.9633, lr=3.00e-04
+step 16500 eval: loss=2.0398
+step 17000: 1.22 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.0189, lr=3.00e-04
+step 17000 eval: loss=2.0848
+step 17500: 1.22 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.8204, lr=3.00e-04
+step 17500 eval: loss=2.1366
+step 18000: 1.22 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.8830, lr=3.00e-04
+step 18000 eval: loss=2.1887
+step 18500: 1.22 TFLOP/s (8.97e+14 total)
+step 18500: loss=0.8507, lr=3.00e-04
+step 18500 eval: loss=2.2096
+step 19000: 1.22 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.8404, lr=3.00e-04
+step 19000 eval: loss=2.2536
+step 19500: 1.22 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.7429, lr=3.00e-04
+step 19500 eval: loss=2.3131
+step 20000: 1.22 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.8431, lr=3.00e-04
+step 20000 eval: loss=2.3778
+step 20500: 1.22 TFLOP/s (9.94e+14 total)
+step 20500: loss=0.8119, lr=3.00e-04
+step 20500 eval: loss=2.4285
+FLOP budget reached at step 20617 (1.000 PFLOPs)
+    + SwiGLU FFN           lr=3e-04 seed=45: train=0.6742, val=1.6213 (gap=+1.8301), acc=47.8%, mfu=18.7%, 20617 steps, 1.000 PFLOPs, 3,175,932 params, 820.9s
+  [23/30]step 500: 1.17 TFLOP/s (2.18e+13 total)
+step 500: loss=2.3918, lr=3.00e-04
+step 500 eval: loss=2.4640
+step 1000: 1.15 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.2422, lr=3.00e-04
+step 1000 eval: loss=2.3559
+step 1500: 1.14 TFLOP/s (6.55e+13 total)
+step 1500: loss=1.8433, lr=3.00e-04
+step 1500 eval: loss=1.9917
+step 2000: 1.14 TFLOP/s (8.73e+13 total)
+step 2000: loss=1.5910, lr=3.00e-04
+step 2000 eval: loss=1.8504
+step 2500: 1.14 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.6040, lr=3.00e-04
+step 2500 eval: loss=1.7432
+step 3000: 1.14 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.4754, lr=3.00e-04
+step 3000 eval: loss=1.7257
+step 3500: 1.14 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.4010, lr=3.00e-04
+step 3500 eval: loss=1.6816
+step 4000: 1.14 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.4687, lr=3.00e-04
+step 4000 eval: loss=1.6654
+step 4500: 1.14 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.4643, lr=3.00e-04
+step 4500 eval: loss=1.6423
+step 5000: 1.13 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.4105, lr=3.00e-04
+step 5000 eval: loss=1.6361
+step 5500: 1.13 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.3977, lr=3.00e-04
+step 5500 eval: loss=1.6295
+step 6000: 1.13 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.3808, lr=3.00e-04
+step 6000 eval: loss=1.6288
+step 6500: 1.13 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.3074, lr=3.00e-04
+step 6500 eval: loss=1.6217
+step 7000: 1.13 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.3608, lr=3.00e-04
+step 7000 eval: loss=1.6281
+step 7500: 1.13 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.2463, lr=3.00e-04
+step 7500 eval: loss=1.6367
+step 8000: 1.13 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.2609, lr=3.00e-04
+step 8000 eval: loss=1.6418
+step 8500: 1.13 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.2655, lr=3.00e-04
+step 8500 eval: loss=1.6499
+step 9000: 1.13 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.2057, lr=3.00e-04
+step 9000 eval: loss=1.6551
+step 9500: 1.13 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.2055, lr=3.00e-04
+step 9500 eval: loss=1.6737
+step 10000: 1.13 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.2172, lr=3.00e-04
+step 10000 eval: loss=1.6911
+step 10500: 1.13 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.1369, lr=3.00e-04
+step 10500 eval: loss=1.7032
+step 11000: 1.13 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.1996, lr=3.00e-04
+step 11000 eval: loss=1.7297
+step 11500: 1.13 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.1071, lr=3.00e-04
+step 11500 eval: loss=1.7617
+step 12000: 1.13 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.1654, lr=3.00e-04
+step 12000 eval: loss=1.7672
+step 12500: 1.13 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.0550, lr=3.00e-04
+step 12500 eval: loss=1.7921
+step 13000: 1.13 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.0515, lr=3.00e-04
+step 13000 eval: loss=1.8274
+step 13500: 1.13 TFLOP/s (5.90e+14 total)
+step 13500: loss=1.0640, lr=3.00e-04
+step 13500 eval: loss=1.8427
+step 14000: 1.13 TFLOP/s (6.11e+14 total)
+step 14000: loss=1.0188, lr=3.00e-04
+step 14000 eval: loss=1.8692
+step 14500: 1.13 TFLOP/s (6.33e+14 total)
+step 14500: loss=0.9926, lr=3.00e-04
+step 14500 eval: loss=1.8901
+step 15000: 1.13 TFLOP/s (6.55e+14 total)
+step 15000: loss=1.0089, lr=3.00e-04
+step 15000 eval: loss=1.9397
+step 15500: 1.13 TFLOP/s (6.77e+14 total)
+step 15500: loss=0.8830, lr=3.00e-04
+step 15500 eval: loss=1.9843
+step 16000: 1.13 TFLOP/s (6.99e+14 total)
+step 16000: loss=0.9453, lr=3.00e-04
+step 16000 eval: loss=2.0120
+step 16500: 1.13 TFLOP/s (7.21e+14 total)
+step 16500: loss=0.9257, lr=3.00e-04
+step 16500 eval: loss=2.0619
+step 17000: 1.13 TFLOP/s (7.42e+14 total)
+step 17000: loss=0.9949, lr=3.00e-04
+step 17000 eval: loss=2.0760
+step 17500: 1.13 TFLOP/s (7.64e+14 total)
+step 17500: loss=0.8787, lr=3.00e-04
+step 17500 eval: loss=2.1662
+step 18000: 1.13 TFLOP/s (7.86e+14 total)
+step 18000: loss=0.8430, lr=3.00e-04
+step 18000 eval: loss=2.1978
+step 18500: 1.13 TFLOP/s (8.08e+14 total)
+step 18500: loss=0.8625, lr=3.00e-04
+step 18500 eval: loss=2.2675
+step 19000: 1.13 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.8315, lr=3.00e-04
+step 19000 eval: loss=2.2959
+step 19500: 1.13 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.7278, lr=3.00e-04
+step 19500 eval: loss=2.3650
+step 20000: 1.13 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.8198, lr=3.00e-04
+step 20000 eval: loss=2.3719
+step 20500: 1.13 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.7949, lr=3.00e-04
+step 20500 eval: loss=2.4235
+step 21000: 1.13 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.6686, lr=3.00e-04
+step 21000 eval: loss=2.4832
+step 21500: 1.13 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.7184, lr=3.00e-04
+step 21500 eval: loss=2.5245
+step 22000: 1.13 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.6916, lr=3.00e-04
+step 22000 eval: loss=2.5810
+step 22500: 1.13 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.6523, lr=3.00e-04
+step 22500 eval: loss=2.6014
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + GQA                  lr=3e-04 seed=45: train=0.6948, val=1.6217 (gap=+2.0338), acc=47.5%, mfu=17.4%, 22898 steps, 1.000 PFLOPs, 2,781,180 params, 884.4s
+  [24/30]step 500: 1.21 TFLOP/s (2.18e+13 total)
+step 500: loss=2.3292, lr=1.00e-04
+step 500 eval: loss=2.4328
+step 1000: 1.19 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.2152, lr=1.00e-04
+step 1000 eval: loss=2.3234
+step 1500: 1.18 TFLOP/s (6.55e+13 total)
+step 1500: loss=2.0847, lr=1.00e-04
+step 1500 eval: loss=2.1522
+step 2000: 1.18 TFLOP/s (8.73e+13 total)
+step 2000: loss=1.7969, lr=1.00e-04
+step 2000 eval: loss=2.0203
+step 2500: 1.18 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.7799, lr=1.00e-04
+step 2500 eval: loss=1.9138
+step 3000: 1.17 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.6160, lr=1.00e-04
+step 3000 eval: loss=1.8413
+step 3500: 1.17 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.5976, lr=1.00e-04
+step 3500 eval: loss=1.7886
+step 4000: 1.17 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.4626, lr=1.00e-04
+step 4000 eval: loss=1.7528
+step 4500: 1.17 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.4812, lr=1.00e-04
+step 4500 eval: loss=1.7216
+step 5000: 1.17 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.4091, lr=1.00e-04
+step 5000 eval: loss=1.7228
+step 5500: 1.17 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.3904, lr=1.00e-04
+step 5500 eval: loss=1.6841
+step 6000: 1.17 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.3914, lr=1.00e-04
+step 6000 eval: loss=1.6816
+step 6500: 1.17 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.4078, lr=1.00e-04
+step 6500 eval: loss=1.6673
+step 7000: 1.17 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.3440, lr=1.00e-04
+step 7000 eval: loss=1.6604
+step 7500: 1.17 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.3307, lr=1.00e-04
+step 7500 eval: loss=1.6612
+step 8000: 1.17 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.2621, lr=1.00e-04
+step 8000 eval: loss=1.6617
+step 8500: 1.17 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.2427, lr=1.00e-04
+step 8500 eval: loss=1.6667
+step 9000: 1.17 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.2826, lr=1.00e-04
+step 9000 eval: loss=1.6702
+step 9500: 1.17 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.2116, lr=1.00e-04
+step 9500 eval: loss=1.6712
+step 10000: 1.17 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.2920, lr=1.00e-04
+step 10000 eval: loss=1.6656
+step 10500: 1.17 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.1206, lr=1.00e-04
+step 10500 eval: loss=1.6897
+step 11000: 1.17 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.1787, lr=1.00e-04
+step 11000 eval: loss=1.6989
+step 11500: 1.17 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.1645, lr=1.00e-04
+step 11500 eval: loss=1.7131
+step 12000: 1.17 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.2158, lr=1.00e-04
+step 12000 eval: loss=1.7345
+step 12500: 1.17 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.2094, lr=1.00e-04
+step 12500 eval: loss=1.7484
+step 13000: 1.17 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.1168, lr=1.00e-04
+step 13000 eval: loss=1.7637
+step 13500: 1.17 TFLOP/s (5.90e+14 total)
+step 13500: loss=1.1106, lr=1.00e-04
+step 13500 eval: loss=1.7844
+step 14000: 1.17 TFLOP/s (6.11e+14 total)
+step 14000: loss=1.1328, lr=1.00e-04
+step 14000 eval: loss=1.7899
+step 14500: 1.17 TFLOP/s (6.33e+14 total)
+step 14500: loss=1.0834, lr=9.99e-05
+step 14500 eval: loss=1.8201
+step 15000: 1.17 TFLOP/s (6.55e+14 total)
+step 15000: loss=1.0529, lr=9.99e-05
+step 15000 eval: loss=1.8419
+step 15500: 1.17 TFLOP/s (6.77e+14 total)
+step 15500: loss=1.0746, lr=9.99e-05
+step 15500 eval: loss=1.8746
+step 16000: 1.17 TFLOP/s (6.99e+14 total)
+step 16000: loss=0.9189, lr=9.99e-05
+step 16000 eval: loss=1.8877
+step 16500: 1.17 TFLOP/s (7.21e+14 total)
+step 16500: loss=0.9656, lr=9.99e-05
+step 16500 eval: loss=1.9201
+step 17000: 1.17 TFLOP/s (7.42e+14 total)
+step 17000: loss=1.0471, lr=9.99e-05
+step 17000 eval: loss=1.9530
+step 17500: 1.17 TFLOP/s (7.64e+14 total)
+step 17500: loss=1.0813, lr=9.99e-05
+step 17500 eval: loss=1.9860
+step 18000: 1.17 TFLOP/s (7.86e+14 total)
+step 18000: loss=0.9502, lr=9.99e-05
+step 18000 eval: loss=2.0067
+step 18500: 1.17 TFLOP/s (8.08e+14 total)
+step 18500: loss=0.9211, lr=9.99e-05
+step 18500 eval: loss=2.0412
+step 19000: 1.17 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.9891, lr=9.99e-05
+step 19000 eval: loss=2.0670
+step 19500: 1.17 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.8565, lr=9.99e-05
+step 19500 eval: loss=2.1140
+step 20000: 1.17 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.8859, lr=9.99e-05
+step 20000 eval: loss=2.1462
+step 20500: 1.17 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.8711, lr=9.99e-05
+step 20500 eval: loss=2.1870
+step 21000: 1.17 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.7546, lr=9.99e-05
+step 21000 eval: loss=2.2241
+step 21500: 1.17 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.7944, lr=9.99e-05
+step 21500 eval: loss=2.2676
+step 22000: 1.17 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.7988, lr=9.99e-05
+step 22000 eval: loss=2.3037
+step 22500: 1.17 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.7899, lr=9.99e-05
+step 22500 eval: loss=2.3460
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + No bias (=LLaMA)     lr=1e-04 seed=45: train=0.8490, val=1.6604 (gap=+1.5640), acc=46.6%, mfu=18.0%, 22898 steps, 1.000 PFLOPs, 2,770,944 params, 855.8s
+
+--- Seed 46 ---
+  [25/30]step 500: 1.23 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4267, lr=3.00e-04
+step 500 eval: loss=2.4614
+step 1000: 1.21 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.2270, lr=3.00e-04
+step 1000 eval: loss=2.2507
+step 1500: 1.20 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.8072, lr=3.00e-04
+step 1500 eval: loss=2.0063
+step 2000: 1.20 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.7355, lr=3.00e-04
+step 2000 eval: loss=1.8652
+step 2500: 1.20 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6524, lr=3.00e-04
+step 2500 eval: loss=1.7986
+step 3000: 1.19 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.6078, lr=3.00e-04
+step 3000 eval: loss=1.7460
+step 3500: 1.19 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4822, lr=3.00e-04
+step 3500 eval: loss=1.7100
+step 4000: 1.19 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4758, lr=3.00e-04
+step 4000 eval: loss=1.7009
+step 4500: 1.19 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.4288, lr=3.00e-04
+step 4500 eval: loss=1.6729
+step 5000: 1.19 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.4115, lr=3.00e-04
+step 5000 eval: loss=1.6589
+step 5500: 1.19 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.4249, lr=3.00e-04
+step 5500 eval: loss=1.6456
+step 6000: 1.19 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3363, lr=3.00e-04
+step 6000 eval: loss=1.6271
+step 6500: 1.19 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.2568, lr=3.00e-04
+step 6500 eval: loss=1.6146
+step 7000: 1.19 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3380, lr=3.00e-04
+step 7000 eval: loss=1.6223
+step 7500: 1.19 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.2010, lr=3.00e-04
+step 7500 eval: loss=1.6237
+step 8000: 1.19 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2805, lr=3.00e-04
+step 8000 eval: loss=1.6256
+step 8500: 1.19 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.2794, lr=3.00e-04
+step 8500 eval: loss=1.6190
+step 9000: 1.19 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.3197, lr=3.00e-04
+step 9000 eval: loss=1.6269
+step 9500: 1.19 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2288, lr=3.00e-04
+step 9500 eval: loss=1.6308
+step 10000: 1.19 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.1673, lr=3.00e-04
+step 10000 eval: loss=1.6312
+step 10500: 1.19 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.2361, lr=3.00e-04
+step 10500 eval: loss=1.6361
+step 11000: 1.19 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2077, lr=3.00e-04
+step 11000 eval: loss=1.6519
+step 11500: 1.19 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1213, lr=3.00e-04
+step 11500 eval: loss=1.6559
+step 12000: 1.19 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1647, lr=3.00e-04
+step 12000 eval: loss=1.6869
+step 12500: 1.19 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1664, lr=3.00e-04
+step 12500 eval: loss=1.6873
+step 13000: 1.19 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.1226, lr=3.00e-04
+step 13000 eval: loss=1.7112
+step 13500: 1.19 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.0192, lr=3.00e-04
+step 13500 eval: loss=1.7166
+step 14000: 1.19 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0018, lr=3.00e-04
+step 14000 eval: loss=1.7298
+step 14500: 1.19 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.0959, lr=3.00e-04
+step 14500 eval: loss=1.7542
+step 15000: 1.19 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0759, lr=3.00e-04
+step 15000 eval: loss=1.7774
+step 15500: 1.19 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0329, lr=3.00e-04
+step 15500 eval: loss=1.7899
+step 16000: 1.19 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.1373, lr=3.00e-04
+step 16000 eval: loss=1.8136
+step 16500: 1.19 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0298, lr=3.00e-04
+step 16500 eval: loss=1.8460
+step 17000: 1.19 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.0449, lr=3.00e-04
+step 17000 eval: loss=1.8552
+step 17500: 1.19 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.9978, lr=3.00e-04
+step 17500 eval: loss=1.8977
+step 18000: 1.19 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.9610, lr=3.00e-04
+step 18000 eval: loss=1.9249
+step 18500: 1.19 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.8878, lr=3.00e-04
+step 18500 eval: loss=1.9540
+step 19000: 1.19 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.9018, lr=3.00e-04
+step 19000 eval: loss=1.9763
+step 19500: 1.19 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.9898, lr=3.00e-04
+step 19500 eval: loss=2.0172
+step 20000: 1.19 TFLOP/s (9.70e+14 total)
+step 20000: loss=1.0280, lr=3.00e-04
+step 20000 eval: loss=2.0427
+step 20500: 1.19 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.9087, lr=3.00e-04
+step 20500 eval: loss=2.0866
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    GPT baseline           lr=3e-04 seed=46: train=0.8224, val=1.6146 (gap=+1.3051), acc=49.6%, mfu=18.3%, 20609 steps, 1.000 PFLOPs, 3,179,776 params, 841.8s
+  [26/30]step 500: 1.24 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4110, lr=1.00e-04
+step 500 eval: loss=2.4412
+step 1000: 1.22 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.3244, lr=1.00e-04
+step 1000 eval: loss=2.3643
+step 1500: 1.21 TFLOP/s (7.28e+13 total)
+step 1500: loss=2.1431, lr=1.00e-04
+step 1500 eval: loss=2.2668
+step 2000: 1.21 TFLOP/s (9.70e+13 total)
+step 2000: loss=2.0635, lr=1.00e-04
+step 2000 eval: loss=2.1446
+step 2500: 1.21 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.9300, lr=1.00e-04
+step 2500 eval: loss=2.0186
+step 3000: 1.21 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.8240, lr=1.00e-04
+step 3000 eval: loss=1.9356
+step 3500: 1.21 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.6595, lr=1.00e-04
+step 3500 eval: loss=1.8740
+step 4000: 1.21 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.6292, lr=1.00e-04
+step 4000 eval: loss=1.8376
+step 4500: 1.21 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.5528, lr=1.00e-04
+step 4500 eval: loss=1.7903
+step 5000: 1.21 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.5512, lr=1.00e-04
+step 5000 eval: loss=1.7621
+step 5500: 1.20 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.5462, lr=1.00e-04
+step 5500 eval: loss=1.7407
+step 6000: 1.20 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.4376, lr=1.00e-04
+step 6000 eval: loss=1.7273
+step 6500: 1.20 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.3781, lr=1.00e-04
+step 6500 eval: loss=1.7003
+step 7000: 1.20 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.4077, lr=1.00e-04
+step 7000 eval: loss=1.6907
+step 7500: 1.20 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.2913, lr=1.00e-04
+step 7500 eval: loss=1.6882
+step 8000: 1.20 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.3952, lr=1.00e-04
+step 8000 eval: loss=1.6852
+step 8500: 1.20 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.3810, lr=1.00e-04
+step 8500 eval: loss=1.6701
+step 9000: 1.20 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.4261, lr=1.00e-04
+step 9000 eval: loss=1.6669
+step 9500: 1.20 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.3384, lr=1.00e-04
+step 9500 eval: loss=1.6728
+step 10000: 1.20 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.2518, lr=1.00e-04
+step 10000 eval: loss=1.6666
+step 10500: 1.20 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.3266, lr=1.00e-04
+step 10500 eval: loss=1.6796
+step 11000: 1.20 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2973, lr=1.00e-04
+step 11000 eval: loss=1.6719
+step 11500: 1.20 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.2154, lr=1.00e-04
+step 11500 eval: loss=1.6777
+step 12000: 1.20 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.2449, lr=1.00e-04
+step 12000 eval: loss=1.6827
+step 12500: 1.20 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.2203, lr=1.00e-04
+step 12500 eval: loss=1.6908
+step 13000: 1.20 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.2062, lr=1.00e-04
+step 13000 eval: loss=1.7061
+step 13500: 1.20 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.0880, lr=1.00e-04
+step 13500 eval: loss=1.7111
+step 14000: 1.20 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.1149, lr=1.00e-04
+step 14000 eval: loss=1.7231
+step 14500: 1.20 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.1715, lr=9.99e-05
+step 14500 eval: loss=1.7340
+step 15000: 1.20 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.1396, lr=9.99e-05
+step 15000 eval: loss=1.7492
+step 15500: 1.20 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.1254, lr=9.99e-05
+step 15500 eval: loss=1.7754
+step 16000: 1.20 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.2057, lr=9.99e-05
+step 16000 eval: loss=1.7801
+step 16500: 1.20 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0992, lr=9.99e-05
+step 16500 eval: loss=1.7998
+step 17000: 1.20 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.1078, lr=9.99e-05
+step 17000 eval: loss=1.8152
+step 17500: 1.20 TFLOP/s (8.49e+14 total)
+step 17500: loss=1.1181, lr=9.99e-05
+step 17500 eval: loss=1.8355
+step 18000: 1.20 TFLOP/s (8.73e+14 total)
+step 18000: loss=1.0775, lr=9.99e-05
+step 18000 eval: loss=1.8754
+step 18500: 1.20 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.9893, lr=9.99e-05
+step 18500 eval: loss=1.8800
+step 19000: 1.20 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.9905, lr=9.99e-05
+step 19000 eval: loss=1.9241
+step 19500: 1.20 TFLOP/s (9.46e+14 total)
+step 19500: loss=1.0435, lr=9.99e-05
+step 19500 eval: loss=1.9430
+step 20000: 1.20 TFLOP/s (9.70e+14 total)
+step 20000: loss=1.1044, lr=9.99e-05
+step 20000 eval: loss=1.9790
+step 20500: 1.20 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.9605, lr=9.99e-05
+step 20500 eval: loss=1.9979
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RMSNorm              lr=1e-04 seed=46: train=0.8981, val=1.6666 (gap=+1.1372), acc=48.3%, mfu=18.5%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 832.5s
+  [27/30]step 500: 1.24 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4203, lr=3.00e-04
+step 500 eval: loss=2.4558
+step 1000: 1.22 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.2162, lr=3.00e-04
+step 1000 eval: loss=2.2482
+step 1500: 1.21 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.8206, lr=3.00e-04
+step 1500 eval: loss=1.9886
+step 2000: 1.21 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.7186, lr=3.00e-04
+step 2000 eval: loss=1.8561
+step 2500: 1.21 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6311, lr=3.00e-04
+step 2500 eval: loss=1.7939
+step 3000: 1.21 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.5964, lr=3.00e-04
+step 3000 eval: loss=1.7440
+step 3500: 1.21 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.4509, lr=3.00e-04
+step 3500 eval: loss=1.7078
+step 4000: 1.21 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4268, lr=3.00e-04
+step 4000 eval: loss=1.6804
+step 4500: 1.21 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.3958, lr=3.00e-04
+step 4500 eval: loss=1.6597
+step 5000: 1.21 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.4037, lr=3.00e-04
+step 5000 eval: loss=1.6445
+step 5500: 1.21 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.4037, lr=3.00e-04
+step 5500 eval: loss=1.6399
+step 6000: 1.21 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3300, lr=3.00e-04
+step 6000 eval: loss=1.6285
+step 6500: 1.21 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.2631, lr=3.00e-04
+step 6500 eval: loss=1.6111
+step 7000: 1.20 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3226, lr=3.00e-04
+step 7000 eval: loss=1.6163
+step 7500: 1.20 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.2061, lr=3.00e-04
+step 7500 eval: loss=1.6219
+step 8000: 1.20 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.2837, lr=3.00e-04
+step 8000 eval: loss=1.6192
+step 8500: 1.20 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.2983, lr=3.00e-04
+step 8500 eval: loss=1.6216
+step 9000: 1.20 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.3176, lr=3.00e-04
+step 9000 eval: loss=1.6207
+step 9500: 1.20 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2393, lr=3.00e-04
+step 9500 eval: loss=1.6298
+step 10000: 1.20 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.1645, lr=3.00e-04
+step 10000 eval: loss=1.6344
+step 10500: 1.20 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.2245, lr=3.00e-04
+step 10500 eval: loss=1.6334
+step 11000: 1.20 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.2194, lr=3.00e-04
+step 11000 eval: loss=1.6531
+step 11500: 1.20 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1478, lr=3.00e-04
+step 11500 eval: loss=1.6505
+step 12000: 1.20 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.1627, lr=3.00e-04
+step 12000 eval: loss=1.6716
+step 12500: 1.20 TFLOP/s (6.07e+14 total)
+step 12500: loss=1.1645, lr=3.00e-04
+step 12500 eval: loss=1.6798
+step 13000: 1.20 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.1473, lr=3.00e-04
+step 13000 eval: loss=1.7100
+step 13500: 1.20 TFLOP/s (6.55e+14 total)
+step 13500: loss=1.0249, lr=3.00e-04
+step 13500 eval: loss=1.7195
+step 14000: 1.20 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0380, lr=3.00e-04
+step 14000 eval: loss=1.7250
+step 14500: 1.20 TFLOP/s (7.04e+14 total)
+step 14500: loss=1.0576, lr=3.00e-04
+step 14500 eval: loss=1.7465
+step 15000: 1.20 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0685, lr=3.00e-04
+step 15000 eval: loss=1.7675
+step 15500: 1.20 TFLOP/s (7.52e+14 total)
+step 15500: loss=1.0279, lr=3.00e-04
+step 15500 eval: loss=1.7838
+step 16000: 1.20 TFLOP/s (7.76e+14 total)
+step 16000: loss=1.1481, lr=3.00e-04
+step 16000 eval: loss=1.8076
+step 16500: 1.20 TFLOP/s (8.01e+14 total)
+step 16500: loss=1.0238, lr=3.00e-04
+step 16500 eval: loss=1.8428
+step 17000: 1.20 TFLOP/s (8.25e+14 total)
+step 17000: loss=1.0297, lr=3.00e-04
+step 17000 eval: loss=1.8441
+step 17500: 1.20 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.9875, lr=3.00e-04
+step 17500 eval: loss=1.8815
+step 18000: 1.20 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.9902, lr=3.00e-04
+step 18000 eval: loss=1.9211
+step 18500: 1.20 TFLOP/s (8.98e+14 total)
+step 18500: loss=0.9238, lr=3.00e-04
+step 18500 eval: loss=1.9438
+step 19000: 1.20 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.8627, lr=3.00e-04
+step 19000 eval: loss=1.9577
+step 19500: 1.20 TFLOP/s (9.46e+14 total)
+step 19500: loss=1.0007, lr=3.00e-04
+step 19500 eval: loss=1.9913
+step 20000: 1.20 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.9861, lr=3.00e-04
+step 20000 eval: loss=2.0168
+step 20500: 1.20 TFLOP/s (9.95e+14 total)
+step 20500: loss=0.9096, lr=3.00e-04
+step 20500 eval: loss=2.0614
+FLOP budget reached at step 20609 (1.000 PFLOPs)
+    + RoPE                 lr=3e-04 seed=46: train=0.8255, val=1.6111 (gap=+1.2804), acc=49.8%, mfu=18.5%, 20609 steps, 1.000 PFLOPs, 3,176,448 params, 832.5s
+  [28/30]step 500: 1.26 TFLOP/s (2.43e+13 total)
+step 500: loss=2.4354, lr=3.00e-04
+step 500 eval: loss=2.4606
+step 1000: 1.24 TFLOP/s (4.85e+13 total)
+step 1000: loss=2.2008, lr=3.00e-04
+step 1000 eval: loss=2.3104
+step 1500: 1.23 TFLOP/s (7.28e+13 total)
+step 1500: loss=1.8895, lr=3.00e-04
+step 1500 eval: loss=1.9553
+step 2000: 1.23 TFLOP/s (9.70e+13 total)
+step 2000: loss=1.5447, lr=3.00e-04
+step 2000 eval: loss=1.8020
+step 2500: 1.23 TFLOP/s (1.21e+14 total)
+step 2500: loss=1.6087, lr=3.00e-04
+step 2500 eval: loss=1.7409
+step 3000: 1.23 TFLOP/s (1.46e+14 total)
+step 3000: loss=1.5008, lr=3.00e-04
+step 3000 eval: loss=1.6942
+step 3500: 1.23 TFLOP/s (1.70e+14 total)
+step 3500: loss=1.3141, lr=3.00e-04
+step 3500 eval: loss=1.6577
+step 4000: 1.23 TFLOP/s (1.94e+14 total)
+step 4000: loss=1.4156, lr=3.00e-04
+step 4000 eval: loss=1.6468
+step 4500: 1.22 TFLOP/s (2.18e+14 total)
+step 4500: loss=1.3665, lr=3.00e-04
+step 4500 eval: loss=1.6281
+step 5000: 1.22 TFLOP/s (2.43e+14 total)
+step 5000: loss=1.3508, lr=3.00e-04
+step 5000 eval: loss=1.6098
+step 5500: 1.22 TFLOP/s (2.67e+14 total)
+step 5500: loss=1.3095, lr=3.00e-04
+step 5500 eval: loss=1.6149
+step 6000: 1.22 TFLOP/s (2.91e+14 total)
+step 6000: loss=1.3536, lr=3.00e-04
+step 6000 eval: loss=1.6161
+step 6500: 1.22 TFLOP/s (3.15e+14 total)
+step 6500: loss=1.2786, lr=3.00e-04
+step 6500 eval: loss=1.6253
+step 7000: 1.22 TFLOP/s (3.40e+14 total)
+step 7000: loss=1.3102, lr=3.00e-04
+step 7000 eval: loss=1.6149
+step 7500: 1.22 TFLOP/s (3.64e+14 total)
+step 7500: loss=1.2665, lr=3.00e-04
+step 7500 eval: loss=1.6359
+step 8000: 1.22 TFLOP/s (3.88e+14 total)
+step 8000: loss=1.1737, lr=3.00e-04
+step 8000 eval: loss=1.6414
+step 8500: 1.22 TFLOP/s (4.12e+14 total)
+step 8500: loss=1.1472, lr=3.00e-04
+step 8500 eval: loss=1.6394
+step 9000: 1.22 TFLOP/s (4.37e+14 total)
+step 9000: loss=1.2102, lr=3.00e-04
+step 9000 eval: loss=1.6498
+step 9500: 1.22 TFLOP/s (4.61e+14 total)
+step 9500: loss=1.2714, lr=3.00e-04
+step 9500 eval: loss=1.6623
+step 10000: 1.22 TFLOP/s (4.85e+14 total)
+step 10000: loss=1.0591, lr=3.00e-04
+step 10000 eval: loss=1.6821
+step 10500: 1.22 TFLOP/s (5.09e+14 total)
+step 10500: loss=1.1007, lr=3.00e-04
+step 10500 eval: loss=1.6921
+step 11000: 1.22 TFLOP/s (5.34e+14 total)
+step 11000: loss=1.0979, lr=3.00e-04
+step 11000 eval: loss=1.7104
+step 11500: 1.22 TFLOP/s (5.58e+14 total)
+step 11500: loss=1.1544, lr=3.00e-04
+step 11500 eval: loss=1.7342
+step 12000: 1.22 TFLOP/s (5.82e+14 total)
+step 12000: loss=1.0581, lr=3.00e-04
+step 12000 eval: loss=1.7628
+step 12500: 1.22 TFLOP/s (6.06e+14 total)
+step 12500: loss=1.0543, lr=3.00e-04
+step 12500 eval: loss=1.7803
+step 13000: 1.22 TFLOP/s (6.31e+14 total)
+step 13000: loss=1.0833, lr=3.00e-04
+step 13000 eval: loss=1.8209
+step 13500: 1.22 TFLOP/s (6.55e+14 total)
+step 13500: loss=0.9809, lr=3.00e-04
+step 13500 eval: loss=1.8506
+step 14000: 1.22 TFLOP/s (6.79e+14 total)
+step 14000: loss=1.0035, lr=3.00e-04
+step 14000 eval: loss=1.8734
+step 14500: 1.22 TFLOP/s (7.03e+14 total)
+step 14500: loss=1.0539, lr=3.00e-04
+step 14500 eval: loss=1.9083
+step 15000: 1.22 TFLOP/s (7.28e+14 total)
+step 15000: loss=1.0056, lr=3.00e-04
+step 15000 eval: loss=1.9385
+step 15500: 1.22 TFLOP/s (7.52e+14 total)
+step 15500: loss=0.9654, lr=3.00e-04
+step 15500 eval: loss=1.9850
+step 16000: 1.22 TFLOP/s (7.76e+14 total)
+step 16000: loss=0.8977, lr=3.00e-04
+step 16000 eval: loss=2.0244
+step 16500: 1.22 TFLOP/s (8.00e+14 total)
+step 16500: loss=0.9588, lr=3.00e-04
+step 16500 eval: loss=2.0684
+step 17000: 1.22 TFLOP/s (8.25e+14 total)
+step 17000: loss=0.9263, lr=3.00e-04
+step 17000 eval: loss=2.1096
+step 17500: 1.22 TFLOP/s (8.49e+14 total)
+step 17500: loss=0.8698, lr=3.00e-04
+step 17500 eval: loss=2.1420
+step 18000: 1.22 TFLOP/s (8.73e+14 total)
+step 18000: loss=0.7799, lr=3.00e-04
+step 18000 eval: loss=2.2072
+step 18500: 1.22 TFLOP/s (8.97e+14 total)
+step 18500: loss=0.8069, lr=3.00e-04
+step 18500 eval: loss=2.2300
+step 19000: 1.22 TFLOP/s (9.22e+14 total)
+step 19000: loss=0.7037, lr=3.00e-04
+step 19000 eval: loss=2.2816
+step 19500: 1.22 TFLOP/s (9.46e+14 total)
+step 19500: loss=0.8163, lr=3.00e-04
+step 19500 eval: loss=2.3651
+step 20000: 1.22 TFLOP/s (9.70e+14 total)
+step 20000: loss=0.8167, lr=3.00e-04
+step 20000 eval: loss=2.3856
+step 20500: 1.22 TFLOP/s (9.94e+14 total)
+step 20500: loss=0.7783, lr=3.00e-04
+step 20500 eval: loss=2.4357
+FLOP budget reached at step 20617 (1.000 PFLOPs)
+    + SwiGLU FFN           lr=3e-04 seed=46: train=0.6066, val=1.6098 (gap=+1.8929), acc=48.1%, mfu=18.7%, 20617 steps, 1.000 PFLOPs, 3,175,932 params, 820.6s
+  [29/30]step 500: 1.16 TFLOP/s (2.18e+13 total)
+step 500: loss=2.4294, lr=3.00e-04
+step 500 eval: loss=2.4593
+step 1000: 1.15 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.2195, lr=3.00e-04
+step 1000 eval: loss=2.3093
+step 1500: 1.14 TFLOP/s (6.55e+13 total)
+step 1500: loss=1.8923, lr=3.00e-04
+step 1500 eval: loss=1.9694
+step 2000: 1.14 TFLOP/s (8.73e+13 total)
+step 2000: loss=1.5689, lr=3.00e-04
+step 2000 eval: loss=1.8383
+step 2500: 1.14 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.6428, lr=3.00e-04
+step 2500 eval: loss=1.7490
+step 3000: 1.14 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.5305, lr=3.00e-04
+step 3000 eval: loss=1.7074
+step 3500: 1.14 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.3317, lr=3.00e-04
+step 3500 eval: loss=1.6731
+step 4000: 1.13 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.4155, lr=3.00e-04
+step 4000 eval: loss=1.6599
+step 4500: 1.13 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.3821, lr=3.00e-04
+step 4500 eval: loss=1.6558
+step 5000: 1.13 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.3444, lr=3.00e-04
+step 5000 eval: loss=1.6169
+step 5500: 1.13 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.2996, lr=3.00e-04
+step 5500 eval: loss=1.6208
+step 6000: 1.13 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.3546, lr=3.00e-04
+step 6000 eval: loss=1.6173
+step 6500: 1.13 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.3013, lr=3.00e-04
+step 6500 eval: loss=1.6200
+step 7000: 1.13 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.3372, lr=3.00e-04
+step 7000 eval: loss=1.6142
+step 7500: 1.13 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.2907, lr=3.00e-04
+step 7500 eval: loss=1.6208
+step 8000: 1.13 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.2134, lr=3.00e-04
+step 8000 eval: loss=1.6432
+step 8500: 1.13 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.1861, lr=3.00e-04
+step 8500 eval: loss=1.6305
+step 9000: 1.13 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.2146, lr=3.00e-04
+step 9000 eval: loss=1.6414
+step 9500: 1.13 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.2851, lr=3.00e-04
+step 9500 eval: loss=1.6563
+step 10000: 1.13 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.0919, lr=3.00e-04
+step 10000 eval: loss=1.6742
+step 10500: 1.13 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.1151, lr=3.00e-04
+step 10500 eval: loss=1.6912
+step 11000: 1.13 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.1033, lr=3.00e-04
+step 11000 eval: loss=1.7115
+step 11500: 1.13 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.1797, lr=3.00e-04
+step 11500 eval: loss=1.7155
+step 12000: 1.13 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.1029, lr=3.00e-04
+step 12000 eval: loss=1.7458
+step 12500: 1.13 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.0738, lr=3.00e-04
+step 12500 eval: loss=1.7604
+step 13000: 1.13 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.1067, lr=3.00e-04
+step 13000 eval: loss=1.7960
+step 13500: 1.13 TFLOP/s (5.90e+14 total)
+step 13500: loss=1.0010, lr=3.00e-04
+step 13500 eval: loss=1.8137
+step 14000: 1.13 TFLOP/s (6.11e+14 total)
+step 14000: loss=1.0178, lr=3.00e-04
+step 14000 eval: loss=1.8494
+step 14500: 1.13 TFLOP/s (6.33e+14 total)
+step 14500: loss=1.0504, lr=3.00e-04
+step 14500 eval: loss=1.8707
+step 15000: 1.13 TFLOP/s (6.55e+14 total)
+step 15000: loss=1.0352, lr=3.00e-04
+step 15000 eval: loss=1.9147
+step 15500: 1.13 TFLOP/s (6.77e+14 total)
+step 15500: loss=1.0043, lr=3.00e-04
+step 15500 eval: loss=1.9375
+step 16000: 1.13 TFLOP/s (6.99e+14 total)
+step 16000: loss=0.9310, lr=3.00e-04
+step 16000 eval: loss=1.9790
+step 16500: 1.13 TFLOP/s (7.21e+14 total)
+step 16500: loss=0.9919, lr=3.00e-04
+step 16500 eval: loss=1.9991
+step 17000: 1.13 TFLOP/s (7.42e+14 total)
+step 17000: loss=0.9454, lr=3.00e-04
+step 17000 eval: loss=2.0688
+step 17500: 1.13 TFLOP/s (7.64e+14 total)
+step 17500: loss=0.9117, lr=3.00e-04
+step 17500 eval: loss=2.0977
+step 18000: 1.13 TFLOP/s (7.86e+14 total)
+step 18000: loss=0.8257, lr=3.00e-04
+step 18000 eval: loss=2.1492
+step 18500: 1.13 TFLOP/s (8.08e+14 total)
+step 18500: loss=0.8739, lr=3.00e-04
+step 18500 eval: loss=2.1633
+step 19000: 1.13 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.7896, lr=3.00e-04
+step 19000 eval: loss=2.2095
+step 19500: 1.13 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.9068, lr=3.00e-04
+step 19500 eval: loss=2.2751
+step 20000: 1.13 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.8456, lr=3.00e-04
+step 20000 eval: loss=2.2871
+step 20500: 1.13 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.8393, lr=3.00e-04
+step 20500 eval: loss=2.3485
+step 21000: 1.13 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.8131, lr=3.00e-04
+step 21000 eval: loss=2.4080
+step 21500: 1.13 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.7531, lr=3.00e-04
+step 21500 eval: loss=2.4358
+step 22000: 1.13 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.7938, lr=3.00e-04
+step 22000 eval: loss=2.5018
+step 22500: 1.13 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.6968, lr=3.00e-04
+step 22500 eval: loss=2.5543
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + GQA                  lr=3e-04 seed=46: train=0.6920, val=1.6142 (gap=+1.8872), acc=47.9%, mfu=17.4%, 22898 steps, 1.000 PFLOPs, 2,781,180 params, 884.9s
+  [30/30]step 500: 1.20 TFLOP/s (2.18e+13 total)
+step 500: loss=2.3620, lr=1.00e-04
+step 500 eval: loss=2.4328
+step 1000: 1.19 TFLOP/s (4.37e+13 total)
+step 1000: loss=2.2605, lr=1.00e-04
+step 1000 eval: loss=2.3064
+step 1500: 1.18 TFLOP/s (6.55e+13 total)
+step 1500: loss=2.0369, lr=1.00e-04
+step 1500 eval: loss=2.1362
+step 2000: 1.18 TFLOP/s (8.73e+13 total)
+step 2000: loss=1.8929, lr=1.00e-04
+step 2000 eval: loss=1.9940
+step 2500: 1.18 TFLOP/s (1.09e+14 total)
+step 2500: loss=1.7258, lr=1.00e-04
+step 2500 eval: loss=1.9059
+step 3000: 1.17 TFLOP/s (1.31e+14 total)
+step 3000: loss=1.6103, lr=1.00e-04
+step 3000 eval: loss=1.8428
+step 3500: 1.17 TFLOP/s (1.53e+14 total)
+step 3500: loss=1.6000, lr=1.00e-04
+step 3500 eval: loss=1.8064
+step 4000: 1.17 TFLOP/s (1.75e+14 total)
+step 4000: loss=1.5687, lr=1.00e-04
+step 4000 eval: loss=1.7718
+step 4500: 1.17 TFLOP/s (1.97e+14 total)
+step 4500: loss=1.4159, lr=1.00e-04
+step 4500 eval: loss=1.7384
+step 5000: 1.17 TFLOP/s (2.18e+14 total)
+step 5000: loss=1.4730, lr=1.00e-04
+step 5000 eval: loss=1.7245
+step 5500: 1.17 TFLOP/s (2.40e+14 total)
+step 5500: loss=1.3365, lr=1.00e-04
+step 5500 eval: loss=1.7063
+step 6000: 1.17 TFLOP/s (2.62e+14 total)
+step 6000: loss=1.3728, lr=1.00e-04
+step 6000 eval: loss=1.6964
+step 6500: 1.17 TFLOP/s (2.84e+14 total)
+step 6500: loss=1.3925, lr=1.00e-04
+step 6500 eval: loss=1.6835
+step 7000: 1.17 TFLOP/s (3.06e+14 total)
+step 7000: loss=1.3216, lr=1.00e-04
+step 7000 eval: loss=1.6756
+step 7500: 1.17 TFLOP/s (3.28e+14 total)
+step 7500: loss=1.3502, lr=1.00e-04
+step 7500 eval: loss=1.6827
+step 8000: 1.17 TFLOP/s (3.49e+14 total)
+step 8000: loss=1.3046, lr=1.00e-04
+step 8000 eval: loss=1.6781
+step 8500: 1.17 TFLOP/s (3.71e+14 total)
+step 8500: loss=1.2752, lr=1.00e-04
+step 8500 eval: loss=1.6807
+step 9000: 1.17 TFLOP/s (3.93e+14 total)
+step 9000: loss=1.3276, lr=1.00e-04
+step 9000 eval: loss=1.6762
+step 9500: 1.17 TFLOP/s (4.15e+14 total)
+step 9500: loss=1.3650, lr=1.00e-04
+step 9500 eval: loss=1.6801
+step 10000: 1.17 TFLOP/s (4.37e+14 total)
+step 10000: loss=1.3443, lr=1.00e-04
+step 10000 eval: loss=1.6939
+step 10500: 1.17 TFLOP/s (4.59e+14 total)
+step 10500: loss=1.2353, lr=1.00e-04
+step 10500 eval: loss=1.6917
+step 11000: 1.17 TFLOP/s (4.80e+14 total)
+step 11000: loss=1.2443, lr=1.00e-04
+step 11000 eval: loss=1.7050
+step 11500: 1.17 TFLOP/s (5.02e+14 total)
+step 11500: loss=1.1373, lr=1.00e-04
+step 11500 eval: loss=1.7217
+step 12000: 1.17 TFLOP/s (5.24e+14 total)
+step 12000: loss=1.2328, lr=1.00e-04
+step 12000 eval: loss=1.7334
+step 12500: 1.17 TFLOP/s (5.46e+14 total)
+step 12500: loss=1.2489, lr=1.00e-04
+step 12500 eval: loss=1.7457
+step 13000: 1.17 TFLOP/s (5.68e+14 total)
+step 13000: loss=1.1586, lr=1.00e-04
+step 13000 eval: loss=1.7572
+step 13500: 1.17 TFLOP/s (5.90e+14 total)
+step 13500: loss=1.1019, lr=1.00e-04
+step 13500 eval: loss=1.7831
+step 14000: 1.17 TFLOP/s (6.11e+14 total)
+step 14000: loss=1.0796, lr=1.00e-04
+step 14000 eval: loss=1.8022
+step 14500: 1.17 TFLOP/s (6.33e+14 total)
+step 14500: loss=1.0919, lr=9.99e-05
+step 14500 eval: loss=1.8198
+step 15000: 1.17 TFLOP/s (6.55e+14 total)
+step 15000: loss=1.0550, lr=9.99e-05
+step 15000 eval: loss=1.8429
+step 15500: 1.17 TFLOP/s (6.77e+14 total)
+step 15500: loss=1.0879, lr=9.99e-05
+step 15500 eval: loss=1.8669
+step 16000: 1.17 TFLOP/s (6.99e+14 total)
+step 16000: loss=1.0568, lr=9.99e-05
+step 16000 eval: loss=1.8865
+step 16500: 1.17 TFLOP/s (7.21e+14 total)
+step 16500: loss=1.0380, lr=9.99e-05
+step 16500 eval: loss=1.9219
+step 17000: 1.17 TFLOP/s (7.42e+14 total)
+step 17000: loss=1.0369, lr=9.99e-05
+step 17000 eval: loss=1.9335
+step 17500: 1.17 TFLOP/s (7.64e+14 total)
+step 17500: loss=0.9713, lr=9.99e-05
+step 17500 eval: loss=1.9549
+step 18000: 1.17 TFLOP/s (7.86e+14 total)
+step 18000: loss=1.0403, lr=9.99e-05
+step 18000 eval: loss=1.9843
+step 18500: 1.17 TFLOP/s (8.08e+14 total)
+step 18500: loss=0.9609, lr=9.99e-05
+step 18500 eval: loss=2.0185
+step 19000: 1.17 TFLOP/s (8.30e+14 total)
+step 19000: loss=0.8576, lr=9.99e-05
+step 19000 eval: loss=2.0591
+step 19500: 1.17 TFLOP/s (8.52e+14 total)
+step 19500: loss=0.9394, lr=9.99e-05
+step 19500 eval: loss=2.0983
+step 20000: 1.17 TFLOP/s (8.73e+14 total)
+step 20000: loss=0.9418, lr=9.99e-05
+step 20000 eval: loss=2.1191
+step 20500: 1.17 TFLOP/s (8.95e+14 total)
+step 20500: loss=0.8772, lr=9.99e-05
+step 20500 eval: loss=2.1516
+step 21000: 1.17 TFLOP/s (9.17e+14 total)
+step 21000: loss=0.9251, lr=9.99e-05
+step 21000 eval: loss=2.1923
+step 21500: 1.17 TFLOP/s (9.39e+14 total)
+step 21500: loss=0.8338, lr=9.99e-05
+step 21500 eval: loss=2.2279
+step 22000: 1.17 TFLOP/s (9.61e+14 total)
+step 22000: loss=0.8492, lr=9.99e-05
+step 22000 eval: loss=2.2767
+step 22500: 1.17 TFLOP/s (9.83e+14 total)
+step 22500: loss=0.8455, lr=9.99e-05
+step 22500 eval: loss=2.3097
+FLOP budget reached at step 22898 (1.000 PFLOPs)
+    + No bias (=LLaMA)     lr=1e-04 seed=46: train=0.8060, val=1.6756 (gap=+1.5249), acc=46.8%, mfu=18.0%, 22898 steps, 1.000 PFLOPs, 2,770,944 params, 855.8s
+
+==============================================================================
+HYP-001c: FLOP-Matched Ablation Results
+==============================================================================
+Config                     LR     Val   Train     Gap     Std           95% CI   N
+------------------------------------------------------------------------------
+GPT baseline            3e-04  1.6092  0.7808 +0.8284  0.0077 [ 1.6004, 1.6180]   5
++ RMSNorm               1e-04  1.6666  0.8641 +0.8024  0.0129 [ 1.6518, 1.6813]   5
++ RoPE                  3e-04  1.6072  0.7671 +0.8401  0.0049 [ 1.6017, 1.6128]   5
++ SwiGLU FFN            3e-04  1.6136  0.6817 +0.9319  0.0106 [ 1.6015, 1.6257]   5
++ GQA                   3e-04  1.6083  0.6869 +0.9214  0.0115 [ 1.5952, 1.6215]   5
++ No bias (=LLaMA)      1e-04  1.6696  0.8186 +0.8509  0.0124 [ 1.6554, 1.6837]   5
+
+==============================================================================
+Comparison vs GPT Baseline (best val loss, at best LR per config)
+==============================================================================
+Config                  Best LR     Mean      Std   Cohen d    vs BL
+------------------------------------------------------------------------------
+GPT baseline              3e-04   1.6092   0.0077    ---    ---
++ RMSNorm                 1e-04   1.6666   0.0129    -5.39    -3.6%
++ RoPE                    3e-04   1.6072   0.0049    +0.30    +0.1%
++ SwiGLU FFN              3e-04   1.6136   0.0106    -0.47    -0.3%
++ GQA                     3e-04   1.6083   0.0115    +0.09    +0.1%
++ No bias (=LLaMA)        1e-04   1.6696   0.0124    -5.84    -3.8%
+
+==============================================================================
+Summary (per-config best LR from HYP-001b):
+  GPT baseline           LR=3e-04  val=1.6092  train=0.7808  n=5
+  + RMSNorm              LR=1e-04  val=1.6666  train=0.8641  n=5
+  + RoPE                 LR=3e-04  val=1.6072  train=0.7671  n=5
+  + SwiGLU FFN           LR=3e-04  val=1.6136  train=0.6817  n=5
+  + GQA                  LR=3e-04  val=1.6083  train=0.6869  n=5
+  + No bias (=LLaMA)     LR=1e-04  val=1.6696  train=0.8186  n=5
+
+Results logged to experiments/results.jsonl
+Total entries in log: 126
+==============================================================================
