@@ -455,7 +455,7 @@ def analyze(results: list[dict]) -> None:
         print(
             f"\n  Seed {seed} (grok@{grok}):"
         )
-        for s, v in zip(steps, vals):
+        for s, v in zip(steps, vals, strict=False):
             bar = "#" * int(v * 50)
             marker = " <-- GROK" if grok and s == (
                 (grok // EVAL_EVERY) * EVAL_EVERY
@@ -473,7 +473,7 @@ def analyze(results: list[dict]) -> None:
         # Find step where P(correct) first exceeds 10%
         step_10 = None
         step_90 = None
-        for s, v in zip(steps, vals):
+        for s, v in zip(steps, vals, strict=False):
             if v >= 0.10 and step_10 is None:
                 step_10 = s
             if v >= 0.90 and step_90 is None:
@@ -556,7 +556,7 @@ def analyze(results: list[dict]) -> None:
         vals = [cp["p_correct_mean"] for cp in cps]
         steps = [cp["step"] for cp in cps]
         step_10 = step_90 = None
-        for s, v in zip(steps, vals):
+        for s, v in zip(steps, vals, strict=False):
             if v >= 0.10 and step_10 is None:
                 step_10 = s
             if v >= 0.90 and step_90 is None:
