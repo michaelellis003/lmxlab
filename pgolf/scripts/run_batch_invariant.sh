@@ -10,7 +10,7 @@ shift
 OVERRIDES="$@"
 
 PGOLF_DIR="/Users/michaelellis/Projects/parameter-golf"
-RESULTS_DIR="/Users/michaelellis/Projects/lmxlab/experiments/batch_invariant"
+RESULTS_DIR="/Users/michaelellis/Projects/lmxlab/pgolf/experiments/batch_invariant"
 mkdir -p "$RESULTS_DIR"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)

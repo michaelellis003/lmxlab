@@ -35,16 +35,16 @@ from pathlib import Path
 from typing import Any
 
 # lmxlab experiment tracking
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 from lmxlab.experiments.tracking import ExperimentLog, LogEntry
 
 # ── Task identity ────────────────────────────────────────────
 TASK_NAME = "pgolf"
 MAX_ITERATIONS = 20
-PGOLF_DIR = Path(__file__).resolve().parent.parent.parent / "parameter-golf"
-RESULTS_FILE = "experiments/pgolf_results.jsonl"
+PGOLF_DIR = Path(__file__).resolve().parent.parent.parent.parent / "parameter-golf"
+RESULTS_FILE = "pgolf/experiments/pgolf_results.jsonl"
 ARTIFACT_LIMIT_BYTES = 16_000_000
-SCRIPT_BACKUP_DIR = Path("experiments/pgolf_scripts")
+SCRIPT_BACKUP_DIR = Path("pgolf/experiments/pgolf_scripts")
 
 # ── Baseline defaults (match train_gpt_mlx.py) ──────────────
 BASELINE = {
