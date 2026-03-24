@@ -57,8 +57,16 @@ ETA_COMM = 1e-3  # Perturbation step size for defect
 
 # Known grok steps from HYP-016 (censored at 60K for non-grokkers)
 GROK_STEPS = {
-    42: 18000, 43: 12000, 44: 60000, 45: 48000, 46: 22000,
-    47: 12000, 48: 4000, 49: 48000, 50: 12000, 51: 36000,
+    42: 18000,
+    43: 12000,
+    44: 60000,
+    45: 48000,
+    46: 22000,
+    47: 12000,
+    48: 4000,
+    49: 48000,
+    50: 12000,
+    51: 36000,
 }
 
 WARMUP_STEPS = 100
@@ -473,14 +481,16 @@ def analyze_results(results: list[dict[str, Any]]) -> None:
             f"{d5k:>10.6f} {d10k:>10.6f}"
         )
 
-        seed_data.append({
-            "seed": r["seed"],
-            "grok_step": grok_step,
-            "defect_1k": d1k,
-            "defect_2k": d2k,
-            "defect_5k": d5k,
-            "defect_10k": d10k,
-        })
+        seed_data.append(
+            {
+                "seed": r["seed"],
+                "grok_step": grok_step,
+                "defect_1k": d1k,
+                "defect_2k": d2k,
+                "defect_5k": d5k,
+                "defect_10k": d10k,
+            }
+        )
 
     if len(seed_data) < 3:
         print("\nToo few runs for correlation analysis.")
@@ -568,10 +578,7 @@ def analyze_results(results: list[dict[str, Any]]) -> None:
                     f"(d={cohens_d:.3f} <= 0.5)"
                 )
         else:
-            print(
-                "  H37-b: CANNOT ASSESS "
-                "(insufficient groups)"
-            )
+            print("  H37-b: CANNOT ASSESS (insufficient groups)")
 
         if abs_rho < 0.4 and (not nongrokkers or cohens_d < 0.3):
             print(
@@ -593,18 +600,26 @@ def main() -> None:
         description="HYP-037: Commutator defect as grokking predictor",
     )
     parser.add_argument(
-        "--dry-run", action="store_true", help="Print config without running",
+        "--dry-run",
+        action="store_true",
+        help="Print config without running",
     )
     parser.add_argument(
-        "--pilot", action="store_true",
+        "--pilot",
+        action="store_true",
         help="Quick single run (seed 48, 2K steps)",
     )
     parser.add_argument(
-        "--max-steps", type=int, default=MAX_STEPS,
+        "--max-steps",
+        type=int,
+        default=MAX_STEPS,
         help=f"Max training steps (default: {MAX_STEPS})",
     )
     parser.add_argument(
-        "--max-runs", type=int, default=None, help="Limit number of runs",
+        "--max-runs",
+        type=int,
+        default=None,
+        help="Limit number of runs",
     )
     args = parser.parse_args()
 
@@ -613,14 +628,13 @@ def main() -> None:
         global DEFECT_STEPS
         DEFECT_STEPS = [1000, 2000]
         result = run_single(
-            seed=48, config=CONFIG, max_steps=2000,
+            seed=48,
+            config=CONFIG,
+            max_steps=2000,
         )
         if result:
             for cp in result["defect_checkpoints"]:
-                print(
-                    f"  step={cp['step']} "
-                    f"defect={cp['defect_median']:.6f}"
-                )
+                print(f"  step={cp['step']} defect={cp['defect_median']:.6f}")
         return
 
     # Full experiment: 10 seeds
@@ -636,7 +650,9 @@ def main() -> None:
     for i, seed in enumerate(seeds):
         print(f"\n[{i + 1}/{len(seeds)}]", end="")
         result = run_single(
-            seed=seed, config=CONFIG, max_steps=args.max_steps,
+            seed=seed,
+            config=CONFIG,
+            max_steps=args.max_steps,
             dry_run=args.dry_run,
         )
         if result:
