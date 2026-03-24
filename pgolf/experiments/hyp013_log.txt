@@ -1,0 +1,673 @@
+mx.metal.get_peak_memory is deprecated and will be removed in a future version. Use mx.get_peak_memory instead.
+HYP-013: Entropy Predicts TTC Amplification
+Grid: 6 runs
+  Operations: ['add', 'mul']
+  Seeds: [42, 43, 44]
+  K values: [1, 2, 4, 8, 16, 32, 64]
+  N samples: 64
+  Modulus: 97
+  FLOP budget: 2.88e+14 per run
+  Target steps: ~2000
+  LR: 0.0003
+  Dropout: 0.0 (fixed)
+
+[1/6]
+============================================================
+Run: add_s42
+  operation=add, seed=42
+  params=9,877,248
+  flops/step=1.44e+11
+  flop_budget=2.88e+14
+  est_steps=2000
+init_val_loss=11.3161
+step 100: 8.4 steps/s, 17206 tok/s
+step 100: 1.21 TFLOP/s (1.44e+13 total)
+step 100: loss=2.5466, lr=2.97e-04
+step 200: 8.2 steps/s, 16848 tok/s
+step 200: 1.20 TFLOP/s (2.88e+13 total)
+step 200: loss=1.5678, lr=3.00e-04
+step 300: 8.2 steps/s, 16808 tok/s
+step 300: 1.19 TFLOP/s (4.32e+13 total)
+step 300: loss=0.6152, lr=3.00e-04
+step 400: 8.6 steps/s, 17624 tok/s
+step 400: 1.20 TFLOP/s (5.75e+13 total)
+step 400: loss=0.2218, lr=3.00e-04
+step 500: 8.6 steps/s, 17605 tok/s
+step 500: 1.21 TFLOP/s (7.19e+13 total)
+  eval step 500: val=2.8347 best=2.8347
+step 500: loss=0.0884, lr=3.00e-04
+step 600: 8.6 steps/s, 17645 tok/s
+step 600: 1.21 TFLOP/s (8.63e+13 total)
+step 600: loss=0.0296, lr=3.00e-04
+step 700: 8.7 steps/s, 17914 tok/s
+step 700: 1.22 TFLOP/s (1.01e+14 total)
+step 700: loss=0.0199, lr=3.00e-04
+step 800: 8.8 steps/s, 18040 tok/s
+step 800: 1.23 TFLOP/s (1.15e+14 total)
+step 800: loss=0.0185, lr=3.00e-04
+step 900: 8.8 steps/s, 18079 tok/s
+step 900: 1.23 TFLOP/s (1.29e+14 total)
+step 900: loss=0.0079, lr=3.00e-04
+step 1000: 8.8 steps/s, 18037 tok/s
+step 1000: 1.23 TFLOP/s (1.44e+14 total)
+  eval step 1000: val=3.1956 best=2.8347
+step 1000: loss=0.0092, lr=3.00e-04
+step 1100: 8.7 steps/s, 17810 tok/s
+step 1100: 1.24 TFLOP/s (1.58e+14 total)
+step 1100: loss=0.0253, lr=3.00e-04
+step 1200: 8.8 steps/s, 17973 tok/s
+step 1200: 1.24 TFLOP/s (1.73e+14 total)
+step 1200: loss=0.0037, lr=3.00e-04
+step 1300: 8.8 steps/s, 18040 tok/s
+step 1300: 1.24 TFLOP/s (1.87e+14 total)
+step 1300: loss=0.0031, lr=3.00e-04
+step 1400: 8.8 steps/s, 17986 tok/s
+step 1400: 1.24 TFLOP/s (2.01e+14 total)
+step 1400: loss=0.0030, lr=3.00e-04
+step 1500: 8.8 steps/s, 18019 tok/s
+step 1500: 1.24 TFLOP/s (2.16e+14 total)
+  eval step 1500: val=3.3919 best=2.8347
+step 1500: loss=0.0026, lr=3.00e-04
+step 1600: 8.8 steps/s, 17970 tok/s
+step 1600: 1.24 TFLOP/s (2.30e+14 total)
+step 1600: loss=0.0020, lr=3.00e-04
+step 1700: 8.8 steps/s, 18090 tok/s
+step 1700: 1.25 TFLOP/s (2.45e+14 total)
+step 1700: loss=0.0024, lr=3.00e-04
+step 1800: 8.8 steps/s, 18046 tok/s
+step 1800: 1.25 TFLOP/s (2.59e+14 total)
+step 1800: loss=0.0017, lr=3.00e-04
+step 1900: 8.8 steps/s, 18033 tok/s
+step 1900: 1.25 TFLOP/s (2.73e+14 total)
+step 1900: loss=0.0022, lr=3.00e-04
+step 2000: 8.6 steps/s, 17605 tok/s
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 1.25 TFLOP/s (2.88e+14 total)
+  eval step 2000: val=3.4664 best=2.8347
+step 2000: loss=0.0017, lr=3.00e-04
+Throughput summary: 2000 steps in 230.7s (8.7 steps/s, 17756 tok/s)
+FLOPs summary: 0.2877 PFLOPs in 230.7s (1.25 TFLOP/s)
+final_val_loss=3.4664 best=2.8347
+Training complete: 2000 steps in 230.6s
+  Evaluating pass@k...
+  pass@k eval: 11.3s
+    pass_at_1: 0.0064
+    pass_at_2: 0.0104
+    pass_at_4: 0.0163
+    pass_at_8: 0.0248
+    pass_at_16: 0.0371
+    pass_at_32: 0.0551
+    pass_at_64: 0.0825
+  Evaluating per-token loss...
+  per-token loss eval: 39.2s
+    prompt_loss: 3.4514
+    answer_loss: 7.4335
+    answer_entropy: 2.1933
+    answer_top5_mass: 0.7552
+    answer_correct_prob: 0.0060
+
+  Steps:      2000
+  Train loss: 0.0017
+  Best val:   2.8347
+  Gap:        -2.8331
+  Wall time:  281.3s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[2/6]
+============================================================
+Run: add_s43
+  operation=add, seed=43
+  params=9,877,248
+  flops/step=1.44e+11
+  flop_budget=2.88e+14
+  est_steps=2000
+init_val_loss=11.3161
+step 100: 8.9 steps/s, 18321 tok/s
+step 100: 1.29 TFLOP/s (1.44e+13 total)
+step 100: loss=2.1750, lr=2.97e-04
+step 200: 9.0 steps/s, 18405 tok/s
+step 200: 1.29 TFLOP/s (2.88e+13 total)
+step 200: loss=1.5745, lr=3.00e-04
+step 300: 8.9 steps/s, 18252 tok/s
+step 300: 1.29 TFLOP/s (4.32e+13 total)
+step 300: loss=0.3076, lr=3.00e-04
+step 400: 7.2 steps/s, 14792 tok/s
+step 400: 1.21 TFLOP/s (5.75e+13 total)
+step 400: loss=0.1788, lr=3.00e-04
+step 500: 7.1 steps/s, 14465 tok/s
+step 500: 1.17 TFLOP/s (7.19e+13 total)
+  eval step 500: val=2.6670 best=2.6670
+step 500: loss=0.0532, lr=3.00e-04
+step 600: 8.6 steps/s, 17701 tok/s
+step 600: 1.18 TFLOP/s (8.63e+13 total)
+step 600: loss=0.0708, lr=3.00e-04
+step 700: 7.8 steps/s, 15905 tok/s
+step 700: 1.17 TFLOP/s (1.01e+14 total)
+step 700: loss=0.0227, lr=3.00e-04
+step 800: 7.6 steps/s, 15590 tok/s
+step 800: 1.16 TFLOP/s (1.15e+14 total)
+step 800: loss=0.0108, lr=3.00e-04
+step 900: 8.5 steps/s, 17333 tok/s
+step 900: 1.17 TFLOP/s (1.29e+14 total)
+step 900: loss=0.0057, lr=3.00e-04
+step 1000: 8.8 steps/s, 17928 tok/s
+step 1000: 1.18 TFLOP/s (1.44e+14 total)
+  eval step 1000: val=3.0720 best=2.6670
+step 1000: loss=0.0051, lr=3.00e-04
+step 1100: 8.5 steps/s, 17325 tok/s
+step 1100: 1.18 TFLOP/s (1.58e+14 total)
+step 1100: loss=0.0031, lr=3.00e-04
+step 1200: 8.9 steps/s, 18210 tok/s
+step 1200: 1.19 TFLOP/s (1.73e+14 total)
+step 1200: loss=0.0044, lr=3.00e-04
+step 1300: 9.1 steps/s, 18632 tok/s
+step 1300: 1.20 TFLOP/s (1.87e+14 total)
+step 1300: loss=0.0024, lr=3.00e-04
+step 1400: 9.0 steps/s, 18486 tok/s
+step 1400: 1.20 TFLOP/s (2.01e+14 total)
+step 1400: loss=0.0033, lr=3.00e-04
+step 1500: 9.0 steps/s, 18394 tok/s
+step 1500: 1.21 TFLOP/s (2.16e+14 total)
+  eval step 1500: val=3.1773 best=2.6670
+step 1500: loss=0.0047, lr=3.00e-04
+step 1600: 9.0 steps/s, 18460 tok/s
+step 1600: 1.21 TFLOP/s (2.30e+14 total)
+step 1600: loss=0.0021, lr=3.00e-04
+step 1700: 9.0 steps/s, 18409 tok/s
+step 1700: 1.22 TFLOP/s (2.45e+14 total)
+step 1700: loss=0.0008, lr=3.00e-04
+step 1800: 9.1 steps/s, 18621 tok/s
+step 1800: 1.22 TFLOP/s (2.59e+14 total)
+step 1800: loss=0.0007, lr=3.00e-04
+step 1900: 9.0 steps/s, 18361 tok/s
+step 1900: 1.23 TFLOP/s (2.73e+14 total)
+step 1900: loss=0.0028, lr=3.00e-04
+step 2000: 6.9 steps/s, 14042 tok/s
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 1.21 TFLOP/s (2.88e+14 total)
+  eval step 2000: val=3.2412 best=2.6670
+step 2000: loss=0.0028, lr=3.00e-04
+Throughput summary: 2000 steps in 237.6s (8.4 steps/s, 17236 tok/s)
+FLOPs summary: 0.2877 PFLOPs in 237.6s (1.21 TFLOP/s)
+final_val_loss=3.2412 best=2.6670
+Training complete: 2000 steps in 237.6s
+  Evaluating pass@k...
+  pass@k eval: 14.8s
+    pass_at_1: 0.0067
+    pass_at_2: 0.0107
+    pass_at_4: 0.0165
+    pass_at_8: 0.0246
+    pass_at_16: 0.0359
+    pass_at_32: 0.0528
+    pass_at_64: 0.0784
+  Evaluating per-token loss...
+  per-token loss eval: 36.9s
+    prompt_loss: 3.4596
+    answer_loss: 7.4444
+    answer_entropy: 2.2444
+    answer_top5_mass: 0.7327
+    answer_correct_prob: 0.0067
+
+  Steps:      2000
+  Train loss: 0.0028
+  Best val:   2.6670
+  Gap:        -2.6641
+  Wall time:  289.4s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[3/6]
+============================================================
+Run: add_s44
+  operation=add, seed=44
+  params=9,877,248
+  flops/step=1.44e+11
+  flop_budget=2.88e+14
+  est_steps=2000
+init_val_loss=11.3643
+step 100: 8.7 steps/s, 17873 tok/s
+step 100: 1.26 TFLOP/s (1.44e+13 total)
+step 100: loss=2.5276, lr=2.97e-04
+step 200: 8.9 steps/s, 18130 tok/s
+step 200: 1.26 TFLOP/s (2.88e+13 total)
+step 200: loss=1.5838, lr=3.00e-04
+step 300: 8.7 steps/s, 17894 tok/s
+step 300: 1.26 TFLOP/s (4.32e+13 total)
+step 300: loss=0.6901, lr=3.00e-04
+step 400: 8.8 steps/s, 18112 tok/s
+step 400: 1.26 TFLOP/s (5.75e+13 total)
+step 400: loss=0.2200, lr=3.00e-04
+step 500: 8.2 steps/s, 16886 tok/s
+step 500: 1.25 TFLOP/s (7.19e+13 total)
+  eval step 500: val=2.6299 best=2.6299
+step 500: loss=0.0954, lr=3.00e-04
+step 600: 8.4 steps/s, 17272 tok/s
+step 600: 1.24 TFLOP/s (8.63e+13 total)
+step 600: loss=0.0255, lr=3.00e-04
+step 700: 8.8 steps/s, 18020 tok/s
+step 700: 1.25 TFLOP/s (1.01e+14 total)
+step 700: loss=0.0174, lr=3.00e-04
+step 800: 7.2 steps/s, 14765 tok/s
+step 800: 1.22 TFLOP/s (1.15e+14 total)
+step 800: loss=0.0072, lr=3.00e-04
+step 900: 7.1 steps/s, 14593 tok/s
+step 900: 1.19 TFLOP/s (1.29e+14 total)
+step 900: loss=0.0056, lr=3.00e-04
+step 1000: 7.7 steps/s, 15747 tok/s
+step 1000: 1.18 TFLOP/s (1.44e+14 total)
+  eval step 1000: val=3.0499 best=2.6299
+step 1000: loss=0.0045, lr=3.00e-04
+step 1100: 7.8 steps/s, 15900 tok/s
+step 1100: 1.18 TFLOP/s (1.58e+14 total)
+step 1100: loss=0.0041, lr=3.00e-04
+step 1200: 7.5 steps/s, 15264 tok/s
+step 1200: 1.17 TFLOP/s (1.73e+14 total)
+step 1200: loss=0.0031, lr=3.00e-04
+step 1300: 8.3 steps/s, 17015 tok/s
+step 1300: 1.17 TFLOP/s (1.87e+14 total)
+step 1300: loss=0.0051, lr=3.00e-04
+step 1400: 8.6 steps/s, 17605 tok/s
+step 1400: 1.17 TFLOP/s (2.01e+14 total)
+step 1400: loss=0.0047, lr=3.00e-04
+step 1500: 8.6 steps/s, 17591 tok/s
+step 1500: 1.18 TFLOP/s (2.16e+14 total)
+  eval step 1500: val=3.1433 best=2.6299
+step 1500: loss=0.0023, lr=3.00e-04
+step 1600: 8.5 steps/s, 17363 tok/s
+step 1600: 1.18 TFLOP/s (2.30e+14 total)
+step 1600: loss=0.0040, lr=3.00e-04
+step 1700: 8.5 steps/s, 17463 tok/s
+step 1700: 1.18 TFLOP/s (2.45e+14 total)
+step 1700: loss=0.0030, lr=3.00e-04
+step 1800: 8.5 steps/s, 17467 tok/s
+step 1800: 1.18 TFLOP/s (2.59e+14 total)
+step 1800: loss=0.0015, lr=3.00e-04
+step 1900: 8.6 steps/s, 17646 tok/s
+step 1900: 1.19 TFLOP/s (2.73e+14 total)
+step 1900: loss=0.0007, lr=3.00e-04
+step 2000: 8.6 steps/s, 17616 tok/s
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 1.19 TFLOP/s (2.88e+14 total)
+  eval step 2000: val=3.2220 best=2.6299
+step 2000: loss=0.0027, lr=3.00e-04
+Throughput summary: 2000 steps in 241.9s (8.3 steps/s, 16932 tok/s)
+FLOPs summary: 0.2877 PFLOPs in 241.9s (1.19 TFLOP/s)
+final_val_loss=3.2220 best=2.6299
+Training complete: 2000 steps in 241.9s
+  Evaluating pass@k...
+  pass@k eval: 11.8s
+    pass_at_1: 0.0059
+    pass_at_2: 0.0096
+    pass_at_4: 0.0156
+    pass_at_8: 0.0253
+    pass_at_16: 0.0400
+    pass_at_32: 0.0611
+    pass_at_64: 0.0893
+  Evaluating per-token loss...
+  per-token loss eval: 34.3s
+    prompt_loss: 3.3235
+    answer_loss: 7.3926
+    answer_entropy: 2.2270
+    answer_top5_mass: 0.7422
+    answer_correct_prob: 0.0062
+
+  Steps:      2000
+  Train loss: 0.0027
+  Best val:   2.6299
+  Gap:        -2.6272
+  Wall time:  288.1s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[4/6]
+============================================================
+Run: mul_s42
+  operation=mul, seed=42
+  params=9,877,248
+  flops/step=1.44e+11
+  flop_budget=2.88e+14
+  est_steps=2000
+init_val_loss=11.3744
+step 100: 8.5 steps/s, 17457 tok/s
+step 100: 1.23 TFLOP/s (1.44e+13 total)
+step 100: loss=2.5507, lr=2.97e-04
+step 200: 8.7 steps/s, 17844 tok/s
+step 200: 1.24 TFLOP/s (2.88e+13 total)
+step 200: loss=1.5759, lr=3.00e-04
+step 300: 8.8 steps/s, 17960 tok/s
+step 300: 1.25 TFLOP/s (4.32e+13 total)
+step 300: loss=1.5481, lr=3.00e-04
+step 400: 8.9 steps/s, 18196 tok/s
+step 400: 1.25 TFLOP/s (5.75e+13 total)
+step 400: loss=1.2764, lr=3.00e-04
+step 500: 8.9 steps/s, 18162 tok/s
+step 500: 1.26 TFLOP/s (7.19e+13 total)
+  eval step 500: val=2.9051 best=2.9051
+step 500: loss=0.6613, lr=3.00e-04
+step 600: 8.8 steps/s, 18007 tok/s
+step 600: 1.26 TFLOP/s (8.63e+13 total)
+step 600: loss=0.1261, lr=3.00e-04
+step 700: 9.1 steps/s, 18612 tok/s
+step 700: 1.27 TFLOP/s (1.01e+14 total)
+step 700: loss=0.0252, lr=3.00e-04
+step 800: 9.1 steps/s, 18657 tok/s
+step 800: 1.27 TFLOP/s (1.15e+14 total)
+step 800: loss=0.0127, lr=3.00e-04
+step 900: 9.1 steps/s, 18556 tok/s
+step 900: 1.28 TFLOP/s (1.29e+14 total)
+step 900: loss=0.0059, lr=3.00e-04
+step 1000: 9.1 steps/s, 18727 tok/s
+step 1000: 1.28 TFLOP/s (1.44e+14 total)
+  eval step 1000: val=3.4169 best=2.9051
+step 1000: loss=0.0039, lr=3.00e-04
+step 1100: 9.1 steps/s, 18550 tok/s
+step 1100: 1.28 TFLOP/s (1.58e+14 total)
+step 1100: loss=0.0032, lr=3.00e-04
+step 1200: 9.1 steps/s, 18665 tok/s
+step 1200: 1.28 TFLOP/s (1.73e+14 total)
+step 1200: loss=0.0033, lr=3.00e-04
+step 1300: 8.4 steps/s, 17238 tok/s
+step 1300: 1.28 TFLOP/s (1.87e+14 total)
+step 1300: loss=0.0141, lr=3.00e-04
+step 1400: 6.8 steps/s, 13925 tok/s
+step 1400: 1.25 TFLOP/s (2.01e+14 total)
+step 1400: loss=0.0496, lr=3.00e-04
+step 1500: 7.9 steps/s, 16196 tok/s
+step 1500: 1.24 TFLOP/s (2.16e+14 total)
+  eval step 1500: val=3.5179 best=2.9051
+step 1500: loss=0.0085, lr=3.00e-04
+step 1600: 8.2 steps/s, 16724 tok/s
+step 1600: 1.24 TFLOP/s (2.30e+14 total)
+step 1600: loss=0.0017, lr=3.00e-04
+step 1700: 7.4 steps/s, 15219 tok/s
+step 1700: 1.23 TFLOP/s (2.45e+14 total)
+step 1700: loss=0.0016, lr=3.00e-04
+step 1800: 8.2 steps/s, 16785 tok/s
+step 1800: 1.22 TFLOP/s (2.59e+14 total)
+step 1800: loss=0.0014, lr=3.00e-04
+step 1900: 8.8 steps/s, 18076 tok/s
+step 1900: 1.23 TFLOP/s (2.73e+14 total)
+step 1900: loss=0.0019, lr=3.00e-04
+step 2000: 8.8 steps/s, 18098 tok/s
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 1.23 TFLOP/s (2.88e+14 total)
+  eval step 2000: val=3.6124 best=2.9051
+step 2000: loss=0.0024, lr=3.00e-04
+Throughput summary: 2000 steps in 234.3s (8.5 steps/s, 17481 tok/s)
+FLOPs summary: 0.2877 PFLOPs in 234.3s (1.23 TFLOP/s)
+final_val_loss=3.6124 best=2.9051
+Training complete: 2000 steps in 234.3s
+  Evaluating pass@k...
+  pass@k eval: 11.8s
+    pass_at_1: 0.0246
+    pass_at_2: 0.0272
+    pass_at_4: 0.0307
+    pass_at_8: 0.0360
+    pass_at_16: 0.0438
+    pass_at_32: 0.0552
+    pass_at_64: 0.0711
+  Evaluating per-token loss...
+  per-token loss eval: 39.1s
+    prompt_loss: 3.6544
+    answer_loss: 8.3041
+    answer_entropy: 1.6087
+    answer_top5_mass: 0.8311
+    answer_correct_prob: 0.0245
+
+  Steps:      2000
+  Train loss: 0.0024
+  Best val:   2.9051
+  Gap:        -2.9026
+  Wall time:  285.2s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[5/6]
+============================================================
+Run: mul_s43
+  operation=mul, seed=43
+  params=9,877,248
+  flops/step=1.44e+11
+  flop_budget=2.88e+14
+  est_steps=2000
+init_val_loss=11.0771
+step 100: 9.1 steps/s, 18556 tok/s
+step 100: 1.30 TFLOP/s (1.44e+13 total)
+step 100: loss=2.4371, lr=2.97e-04
+step 200: 9.1 steps/s, 18568 tok/s
+step 200: 1.30 TFLOP/s (2.88e+13 total)
+step 200: loss=1.5503, lr=3.00e-04
+step 300: 9.2 steps/s, 18776 tok/s
+step 300: 1.31 TFLOP/s (4.32e+13 total)
+step 300: loss=1.5410, lr=3.00e-04
+step 400: 9.0 steps/s, 18512 tok/s
+step 400: 1.31 TFLOP/s (5.75e+13 total)
+step 400: loss=0.8127, lr=3.00e-04
+step 500: 6.8 steps/s, 14023 tok/s
+step 500: 1.23 TFLOP/s (7.19e+13 total)
+  eval step 500: val=3.1756 best=3.1756
+step 500: loss=0.3427, lr=3.00e-04
+step 600: 7.6 steps/s, 15600 tok/s
+step 600: 1.20 TFLOP/s (8.63e+13 total)
+step 600: loss=0.0521, lr=3.00e-04
+step 700: 8.8 steps/s, 18000 tok/s
+step 700: 1.21 TFLOP/s (1.01e+14 total)
+step 700: loss=0.0092, lr=3.00e-04
+step 800: 8.9 steps/s, 18220 tok/s
+step 800: 1.22 TFLOP/s (1.15e+14 total)
+step 800: loss=0.0073, lr=3.00e-04
+step 900: 9.0 steps/s, 18350 tok/s
+step 900: 1.23 TFLOP/s (1.29e+14 total)
+step 900: loss=0.0036, lr=3.00e-04
+step 1000: 8.9 steps/s, 18265 tok/s
+step 1000: 1.23 TFLOP/s (1.44e+14 total)
+  eval step 1000: val=3.5601 best=3.1756
+step 1000: loss=0.0038, lr=3.00e-04
+step 1100: 8.9 steps/s, 18239 tok/s
+step 1100: 1.24 TFLOP/s (1.58e+14 total)
+step 1100: loss=0.0047, lr=3.00e-04
+step 1200: 8.9 steps/s, 18265 tok/s
+step 1200: 1.24 TFLOP/s (1.73e+14 total)
+step 1200: loss=0.0039, lr=3.00e-04
+step 1300: 8.9 steps/s, 18280 tok/s
+step 1300: 1.24 TFLOP/s (1.87e+14 total)
+step 1300: loss=0.0038, lr=3.00e-04
+step 1400: 8.9 steps/s, 18304 tok/s
+step 1400: 1.25 TFLOP/s (2.01e+14 total)
+step 1400: loss=0.0030, lr=3.00e-04
+step 1500: 8.9 steps/s, 18281 tok/s
+step 1500: 1.25 TFLOP/s (2.16e+14 total)
+  eval step 1500: val=3.6542 best=3.1756
+step 1500: loss=0.0040, lr=3.00e-04
+step 1600: 8.9 steps/s, 18221 tok/s
+step 1600: 1.25 TFLOP/s (2.30e+14 total)
+step 1600: loss=0.0033, lr=3.00e-04
+step 1700: 8.9 steps/s, 18320 tok/s
+step 1700: 1.25 TFLOP/s (2.45e+14 total)
+step 1700: loss=0.0011, lr=3.00e-04
+step 1800: 8.9 steps/s, 18263 tok/s
+step 1800: 1.25 TFLOP/s (2.59e+14 total)
+step 1800: loss=0.0007, lr=3.00e-04
+step 1900: 8.9 steps/s, 18253 tok/s
+step 1900: 1.26 TFLOP/s (2.73e+14 total)
+step 1900: loss=0.0040, lr=3.00e-04
+step 2000: 8.9 steps/s, 18306 tok/s
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 1.26 TFLOP/s (2.88e+14 total)
+  eval step 2000: val=3.7198 best=3.1756
+step 2000: loss=0.0022, lr=3.00e-04
+Throughput summary: 2000 steps in 228.9s (8.7 steps/s, 17895 tok/s)
+FLOPs summary: 0.2877 PFLOPs in 228.9s (1.26 TFLOP/s)
+final_val_loss=3.7198 best=3.1756
+Training complete: 2000 steps in 228.9s
+  Evaluating pass@k...
+  pass@k eval: 11.7s
+    pass_at_1: 0.0212
+    pass_at_2: 0.0268
+    pass_at_4: 0.0343
+    pass_at_8: 0.0445
+    pass_at_16: 0.0589
+    pass_at_32: 0.0795
+    pass_at_64: 0.1087
+  Evaluating per-token loss...
+  per-token loss eval: 34.3s
+    prompt_loss: 3.6234
+    answer_loss: 7.3612
+    answer_entropy: 2.0625
+    answer_top5_mass: 0.7641
+    answer_correct_prob: 0.0198
+
+  Steps:      2000
+  Train loss: 0.0022
+  Best val:   3.1756
+  Gap:        -3.1734
+  Wall time:  274.9s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+[6/6]
+============================================================
+Run: mul_s44
+  operation=mul, seed=44
+  params=9,877,248
+  flops/step=1.44e+11
+  flop_budget=2.88e+14
+  est_steps=2000
+init_val_loss=11.2195
+step 100: 8.9 steps/s, 18215 tok/s
+step 100: 1.28 TFLOP/s (1.44e+13 total)
+step 100: loss=2.5285, lr=2.97e-04
+step 200: 8.2 steps/s, 16889 tok/s
+step 200: 1.23 TFLOP/s (2.88e+13 total)
+step 200: loss=1.6395, lr=3.00e-04
+step 300: 7.9 steps/s, 16178 tok/s
+step 300: 1.20 TFLOP/s (4.32e+13 total)
+step 300: loss=1.5457, lr=3.00e-04
+step 400: 8.9 steps/s, 18265 tok/s
+step 400: 1.22 TFLOP/s (5.75e+13 total)
+step 400: loss=0.8028, lr=3.00e-04
+step 500: 8.8 steps/s, 18046 tok/s
+step 500: 1.23 TFLOP/s (7.19e+13 total)
+  eval step 500: val=3.0915 best=3.0915
+step 500: loss=0.5891, lr=3.00e-04
+step 600: 8.8 steps/s, 18094 tok/s
+step 600: 1.23 TFLOP/s (8.63e+13 total)
+step 600: loss=0.0685, lr=3.00e-04
+step 700: 8.1 steps/s, 16576 tok/s
+step 700: 1.22 TFLOP/s (1.01e+14 total)
+step 700: loss=0.0261, lr=3.00e-04
+step 800: 8.9 steps/s, 18192 tok/s
+step 800: 1.23 TFLOP/s (1.15e+14 total)
+step 800: loss=0.0086, lr=3.00e-04
+step 900: 8.8 steps/s, 17940 tok/s
+step 900: 1.23 TFLOP/s (1.29e+14 total)
+step 900: loss=0.0054, lr=3.00e-04
+step 1000: 8.9 steps/s, 18233 tok/s
+step 1000: 1.24 TFLOP/s (1.44e+14 total)
+  eval step 1000: val=3.6156 best=3.0915
+step 1000: loss=0.0048, lr=3.00e-04
+step 1100: 8.9 steps/s, 18159 tok/s
+step 1100: 1.24 TFLOP/s (1.58e+14 total)
+step 1100: loss=0.0051, lr=3.00e-04
+step 1200: 8.9 steps/s, 18255 tok/s
+step 1200: 1.25 TFLOP/s (1.73e+14 total)
+step 1200: loss=0.0034, lr=3.00e-04
+step 1300: 8.9 steps/s, 18181 tok/s
+step 1300: 1.25 TFLOP/s (1.87e+14 total)
+step 1300: loss=0.0033, lr=3.00e-04
+step 1400: 8.9 steps/s, 18232 tok/s
+step 1400: 1.25 TFLOP/s (2.01e+14 total)
+step 1400: loss=0.0034, lr=3.00e-04
+step 1500: 8.9 steps/s, 18176 tok/s
+step 1500: 1.25 TFLOP/s (2.16e+14 total)
+  eval step 1500: val=3.6932 best=3.0915
+step 1500: loss=0.0013, lr=3.00e-04
+step 1600: 8.9 steps/s, 18167 tok/s
+step 1600: 1.25 TFLOP/s (2.30e+14 total)
+step 1600: loss=0.0034, lr=3.00e-04
+step 1700: 8.9 steps/s, 18166 tok/s
+step 1700: 1.25 TFLOP/s (2.45e+14 total)
+step 1700: loss=0.0033, lr=3.00e-04
+step 1800: 8.9 steps/s, 18224 tok/s
+step 1800: 1.26 TFLOP/s (2.59e+14 total)
+step 1800: loss=0.0021, lr=3.00e-04
+step 1900: 8.9 steps/s, 18212 tok/s
+step 1900: 1.26 TFLOP/s (2.73e+14 total)
+step 1900: loss=0.0015, lr=3.00e-04
+step 2000: 8.9 steps/s, 18223 tok/s
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 1.26 TFLOP/s (2.88e+14 total)
+  eval step 2000: val=3.7590 best=3.0915
+step 2000: loss=0.0043, lr=3.00e-04
+Throughput summary: 2000 steps in 228.8s (8.7 steps/s, 17906 tok/s)
+FLOPs summary: 0.2877 PFLOPs in 228.8s (1.26 TFLOP/s)
+final_val_loss=3.7590 best=3.0915
+Training complete: 2000 steps in 228.7s
+  Evaluating pass@k...
+  pass@k eval: 11.6s
+    pass_at_1: 0.0252
+    pass_at_2: 0.0286
+    pass_at_4: 0.0331
+    pass_at_8: 0.0388
+    pass_at_16: 0.0468
+    pass_at_32: 0.0584
+    pass_at_64: 0.0747
+  Evaluating per-token loss...
+  per-token loss eval: 34.4s
+    prompt_loss: 3.7594
+    answer_loss: 8.1295
+    answer_entropy: 1.5220
+    answer_top5_mass: 0.8421
+    answer_correct_prob: 0.0245
+
+  Steps:      2000
+  Train loss: 0.0043
+  Best val:   3.0915
+  Gap:        -3.0872
+  Wall time:  274.8s
+  FLOPs:      2.88e+14
+  Status:     keep
+
+============================================================
+Summary
+============================================================
+Run                 Val    p@1   p@64    Amp    Ent
+---------------------------------------------------
+add_s42          2.8347  0.006  0.083   13.0x  2.193
+add_s43          2.6670  0.007  0.078   11.7x  2.244
+add_s44          2.6299  0.006  0.089   15.1x  2.227
+mul_s42          2.9051  0.025  0.071    2.9x  1.609
+mul_s43          3.1756  0.021  0.109    5.1x  2.062
+mul_s44          3.0915  0.025  0.075    3.0x  1.522
+
+======================================================================
+Per-Run Entropy vs Amplification
+======================================================================
+Run              Entropy  P(corr)     p@1    p@64     Amp
+---------------------------------------------------------
+add_s42            2.193   0.0060  0.0064  0.0825    13.0x
+add_s43            2.244   0.0067  0.0067  0.0784    11.7x
+add_s44            2.227   0.0062  0.0059  0.0893    15.1x
+mul_s42            1.609   0.0245  0.0246  0.0711     2.9x
+mul_s43            2.062   0.0198  0.0212  0.1087     5.1x
+mul_s44            1.522   0.0245  0.0252  0.0747     3.0x
+
+======================================================================
+Means by Operation
+======================================================================
+add      entropy=2.222, P(corr)=0.0063, p@1=0.0063, p@64=0.0834, amp=13.3x
+mul      entropy=1.731, P(corr)=0.0229, p@1=0.0236, p@64=0.0848, amp=3.7x
+
+======================================================================
+Correlation Analysis (across all 6 runs)
+======================================================================
+  r(entropy, amp):      +0.879
+  r(P(correct), amp):   -0.981
+  r(pass@1, amp):       -0.984
+  r(entropy, pass@1):   -0.896
+
+Interpretation:
+  -> Entropy STRONGLY predicts amplification (H13-a supported)
+
+Results saved to experiments/hyp013_results.json

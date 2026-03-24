@@ -1,0 +1,217 @@
+Hybrid Baselines Training
+Architectures: ['gpt_10m', 'llama_10m', 'falcon_h1_10m', 'jamba_10m', 'bamba_10m']
+Target steps: 2000
+
+============================================================
+Training: gpt_10m
+  params=9,605,504
+  flop_budget=2.87e+14
+  est_steps=2000
+2026/03/14 21:42:55 INFO mlflow.tracking.fluent: Experiment with name 'hybrid-baselines' does not exist. Creating a new experiment.
+  init_val_loss=11.3322
+step 100: loss=5.3222, lr=2.97e-04
+step 200: loss=4.8560, lr=3.00e-04
+step 300: loss=4.5705, lr=3.00e-04
+step 400: loss=4.3616, lr=3.00e-04
+step 500: loss=4.2817, lr=3.00e-04
+step 500: 1.12 TFLOP/s (7.17e+13 total)
+step 600: loss=3.6724, lr=3.00e-04
+step 700: loss=3.6364, lr=3.00e-04
+step 800: loss=4.0195, lr=3.00e-04
+step 900: loss=3.8364, lr=3.00e-04
+step 1000: loss=3.6125, lr=3.00e-04
+step 1000: 1.12 TFLOP/s (1.43e+14 total)
+step 1100: loss=3.5705, lr=3.00e-04
+step 1200: loss=3.6292, lr=3.00e-04
+step 1300: loss=3.6161, lr=3.00e-04
+step 1400: loss=3.4639, lr=3.00e-04
+step 1500: loss=3.7480, lr=3.00e-04
+step 1500: 1.13 TFLOP/s (2.15e+14 total)
+step 1600: loss=3.0717, lr=3.00e-04
+step 1700: loss=3.6131, lr=3.00e-04
+step 1800: loss=3.3536, lr=3.00e-04
+step 1900: loss=3.5122, lr=3.00e-04
+step 2000: loss=3.1158, lr=3.00e-04
+FLOP budget reached at step 2000 (0.287 PFLOPs)
+step 2000: 1.13 TFLOP/s (2.87e+14 total)
+Training complete: 2000 steps in 253.7s
+FLOPs summary: 0.2869 PFLOPs in 253.7s (1.13 TFLOP/s)
+  checkpoint saved: experiments/checkpoints/gpt_10m.safetensors
+  Steps:      2000
+  Train loss: 3.1158
+  Val loss:   3.1316
+  Gap:        -0.0158
+  Wall time:  253.7s
+
+============================================================
+Training: llama_10m
+  params=9,877,248
+  flop_budget=2.88e+14
+  est_steps=2000
+  init_val_loss=11.3702
+step 100: loss=5.1050, lr=2.97e-04
+step 200: loss=4.4712, lr=3.00e-04
+step 300: loss=4.1517, lr=3.00e-04
+step 400: loss=3.9588, lr=3.00e-04
+step 500: loss=3.8177, lr=3.00e-04
+step 500: 1.00 TFLOP/s (7.19e+13 total)
+step 600: loss=3.1870, lr=3.00e-04
+step 700: loss=3.1326, lr=3.00e-04
+step 800: loss=3.5777, lr=3.00e-04
+step 900: loss=3.3275, lr=3.00e-04
+step 1000: loss=3.1087, lr=3.00e-04
+step 1000: 1.07 TFLOP/s (1.44e+14 total)
+step 1100: loss=3.0960, lr=3.00e-04
+step 1200: loss=3.1425, lr=3.00e-04
+step 1300: loss=3.1613, lr=3.00e-04
+step 1400: loss=2.9878, lr=3.00e-04
+step 1500: loss=3.3315, lr=3.00e-04
+step 1500: 1.13 TFLOP/s (2.16e+14 total)
+step 1600: loss=2.6049, lr=3.00e-04
+step 1700: loss=3.1790, lr=3.00e-04
+step 1800: loss=2.9588, lr=3.00e-04
+step 1900: loss=3.0695, lr=3.00e-04
+step 2000: loss=2.6778, lr=3.00e-04
+FLOP budget reached at step 2000 (0.288 PFLOPs)
+step 2000: 1.16 TFLOP/s (2.88e+14 total)
+Training complete: 2000 steps in 248.7s
+FLOPs summary: 0.2877 PFLOPs in 248.7s (1.16 TFLOP/s)
+  checkpoint saved: experiments/checkpoints/llama_10m.safetensors
+  Steps:      2000
+  Train loss: 2.6778
+  Val loss:   2.7097
+  Gap:        -0.0319
+  Wall time:  248.7s
+
+============================================================
+Training: falcon_h1_10m
+  params=9,299,320
+  flop_budget=3.45e+14
+  est_steps=2000
+  init_val_loss=11.3157
+step 100: loss=4.7676, lr=2.97e-04
+step 200: loss=4.2130, lr=3.00e-04
+step 300: loss=3.9437, lr=3.00e-04
+step 400: loss=3.8050, lr=3.00e-04
+step 500: loss=3.6424, lr=3.00e-04
+step 500: 1.09 TFLOP/s (8.63e+13 total)
+step 600: loss=3.0301, lr=3.00e-04
+step 700: loss=2.9551, lr=3.00e-04
+step 800: loss=3.4889, lr=3.00e-04
+step 900: loss=3.2305, lr=3.00e-04
+step 1000: loss=2.9276, lr=3.00e-04
+step 1000: 1.10 TFLOP/s (1.73e+14 total)
+step 1100: loss=2.9534, lr=3.00e-04
+step 1200: loss=3.0212, lr=3.00e-04
+step 1300: loss=3.0233, lr=3.00e-04
+step 1400: loss=2.8824, lr=3.00e-04
+step 1500: loss=3.2237, lr=3.00e-04
+step 1500: 1.11 TFLOP/s (2.59e+14 total)
+step 1600: loss=2.5256, lr=3.00e-04
+step 1700: loss=3.0842, lr=3.00e-04
+step 1800: loss=2.8563, lr=3.00e-04
+step 1900: loss=2.9904, lr=3.00e-04
+step 2000: loss=2.6055, lr=3.00e-04
+FLOP budget reached at step 2000 (0.345 PFLOPs)
+step 2000: 1.11 TFLOP/s (3.45e+14 total)
+Training complete: 2000 steps in 312.1s
+FLOPs summary: 0.3453 PFLOPs in 312.1s (1.11 TFLOP/s)
+  checkpoint saved: experiments/checkpoints/falcon_h1_10m.safetensors
+  Steps:      2000
+  Train loss: 2.6055
+  Val loss:   2.6162
+  Gap:        -0.0107
+  Wall time:  312.1s
+
+============================================================
+Training: jamba_10m
+  params=10,185,080
+  flop_budget=3.43e+14
+  est_steps=2000
+  init_val_loss=11.3129
+step 100: loss=4.7455, lr=2.97e-04
+step 200: loss=4.2258, lr=3.00e-04
+step 300: loss=3.9352, lr=3.00e-04
+step 400: loss=3.7917, lr=3.00e-04
+step 500: loss=3.6267, lr=3.00e-04
+step 500: 0.84 TFLOP/s (8.57e+13 total)
+step 600: loss=2.9969, lr=3.00e-04
+step 700: loss=2.9825, lr=3.00e-04
+step 800: loss=3.4678, lr=3.00e-04
+step 900: loss=3.2335, lr=3.00e-04
+step 1000: loss=2.9493, lr=3.00e-04
+step 1000: 0.90 TFLOP/s (1.71e+14 total)
+step 1100: loss=2.9594, lr=3.00e-04
+step 1200: loss=3.0307, lr=3.00e-04
+step 1300: loss=3.0520, lr=3.00e-04
+step 1400: loss=2.9002, lr=3.00e-04
+step 1500: loss=3.2310, lr=3.00e-04
+step 1500: 0.90 TFLOP/s (2.57e+14 total)
+step 1600: loss=2.5345, lr=3.00e-04
+step 1700: loss=3.1062, lr=3.00e-04
+step 1800: loss=2.8616, lr=3.00e-04
+step 1900: loss=3.0273, lr=3.00e-04
+step 2000: loss=2.6139, lr=3.00e-04
+FLOP budget reached at step 2000 (0.343 PFLOPs)
+step 2000: 0.90 TFLOP/s (3.43e+14 total)
+Training complete: 2000 steps in 381.4s
+FLOPs summary: 0.3429 PFLOPs in 381.4s (0.90 TFLOP/s)
+  checkpoint saved: experiments/checkpoints/jamba_10m.safetensors
+  Steps:      2000
+  Train loss: 2.6139
+  Val loss:   2.6290
+  Gap:        -0.0152
+  Wall time:  381.4s
+
+============================================================
+Training: bamba_10m
+  params=9,299,320
+  flop_budget=3.45e+14
+  est_steps=2000
+  init_val_loss=11.3157
+step 100: loss=4.7676, lr=2.97e-04
+step 200: loss=4.2130, lr=3.00e-04
+step 300: loss=3.9436, lr=3.00e-04
+step 400: loss=3.8051, lr=3.00e-04
+step 500: loss=3.6424, lr=3.00e-04
+step 500: 1.10 TFLOP/s (8.63e+13 total)
+step 600: loss=3.0300, lr=3.00e-04
+step 700: loss=2.9551, lr=3.00e-04
+step 800: loss=3.4889, lr=3.00e-04
+step 900: loss=3.2302, lr=3.00e-04
+step 1000: loss=2.9276, lr=3.00e-04
+step 1000: 1.09 TFLOP/s (1.73e+14 total)
+step 1100: loss=2.9533, lr=3.00e-04
+step 1200: loss=3.0213, lr=3.00e-04
+step 1300: loss=3.0234, lr=3.00e-04
+step 1400: loss=2.8825, lr=3.00e-04
+step 1500: loss=3.2239, lr=3.00e-04
+step 1500: 1.00 TFLOP/s (2.59e+14 total)
+step 1600: loss=2.5254, lr=3.00e-04
+step 1700: loss=3.0841, lr=3.00e-04
+step 1800: loss=2.8563, lr=3.00e-04
+step 1900: loss=2.9902, lr=3.00e-04
+step 2000: loss=2.6054, lr=3.00e-04
+FLOP budget reached at step 2000 (0.345 PFLOPs)
+step 2000: 1.01 TFLOP/s (3.45e+14 total)
+Training complete: 2000 steps in 341.2s
+FLOPs summary: 0.3453 PFLOPs in 341.2s (1.01 TFLOP/s)
+  checkpoint saved: experiments/checkpoints/bamba_10m.safetensors
+  Steps:      2000
+  Train loss: 2.6054
+  Val loss:   2.6162
+  Gap:        -0.0108
+  Wall time:  341.2s
+
+============================================================
+Summary
+============================================================
+Arch                      Val    Train  Steps   Time
+----------------------------------------------------
+gpt_10m                3.1316   3.1158   2000  253.7s
+llama_10m              2.7097   2.6778   2000  248.7s
+falcon_h1_10m          2.6162   2.6055   2000  312.1s
+jamba_10m              2.6290   2.6139   2000  381.4s
+bamba_10m              2.6162   2.6054   2000  341.2s
+
+Results saved to experiments/hybrid_baselines.json
