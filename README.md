@@ -114,44 +114,6 @@ trainer = Trainer(model, TrainConfig(learning_rate=1e-3, max_steps=100))
 
 See the [Quickstart guide](https://michaelellis003.github.io/lmxlab/getting-started/quickstart/) for details.
 
-## Recipes
-
-Scripts in `recipes/`:
-
-```bash
-uv run python recipes/train_tiny_gpt.py              # Train a tiny GPT
-uv run python recipes/train_llama_shakespeare.py      # LLaMA on Shakespeare
-uv run python recipes/compare_training.py             # Compare architectures
-uv run python recipes/compare_architectures.py        # Side-by-side architecture comparison
-uv run python recipes/ablation_gpt_to_llama.py        # Feature ablation study
-uv run python recipes/finetune_lora.py --rank 8       # LoRA fine-tuning
-uv run python recipes/finetune_qlora.py --bits 4      # QLoRA (4-bit + LoRA)
-uv run python recipes/train_dpo.py                    # DPO preference optimization
-uv run python recipes/train_grpo.py                   # GRPO reward optimization
-uv run python recipes/train_curriculum.py              # Curriculum learning
-uv run python recipes/train_mtp.py --n-predict 2      # Multi-token prediction
-uv run python recipes/train_deltanet.py                # Hybrid DeltaNet vs GQA
-uv run python recipes/train_moe.py --experts 4        # Mixture of Experts
-uv run python recipes/advanced_sampling.py             # Best-of-N and majority vote
-uv run python recipes/speculative_decoding.py         # Draft-then-verify generation
-uv run python recipes/evaluate_model.py               # Evaluate with perplexity/BPB
-uv run python recipes/interactive_generate.py         # Streaming token-by-token generation
-uv run python recipes/checkpoint_resume.py            # Save and resume training
-uv run python recipes/run_experiment.py               # Structured experiment with logging
-uv run python recipes/sweep_learning_rate.py          # Hyperparameter sweep
-uv run python recipes/load_pretrained.py              # Load HuggingFace model
-uv run python recipes/profile_models.py               # Architecture profiling
-uv run python recipes/benchmark_compile.py            # mx.compile speedup benchmark
-uv run python recipes/distill_model.py                # Knowledge distillation
-uv run python recipes/quantize_and_generate.py        # 4-bit/8-bit quantization
-uv run python recipes/train_with_callbacks.py         # Logging, throughput, early stopping
-uv run python recipes/train_with_datasets.py          # TextDataset vs TokenDataset
-uv run python recipes/compare_schedules.py            # LR schedules and optimizers
-uv run python recipes/compare_optimizers.py           # Optimizer comparison (Experiment 3)
-uv run python recipes/compare_kv_cache.py             # MLA vs GQA KV cache (Experiment 4)
-uv run python recipes/analyze_experiments.py          # Statistical analysis tools
-```
-
 ## CLI
 
 ```bash
