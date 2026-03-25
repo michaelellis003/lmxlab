@@ -3,7 +3,7 @@
 Copy this file for each research task. Edit TASK_NAME and the
 ``propose()`` function. Everything else is immutable infrastructure.
 
-The agent loop (driven by Claude Code via /autorun) calls:
+The agent loop calls:
   1. propose(past_results) -> config dict
   2. run(config) -> metrics dict
   3. Log result and print JSON summary
@@ -71,7 +71,7 @@ DEFAULT_EVAL_BATCHES = 20
 DEFAULT_FLOP_BUDGET = 5e13
 
 
-# ── MUTABLE: Claude edits this function between iterations ────
+# ── MUTABLE: edit this function between iterations ────
 
 
 def propose(

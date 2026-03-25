@@ -98,7 +98,7 @@ tokenization.
 **Key findings:**
 
 1. **LLaMA dominates at 30M.** With BPE tokenization and realistic
-   data, LLaMA outperforms GPT by 0.54 val loss — completely
+   data, LLaMA outperforms GPT by 0.54 val loss, completely
    reversing the 3M char-level finding.
 2. **Dropout hurts in the undertrained regime.** Both architectures
    degrade with higher dropout when training for less than one
@@ -140,7 +140,7 @@ and three SSM+attention hybrids (Falcon-H1, Jamba, Bamba).
 ### Architecture matters at 10-30M, not at 3M
 
 At 3M params with char-level tokenization, architecture
-differences wash out entirely — regularization (dropout) is the
+differences wash out entirely; regularization (dropout) is the
 dominant factor. At 10-30M with BPE tokenization, architecture
 produces massive effect sizes (Cohen's d > 15).
 
@@ -174,7 +174,7 @@ how experiments are designed, controlled, and tracked. Key
 methodology improvements over the course of this work:
 
 - **HYP-001 / HYP-001b:** No validation split. Training loss
-  reported as primary metric. Results unreliable — superseded.
+  reported as primary metric. Results unreliable; superseded.
 - **HYP-001c:** Added 90/10 train/val split. Revealed massive
   overfitting that was invisible in prior rounds.
 - **HYP-001d:** Val loss as primary metric (DEC-008). Discovered

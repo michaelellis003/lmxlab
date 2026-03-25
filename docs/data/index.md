@@ -1,9 +1,6 @@
 # Data Pipeline
 
-lmxlab's data pipeline follows a simple flow: raw text goes through
-a tokenizer, gets wrapped in a dataset, and is yielded as batches for
-training. No multiprocessing needed -- MLX's unified memory means data
-is already on the GPU.
+The lmxlab data pipeline passes raw text through a tokenizer, wraps the result in a dataset, and yields batches for training. Because MLX uses unified memory, the same arrays reside in both CPU and GPU address spaces, so no separate data-loading workers are required.
 
 ## Tokenizers
 
@@ -26,7 +23,7 @@ ids = tok.encode('To be or not to be')
 print(tok.decode(ids))  # 'To be or not to be'
 ```
 
-You can also create one with default ASCII characters (no text needed):
+A default ASCII character set (no input text required) is also available:
 
 ```python
 tok = CharTokenizer()  # ASCII printable (95 chars)
@@ -64,7 +61,7 @@ print(tok.decode(ids))
 print(f'EOS: {tok.eos_token_id}, BOS: {tok.bos_token_id}')
 ```
 
-This is the tokenizer to use when working with models loaded via
+This tokenizer should be used when working with models loaded via
 `load_from_hf()`.
 
 ### Custom Tokenizers
@@ -107,12 +104,11 @@ x, y = dataset[0]
 # x: tokens[0:128], y: tokens[1:129]
 ```
 
-The target is the input shifted by one position -- standard
-next-token prediction.
+The target is the input shifted by one position (standard next-token prediction).
 
 ### TokenDataset
 
-If you already have token IDs (e.g., pre-tokenized data):
+For pre-tokenized data (token IDs already available):
 
 ```python
 import mlx.core as mx
@@ -153,7 +149,7 @@ ds = HFDataset(
 )
 ```
 
-You can also iterate over individual tokens:
+Individual tokens can also be iterated:
 
 ```python
 for token_id in ds.token_iterator():
@@ -187,10 +183,9 @@ The iterator:
 3. Yields batches of `batch_size` sequences
 
 !!! note "No DataLoader needed"
-    Unlike PyTorch, there's no need for `DataLoader` with
-    `num_workers`. MLX uses unified memory -- the same arrays live
-    on CPU and GPU simultaneously. A simple Python iterator is
-    sufficient.
+    Unlike PyTorch, no `DataLoader` with `num_workers` is required.
+    MLX uses unified memory, so the same arrays reside in both CPU
+    and GPU address spaces. A plain Python iterator suffices.
 
 ## End-to-End Example
 

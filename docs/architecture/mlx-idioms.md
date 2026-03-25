@@ -1,15 +1,14 @@
 # MLX Idioms
 
-MLX looks like PyTorch at first glance -- `nn.Module`, `nn.Linear`,
-`mx.array` -- but the execution model is fundamentally different. This page
-covers the MLX patterns that lmxlab relies on and how they differ from
-their PyTorch equivalents.
+MLX looks like PyTorch at first glance (`nn.Module`, `nn.Linear`,
+`mx.array`), but the execution model differs in several important ways.
+This page covers the MLX patterns that lmxlab relies on and how they
+differ from their PyTorch equivalents.
 
 ## Lazy evaluation and `mx.eval`
 
-This is the single most important difference. In PyTorch, every operation
-executes immediately. In MLX, operations build a computation graph that
-is evaluated lazily.
+In PyTorch, every operation executes immediately. In MLX, operations
+build a computation graph that is evaluated lazily.
 
 ```python
 import mlx.core as mx
@@ -22,8 +21,8 @@ mx.eval(c)  # NOW the addition runs on the GPU
 ```
 
 This matters because MLX can fuse operations and optimize the graph before
-executing it. But it also means you need to be deliberate about when
-evaluation happens.
+executing it. The corollary is that evaluation points must be chosen
+deliberately.
 
 **The rule in lmxlab:** call `mx.eval` at explicit boundaries -- after
 a training step, after generation produces a token, after evaluation
@@ -36,9 +35,9 @@ mx.eval(loss, self.model.parameters(), self.optimizer.state)
 # ^--- One eval boundary per training step, covering all outputs
 ```
 
-If you forget `mx.eval`, the graph keeps growing and memory usage climbs.
-If you call it too often, you break fusion opportunities and hurt
-performance. The training loop in `Trainer` demonstrates the right balance.
+Omitting `mx.eval` causes the graph to grow and memory usage to climb.
+Calling it too often breaks fusion opportunities and hurts performance.
+The training loop in `Trainer` demonstrates the intended balance.
 
 ## `nn.value_and_grad` (not `.backward()`)
 
@@ -100,7 +99,7 @@ read and written by the function. This is necessary because the model
 parameters are mutated in-place by the optimizer.
 
 !!! warning "Compile gotcha"
-    `mx.compile` traces the function once and caches the graph. If your
+    `mx.compile` traces the function once and caches the graph. If the
     function has Python-level control flow that depends on tensor values
     (e.g., `if loss > threshold:`), the condition is captured at trace time
     and will not change on subsequent calls. Keep compiled functions free
@@ -134,12 +133,12 @@ this -- there is no concept of device placement.
     model = model.to('mps')  # Copy all parameters
     ```
 
-This eliminates an entire category of bugs (tensors on different devices)
-and simplifies the code. In lmxlab, you will never see a `.to()` call.
+This removes the class of bugs caused by tensors residing on different
+devices. The lmxlab codebase contains no `.to()` calls.
 
-The tradeoff: you cannot have separate CPU and GPU memory pools. If your
-model and data together exceed unified memory, you are out of luck (there
-is no automatic CPU offloading like PyTorch's `device_map='auto'`).
+The tradeoff is that there are no separate CPU and GPU memory pools. If
+the model and data together exceed unified memory, there is no fallback
+(no automatic CPU offloading like PyTorch's `device_map='auto'`).
 
 ## `mx.fast.scaled_dot_product_attention`
 
@@ -168,7 +167,7 @@ handles the head broadcasting internally.
 
 ## Optimizer updates: functional, not in-place
 
-In PyTorch, you call `optimizer.step()` and it mutates parameters in-place.
+In PyTorch, `optimizer.step()` mutates parameters in-place.
 In MLX, the optimizer produces new parameter values:
 
 ```python
@@ -187,8 +186,8 @@ gradient dict rather than modifying the input.
 
 ## `nn.RoPE` and other built-in modules
 
-MLX provides several commonly-used components out of the box. lmxlab wraps
-them for registry compatibility but delegates to the MLX implementations:
+MLX provides several commonly-used components. lmxlab wraps them for
+registry compatibility but delegates to the MLX implementations:
 
 - `nn.RoPE` -- Rotary Position Embedding
 - `nn.RMSNorm` -- Root Mean Square Normalization
@@ -196,8 +195,9 @@ them for registry compatibility but delegates to the MLX implementations:
 - `nn.SinusoidalPositionalEncoding` -- Sinusoidal position encoding
 - `nn.ALiBi` -- Attention with Linear Biases
 
-Using MLX's built-in modules means we get upstream performance improvements
-for free, and the code stays close to the mathematical definitions.
+Using MLX's built-in modules means upstream performance improvements
+apply automatically, and the code stays close to the mathematical
+definitions.
 
 ## Summary: MLX vs PyTorch mental model
 
@@ -210,6 +210,6 @@ for free, and the code stays close to the mathematical definitions.
 | Fused attention | `F.scaled_dot_product_attention` | `mx.fast.scaled_dot_product_attention` |
 | Optimizer | `optimizer.step()` (in-place) | `optimizer.update(model, grads)` |
 
-The common thread: MLX favors **explicit, functional** patterns over
-**implicit, mutation-based** ones. This requires a slight adjustment in
-thinking but produces code that is easier to reason about and compose.
+Throughout, MLX favors explicit, functional patterns over implicit,
+mutation-based ones. The resulting code is easier to reason about
+and compose.

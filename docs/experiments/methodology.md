@@ -36,8 +36,8 @@ gated FFNs). See `experiments/flops.py` for details.
 ### Validation Split
 
 Every experiment uses a train/val split (DEC-008). Validation
-loss is the primary metric — training loss is a secondary
-diagnostic only.
+loss is the primary metric; training loss is a secondary diagnostic
+only.
 
 - **Shakespeare char-level:** 90/10 sequential split (~1.0M
   train tokens, ~111K val tokens), matching nanoGPT convention
@@ -51,7 +51,7 @@ of training.
 !!! warning "Superseded experiments"
     HYP-001 and HYP-001b had no validation split and reported
     training loss as the primary metric. This masked severe
-    overfitting. Results from these runs are superseded —
+    overfitting. Results from these runs are superseded;
     see [Results](results.md) for trusted findings.
 
 ### Git-as-Experiment-Infra
@@ -90,8 +90,8 @@ uv run python recipes/hyp006_dropout_norm.py  # runs 3 seeds per config
 
 ### results.jsonl
 
-All experiments log to `experiments/results.jsonl` — a line-delimited
-JSON file that's easy to parse, version-control, and analyze. Each
+All experiments log to `experiments/results.jsonl`, a line-delimited
+JSON file suitable for parsing, version control, and analysis. Each
 entry records:
 
 | Field | Description |
@@ -190,7 +190,7 @@ print(f"Decode: {gen['decode_ms_per_token']:.1f}ms/token")
 
 ## Recipe Scripts
 
-Ready-to-run experiment scripts:
+Experiment scripts:
 
 | Recipe | Experiment | Description |
 |--------|-----------|-------------|
@@ -215,11 +215,11 @@ confirmation bias and the garden of forking paths (Gelman & Loken, 2013).
 
 Each pre-registered experiment specifies:
 
-1. **A question** — what we want to learn
-2. **Competing hypotheses** — at least 2-4 plausible explanations
-3. **Design** — controlled experimental conditions
-4. **Analysis plan** — how results will be interpreted
-5. **Falsification criteria** — what would disprove each hypothesis
+1. A question (what is to be learned)
+2. Competing hypotheses (at least 2-4 plausible explanations)
+3. Design (controlled experimental conditions)
+4. Analysis plan (how results will be interpreted)
+5. Falsification criteria (what would disprove each hypothesis)
 
 Completed experiments with trusted results:
 
@@ -231,16 +231,16 @@ See [Results](results.md) for findings from these experiments.
 
 ### Why Pre-Registration Matters
 
-Without pre-registration, it's easy to unconsciously adjust hypotheses
-after seeing results — finding a "story" that fits the data rather than
-testing a prediction against data. Pre-registration commits to the
-analysis before results are known, which:
+Without pre-registration, hypotheses may be unconsciously adjusted after
+seeing results, fitting a narrative to the data rather than testing a
+prediction against it. Pre-registration commits to the analysis before
+results are known, which:
 
 - Makes positive results more credible (they were predicted, not retrofitted)
-- Makes negative results publishable (they falsify a stated hypothesis)
-- Forces clearer thinking about what we actually expect and why
+- Makes negative results informative (they falsify a stated hypothesis)
+- Forces clearer reasoning about expectations and their justifications
 
-## Running Your Own Experiments
+## Running Experiments
 
 ```python
 from lmxlab.experiments.runner import ExperimentConfig, ExperimentRunner

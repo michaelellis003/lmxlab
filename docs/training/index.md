@@ -48,7 +48,7 @@ config = TrainConfig(
 
 Gradients are averaged across micro-batches, then clipped and applied
 in a single optimizer step. This is useful when the effective batch
-size you want doesn't fit in memory.
+size does not fit in memory.
 
 ## Compiled Training Step
 
@@ -66,7 +66,7 @@ if config.compile_step:
     )
 ```
 
-**Key MLX pattern:** `mx.compile` needs explicit `inputs` and `outputs` so it knows which arrays to trace. The model parameters serve as both.
+Note that `mx.compile` requires explicit `inputs` and `outputs` to identify which arrays to trace. The model parameters serve as both.
 
 ## Optimizers
 
@@ -156,8 +156,8 @@ merge_lora(model)
 
 Target options:
 
-- `'attention'` — q/k/v/o projections (default, most common)
-- `'ffn'` — gate/up/down projections
+- `'attention'` - q/k/v/o projections (default, most common)
+- `'ffn'` - gate/up/down projections
 - Both: `targets=['attention', 'ffn']`
 
 ### QLoRA
@@ -175,7 +175,7 @@ quantize_model(model, bits=4)
 # Add LoRA on top of quantized layers
 apply_qlora(model, rank=8, targets=['attention'])
 
-# Train normally — base stays int4, LoRA trains in float16
+# Train: base stays int4, LoRA trains in float16
 trainer.train(data)
 ```
 

@@ -1,10 +1,10 @@
 # Architecture Overview
 
-lmxlab's central claim is that GPT, LLaMA, and DeepSeek are not different
-architectures -- they are different *configurations* of the same four building
-blocks. This page explains how the library makes that idea concrete.
+GPT, LLaMA, and DeepSeek are not different architectures. They are
+different *configurations* of the same four building blocks. This page
+describes how lmxlab encodes that observation.
 
-## The key insight: configs, not subclasses
+## Configs, not subclasses
 
 Most ML codebases define one class per architecture: `GPTModel`, `LlamaModel`,
 `DeepSeekModel`. Each duplicates the transformer skeleton (embed, blocks, norm,
@@ -67,8 +67,8 @@ class GQA(AttentionBase):
 attn_cls = attention_registry.get('gqa')  # Returns the GQA class
 ```
 
-If you ask for a key that doesn't exist, you get a clear error listing the
-available options.
+Requesting a nonexistent key produces an error listing the available
+options.
 
 ## How a model is built
 
@@ -93,8 +93,8 @@ LanguageModel.__init__()
 ```
 
 Every component's constructor takes a `BlockConfig`. This uniform interface
-is what makes the registry pattern work -- you can swap any component without
-changing the wiring code.
+is what makes the registry pattern work: any component can be swapped
+without changing the wiring code.
 
 ## Config factories as architecture specifications
 
@@ -121,10 +121,10 @@ def llama_config(
     )
 ```
 
-There is no class to subclass, no abstract methods to override. If you want
-a new architecture, write a function that returns a `ModelConfig`. If your
-architecture needs a new attention mechanism, register it and reference it
-by name.
+There is no class to subclass and no abstract methods to override. A new
+architecture is defined by writing a function that returns a `ModelConfig`.
+If the architecture needs a new attention mechanism, it is registered and
+referenced by name.
 
 ## Per-layer block overrides
 
@@ -146,18 +146,17 @@ config = ModelConfig(
 The `get_block_config(layer_idx)` method returns the per-layer config if
 provided, otherwise falls back to the shared `block` config.
 
-## What this buys you
+## Consequences
 
-1. **Readability.** The "architecture" of LLaMA fits in a single config dict.
-   No hunting through class hierarchies.
-2. **Composability.** Mix and match: GQA attention with LayerNorm, or MHA with
-   RMSNorm. The registries don't care.
-3. **Extensibility.** Add a new attention variant by implementing `AttentionBase`,
-   registering it, and referencing it by name. No changes to `LanguageModel` or
-   `ConfigurableBlock`.
-4. **Comparison.** To understand the difference between LLaMA and DeepSeek,
-   compare two config dicts. The structural similarities and differences are
-   immediately visible.
+1. A full LLaMA architecture specification fits in a single config dict,
+   with no class hierarchy to trace.
+2. Components compose freely: GQA attention with LayerNorm, or MHA with
+   RMSNorm. The registries impose no coupling.
+3. Adding a new attention variant requires implementing `AttentionBase`,
+   registering it, and referencing it by name. `LanguageModel` and
+   `ConfigurableBlock` remain unchanged.
+4. Comparing LLaMA and DeepSeek reduces to comparing two config dicts.
+   Structural similarities and differences are visible at a glance.
 
 ## Next steps
 

@@ -1,19 +1,19 @@
-# Your First Training Run
+# First Training Run
 
 This guide walks through training a small language model from
-scratch on Apple Silicon. By the end you will have a model that
-memorizes a short text and generates completions from it.
+scratch on Apple Silicon. The result is a model that memorizes a
+short text and generates completions from it.
 
-!!! info "What you'll learn"
-    - How to prepare text data for training
-    - How lmxlab's `Trainer` works with `mx.compile`
-    - How to monitor loss curves and generate text
-    - How MLX's lazy evaluation and unified memory simplify the loop
+!!! info "Prerequisites"
+    - Preparing text data for training
+    - Using lmxlab's `Trainer` with `mx.compile`
+    - Monitoring loss curves and generating text
+    - MLX lazy evaluation and unified memory in the training loop
 
 ## The full script
 
-Here is the complete training script. The sections below explain
-each part.
+The complete training script is shown below. The sections that
+follow explain each part.
 
 ```python
 from dataclasses import replace
@@ -94,8 +94,9 @@ tokens = mx.array(tokenizer.encode(text), dtype=mx.int32)
 
 `CharTokenizer` maps each unique character to an integer ID.
 It builds its vocabulary from the input text, so `vocab_size`
-equals the number of distinct characters. For real training
-you would use a BPE tokenizer like `TiktokenTokenizer('gpt2')`.
+equals the number of distinct characters. For real training,
+a BPE tokenizer such as `TiktokenTokenizer('gpt2')` is more
+appropriate.
 
 The `batch_iterator` takes this flat token array and creates
 sliding windows of `(input, target)` pairs:
@@ -126,17 +127,17 @@ mx.eval(model.parameters())
 ```
 
 `gpt_tiny()` returns a `ModelConfig` with small dimensions
-(d_model=64, 2 layers, 4 heads). We override `vocab_size` to
-match our tokenizer using `dataclasses.replace`.
+(d_model=64, 2 layers, 4 heads). The `vocab_size` is overridden to
+match the tokenizer using `dataclasses.replace`.
 
 The `mx.eval(model.parameters())` call materializes the
-weights. MLX is lazy by default -- without this call, the
-random weight tensors would not actually be computed until
-first use. Evaluating them up front gives a clean baseline.
+weights. MLX is lazy by default: without this call, the
+random weight tensors would not be computed until
+first use. Evaluating them up front establishes a clean baseline.
 
-!!! tip "Why not LLaMA?"
-    `gpt_tiny()` is fine for a first test. To try LLaMA instead,
-    swap in `llama_tiny()` -- the rest of the code is identical:
+!!! tip "Swapping architectures"
+    To use LLaMA instead of GPT, replace the config factory.
+    The rest of the code is identical:
 
     ```python
     from lmxlab.models.llama import llama_tiny
@@ -168,26 +169,25 @@ history = trainer.train(
 )
 ```
 
-**What happens inside `Trainer`:**
+The `Trainer` performs the following steps:
 
 1. Wraps the loss function with `nn.value_and_grad` for
    functional gradient computation
 2. Optionally wraps the full step (forward + backward + update)
    with `mx.compile` for hardware-fused execution
-3. Each step: compute loss and gradients, clip gradients,
-   update weights via AdamW
+3. Each step: computes loss and gradients, clips gradients,
+   updates weights via AdamW
 4. Calls `mx.eval(loss, model.parameters(), optimizer.state)`
-   at the eval boundary -- this is where MLX actually runs the
-   computation graph on the GPU
+   at the eval boundary, which triggers actual GPU computation
 
 !!! note "`compile_step=False` for tiny models"
-    We disable compilation here because the tiny model runs in
+    Compilation is disabled here because the tiny model runs in
     microseconds and compilation overhead dominates. For real
     models (millions of parameters), set `compile_step=True`
     for a significant speedup. See
     [Compiled Training](../architecture/compiled-training.md).
 
-**Training config options:**
+Training config options:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -201,7 +201,7 @@ history = trainer.train(
 
 ### 4. Monitor training
 
-Add callbacks to see what is happening:
+Add callbacks to observe training dynamics:
 
 ```python
 from lmxlab.training.callbacks import (
@@ -223,18 +223,18 @@ trainer = Trainer(
 ```
 
 `MetricsLogger` prints loss and learning rate at each interval.
-`ThroughputMonitor` reports tokens per second -- useful for
-comparing compiled vs uncompiled steps, or different model
-sizes on your hardware.
+`ThroughputMonitor` reports tokens per second, which is useful for
+comparing compiled vs uncompiled steps or different model sizes.
 
-**What to expect:**
+Expected training behavior:
 
-- **Loss starts high** (~4-5 for character-level, ~10-11 for
-  BPE with large vocab). This is `-log(1/vocab_size)`.
-- **Loss drops quickly** in the first ~50 steps as the model
+- Loss starts high (approximately 4-5 for character-level,
+  10-11 for BPE with large vocab), corresponding to
+  `-log(1/vocab_size)`.
+- Loss drops in the first 50 or so steps as the model
   learns character frequencies.
-- **Loss plateaus** around 1.0-2.0 for this tiny dataset.
-  With more data and a larger model, it would continue dropping.
+- Loss plateaus around 1.0-2.0 for this tiny dataset.
+  With more data and a larger model, it would continue decreasing.
 
 ### 5. Generate text
 
@@ -253,10 +253,10 @@ print(tokenizer.decode(output[0].tolist()))
 
 Generation uses KV caching: the prompt is processed in one
 forward pass (prefill), then each new token reuses cached
-key/value projections. This makes generation O(n) instead
-of O(n^2).
+key/value projections. This reduces generation from O(n^2)
+to O(n).
 
-**Sampling parameters:**
+Sampling parameters:
 
 | Parameter | Effect |
 |-----------|--------|
@@ -267,10 +267,10 @@ of O(n^2).
 | `top_p=0.95` | Nucleus sampling (dynamic vocabulary cutoff) |
 | `repetition_penalty=1.2` | Penalize tokens already generated |
 
-For a tiny model trained on a paragraph, expect the output to
-roughly reproduce the training text with some variations.
+For a tiny model trained on a single paragraph, the output will
+approximately reproduce the training text with some variation.
 
-## Evaluating your model
+## Evaluating the model
 
 After training, measure quality with perplexity or
 bits-per-byte:
@@ -288,15 +288,16 @@ ppl = perplexity(model, [mx.concatenate([x, y[:, -1:]], axis=1)
 print(f"Perplexity: {ppl:.2f}")
 ```
 
-Lower perplexity means the model is more confident in its
-predictions. A perfect model that memorized the training data
-would approach perplexity 1.0.
+Lower perplexity indicates higher confidence in predictions.
+A model that perfectly memorized the training data would
+approach perplexity 1.0.
 
 ## Scaling up
 
-Once the basics work, here are natural next steps:
+The following modifications extend this example to
+realistic training settings.
 
-**Bigger model:**
+Larger model:
 
 ```python
 from lmxlab.models.llama import llama_config
@@ -311,7 +312,7 @@ config = llama_config(
 )
 ```
 
-**BPE tokenizer:**
+BPE tokenizer:
 
 ```python
 from lmxlab.data.tokenizer import TiktokenTokenizer
@@ -319,7 +320,7 @@ from lmxlab.data.tokenizer import TiktokenTokenizer
 tokenizer = TiktokenTokenizer('gpt2')  # 50257 tokens
 ```
 
-**Real text data:**
+Real text data:
 
 ```python
 from lmxlab.data.dataset import TextDataset
@@ -327,7 +328,7 @@ from lmxlab.data.dataset import TextDataset
 dataset = TextDataset('path/to/text.txt', tokenizer, seq_len=128)
 ```
 
-**Compiled training (for real models):**
+Compiled training (for larger models):
 
 ```python
 train_config = TrainConfig(
@@ -338,7 +339,7 @@ train_config = TrainConfig(
 )
 ```
 
-**Gradient accumulation (when batch doesn't fit in memory):**
+Gradient accumulation (when a batch does not fit in memory):
 
 ```python
 train_config = TrainConfig(
@@ -347,7 +348,7 @@ train_config = TrainConfig(
 )
 ```
 
-**Checkpointing:**
+Checkpointing:
 
 ```python
 from lmxlab.training.checkpoints import save_checkpoint
@@ -363,5 +364,5 @@ save_checkpoint(model, trainer.optimizer, trainer.step, 'ckpt/')
   -- How `mx.compile` speeds up the training loop
 - **[MLX Idioms](../architecture/mlx-idioms.md)** -- Lazy
   evaluation, eval boundaries, and unified memory
-- **[Recipes](../recipes/index.md)** -- 30+ ready-to-run
-  scripts for training, fine-tuning, and evaluation
+- **[Recipes](../recipes/index.md)** -- 30+ scripts for
+  training, fine-tuning, and evaluation

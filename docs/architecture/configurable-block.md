@@ -1,9 +1,8 @@
 # Configurable Block
 
-`ConfigurableBlock` is the core abstraction in lmxlab. It is a single
-`nn.Module` that assembles a complete transformer block from registry
-components based on a `BlockConfig`. This page explains how it works and
-how to extend it.
+`ConfigurableBlock` is a single `nn.Module` that assembles a complete
+transformer block from registry components based on a `BlockConfig`.
+This page describes its structure and extension points.
 
 ## Anatomy of a block
 
@@ -42,8 +41,8 @@ signature is the contract that makes the registry system work.
 ## Pre-norm vs post-norm
 
 The `pre_norm` flag in `BlockConfig` controls where normalization is applied
-relative to the sublayer and residual connection. This is a surprisingly
-important design choice.
+relative to the sublayer and residual connection. The choice has a
+measurable effect on training stability and final quality.
 
 ### Pre-norm (LLaMA, GPT-2, most modern models)
 
@@ -118,7 +117,7 @@ or `LanguageModel`.
 
 ### Example: adding a new attention variant
 
-Suppose you want to implement sliding window attention:
+As an example, consider implementing sliding window attention:
 
 **Step 1: Implement the module.**
 
@@ -174,7 +173,7 @@ config = BlockConfig(
 )
 ```
 
-That is it. `ConfigurableBlock` will look up `'sliding_window'` from the
+`ConfigurableBlock` will look up `'sliding_window'` from the
 attention registry and instantiate it. The same pattern applies to FFN,
 norm, and position encoding registries.
 
@@ -189,23 +188,22 @@ All registry components share a common constructor contract:
 | Norm | `nn.Module` | `(config: BlockConfig)` | `(x) -> output` |
 | Position | `nn.Module` | `(config: BlockConfig)` | varies by type |
 
-As long as your component follows this contract, it will work with
-`ConfigurableBlock` without any changes to existing code.
+Any component that follows this contract will work with
+`ConfigurableBlock` without changes to existing code.
 
-## Why not subclass?
+## Registries vs. subclassing
 
-A natural question: why not define `LlamaBlock(TransformerBlock)` and
-override methods? Three reasons:
+An alternative design would define `LlamaBlock(TransformerBlock)` and
+override methods. The registry approach was chosen for three reasons:
 
-1. **Combinatorial explosion.** With 3 attention types, 2 FFN types, 2 norm
-   types, and 3 position encodings, you would need 36 subclasses to cover
-   every combination. The registry approach handles all combinations with
+1. With 3 attention types, 2 FFN types, 2 norm types, and 3 position
+   encodings, subclassing would require 36 classes to cover every
+   combination. The registry approach handles all combinations with
    zero subclasses.
 
-2. **Readability.** When you see `BlockConfig(attention='gqa', ffn='gated')`,
-   you know exactly what the block does. With inheritance, you have to trace
-   through the class hierarchy.
+2. `BlockConfig(attention='gqa', ffn='gated')` states what the block does
+   directly. With inheritance, the class hierarchy must be traced.
 
-3. **Independence.** Each component is self-contained. You can test GQA
-   without knowing about the block that will contain it, and you can add
-   MLA without modifying any existing attention code.
+3. Each component is independent. GQA can be tested without knowing
+   about the block that will contain it, and MLA can be added without
+   modifying any existing attention code.

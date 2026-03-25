@@ -1,13 +1,13 @@
 # Model Architectures
 
-lmxlab implements 24 architectures as **config factories** — functions that return a `ModelConfig`. The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
+lmxlab implements 24 architectures as config factories (functions that return a `ModelConfig`). The same `LanguageModel` class handles all of them through `ConfigurableBlock`.
 
 ## Architecture Comparison
 
 | Architecture | Attention | FFN | Norm | Position | Bias | KV Heads | Special |
 |---|---|---|---|---|---|---|---|
 | **GPT** | MHA | Standard | LayerNorm | Sinusoidal | Yes | = n_heads | Baseline |
-| **LLaMA** | GQA | Gated (SwiGLU) | RMSNorm | RoPE | No | < n_heads | — |
+| **LLaMA** | GQA | Gated (SwiGLU) | RMSNorm | RoPE | No | < n_heads | - |
 | **Gemma** | GQA (MQA) | Gated | RMSNorm | RoPE | No | 1 | Tied embeddings |
 | **Gemma 3** | SlidingWindowGQA + GQA | Gated | RMSNorm | RoPE | No | < n_heads | Sliding window |
 | **Qwen** | GQA | Gated | RMSNorm | RoPE (θ=1M) | Yes | < n_heads | High RoPE theta |
@@ -33,7 +33,7 @@ lmxlab implements 24 architectures as **config factories** — functions that re
 
 ## GPT
 
-The baseline architecture. Standard multi-head attention, LayerNorm, and sinusoidal positional encoding.
+GPT uses standard multi-head attention, LayerNorm, and sinusoidal positional encoding.
 
 ```python
 from lmxlab.models.gpt import gpt_config
@@ -43,11 +43,11 @@ config = gpt_config()
 # position="sinusoidal", bias=True
 ```
 
-**Key characteristics:** Uses bias in all linear layers, pre-norm LayerNorm (matching GPT-2), and the only architecture with standard (non-gated) FFN.
+This architecture uses bias in all linear layers, pre-norm LayerNorm (matching GPT-2), and is the only architecture with a standard (non-gated) FFN.
 
 ## LLaMA
 
-The modern open-source baseline. Grouped-query attention for memory efficiency, RMSNorm for speed, and SwiGLU FFN.
+LLaMA uses grouped-query attention for memory efficiency, RMSNorm for speed, and a SwiGLU FFN.
 
 ```python
 from lmxlab.models.llama import llama_config
@@ -57,7 +57,7 @@ config = llama_config()
 # position="rope", bias=False, n_kv_heads=8
 ```
 
-**Key characteristics:** No bias anywhere (simplifies the model), GQA with 8 KV heads sharing across 32 query heads, RoPE for position encoding.
+No bias terms are used. GQA maps 8 KV heads across 32 query heads, with RoPE for position encoding.
 
 ## Gemma
 
@@ -70,7 +70,7 @@ config = gemma_config()
 # n_kv_heads=1 (multi-query), tie_embeddings=True
 ```
 
-**Key insight:** When `n_kv_heads=1`, GQA becomes Multi-Query Attention (MQA). All query heads share a single set of keys and values.
+When `n_kv_heads=1`, GQA reduces to Multi-Query Attention (MQA): all query heads share a single set of keys and values.
 
 ## Qwen
 
@@ -83,11 +83,11 @@ config = qwen_config()
 # rope_theta=1_000_000.0, bias=True
 ```
 
-**Key insight:** Higher RoPE theta extends the effective context window by changing the frequency spectrum of positional encodings.
+A higher RoPE theta extends the effective context window by shifting the frequency spectrum of positional encodings toward lower frequencies.
 
 ## Mixtral (MoE)
 
-Sparse Mixture of Experts — routes each token to 2 of 8 expert FFNs.
+Mixtral is a sparse Mixture of Experts model that routes each token to 2 of 8 expert FFNs.
 
 ```python
 from lmxlab.models.mixtral import mixtral_config
@@ -96,11 +96,11 @@ config = mixtral_config()
 # Uses MoEFFN: 8 experts, top-2 routing
 ```
 
-**Key insight:** MoE increases model capacity without proportionally increasing compute — each token only uses 2/8 of the FFN parameters.
+MoE increases model capacity without proportionally increasing compute, since each token activates only 2 of 8 expert FFN parameter sets.
 
 ## DeepSeek V2 (MLA)
 
-Multi-Head Latent Attention compresses KV representations into a low-rank latent space, dramatically reducing KV cache size (~57x vs MHA).
+Multi-Head Latent Attention compresses KV representations into a low-rank latent space, reducing KV cache size by approximately 57x relative to MHA.
 
 ```python
 from lmxlab.models.deepseek import deepseek_config
@@ -110,12 +110,12 @@ config = deepseek_config()
 # q_lora_rank=1536
 ```
 
-**How MLA works:**
+MLA operates as follows:
 
-1. **Down-project** KV from `d_model` → `kv_lora_rank` (+ `rope_dim` for shared RoPE key)
-2. **Cache** only the compressed latent (not full K, V)
-3. **Up-project** latent → multi-head K and V at attention time
-4. **Decoupled RoPE**: position info kept in a separate single-head key
+1. Down-project KV from `d_model` to `kv_lora_rank` (plus `rope_dim` for a shared RoPE key)
+2. Cache only the compressed latent (not full K, V)
+3. Up-project the latent to multi-head K and V at attention time
+4. Decoupled RoPE: position information is kept in a separate single-head key
 
 Cache per token: `kv_lora_rank + rope_dim = 576` vs `2 × n_heads × head_dim = 32,768` for MHA.
 
@@ -132,11 +132,11 @@ config = gemma3_config()
 # (Real Gemma 3 uses window_size=1024; adjust to match)
 ```
 
-**Key insight:** Local attention is O(n × w) instead of O(n²), making long sequences tractable. Periodic global layers maintain long-range dependencies. Uses per-layer `block_configs` — a direct showcase of the ConfigurableBlock system's flexibility.
+Local attention is O(n * w) instead of O(n^2), making long sequences tractable while periodic global layers maintain long-range dependencies. This architecture uses per-layer `block_configs`, exercising the ConfigurableBlock system's per-layer configuration.
 
 ## Qwen 3.5 (Hybrid DeltaNet + GQA)
 
-The most architecturally novel model: interleaves **Gated DeltaNet** (linear attention with delta rule) and standard **GQA** layers in a 3:1 ratio.
+Qwen 3.5 interleaves Gated DeltaNet (linear attention with delta rule) and standard GQA layers in a 3:1 ratio.
 
 ```python
 from lmxlab.models.qwen35 import qwen35_config
@@ -147,19 +147,19 @@ config = qwen35_config()
 # GQA: standard with RoPE, growing KV cache
 ```
 
-**How Gated DeltaNet works:**
+Gated DeltaNet operates as follows:
 
-1. **Delta rule**: State matrix S predicts v from k, then corrects itself based on prediction error: `S = α·S - β·(S@k - v)@k^T`
-2. **Decay gate (α)**: Learned selective forgetting — when to discard old context
-3. **Update gate (β)**: Learned correction strength — how much to trust new information
-4. **Fixed-size state**: O(d²) per token regardless of sequence length (vs O(n) for KV cache)
-5. **Short causal convolutions**: Replace RoPE for local context in DeltaNet layers
+1. Delta rule: the state matrix S predicts v from k, then corrects itself based on prediction error: `S = alpha * S - beta * (S@k - v)@k^T`
+2. Decay gate (alpha): learned selective forgetting that controls how much old context is discarded
+3. Update gate (beta): learned correction strength that controls how much new information is incorporated
+4. Fixed-size state: O(d^2) per token regardless of sequence length (compared to O(n) for a KV cache)
+5. Short causal convolutions replace RoPE for local context in DeltaNet layers
 
-**Key insight:** Pure linear attention loses expressiveness by compressing all history into a fixed-size state. The hybrid 3:1 pattern preserves efficient long-context processing (DeltaNet) while periodic GQA layers provide global attention for tasks that need it.
+Pure linear attention loses expressiveness by compressing all history into a fixed-size state. The hybrid 3:1 pattern preserves efficient long-context processing via DeltaNet while periodic GQA layers provide full attention when needed.
 
 ## Qwen-Next (Gated Attention)
 
-Uses **GatedGQA** — GQA with a learned sigmoid gate on the attention output. The gate modulates how much attention information passes through, improving gradient flow and representational capacity.
+Qwen-Next uses GatedGQA, a variant of GQA with a learned sigmoid gate on the attention output. The gate modulates how much attention information passes through, improving gradient flow and representational capacity.
 
 ```python
 from lmxlab.models.qwen_next import qwen_next_config
@@ -168,7 +168,7 @@ config = qwen_next_config()
 # attention="gated_gqa": y = attn_out * sigmoid(W_gate @ x)
 ```
 
-**Key insight:** The output gate (G1 elementwise variant from arXiv:2505.06708) adds minimal parameters but measurably improves training dynamics by giving the model a learned bypass around the attention mechanism.
+The output gate (G1 elementwise variant from arXiv:2505.06708) adds minimal parameters but measurably improves training dynamics by providing a learned bypass around the attention mechanism.
 
 ## DeepSeek V3 (MLA + MoE)
 
@@ -194,7 +194,7 @@ config = nemotron3_config()
 # Mamba layers for sequence mixing, MoE for capacity
 ```
 
-**Key insight:** Different layer types handle different aspects — Mamba-2 for efficient sequence mixing, attention for precise retrieval, and LatentMoE for routing tokens to specialized experts with reduced dimensionality.
+Each layer type serves a distinct role: Mamba-2 for efficient sequence mixing, attention for precise retrieval, and LatentMoE for routing tokens to specialized experts with reduced dimensionality.
 
 ## Llama 4 Scout (iRoPE + Chunked Attention)
 
@@ -211,7 +211,7 @@ config = llama4_scout_config()
 
 ## Mistral Small (Sliding Window)
 
-All layers use sliding-window GQA with a fixed window size. Unlike Gemma 3's mixed approach, Mistral Small applies local attention uniformly — no global layers.
+All layers use sliding-window GQA with a fixed window size. Unlike Gemma 3's mixed approach, Mistral Small applies local attention uniformly with no global layers.
 
 ```python
 from lmxlab.models.mistral import mistral_small_config
@@ -348,7 +348,7 @@ config = glm45_config()
 # KV compression via kv_lora_rank=512
 ```
 
-**Key insight:** Disabling RoPE in MLA removes the decoupled RoPE key entirely, letting the model learn position-dependent patterns implicitly through the latent representations.
+Setting `rope_dim=0` in MLA removes the decoupled RoPE key entirely; position-dependent patterns are learned implicitly through the latent representations.
 
 ## Loading Pretrained Weights
 
@@ -364,7 +364,7 @@ model, config = load_from_hf('meta-llama/Llama-3.2-1B')
 
 ### Manual conversion
 
-If you have weights and config locally:
+Given local weights and config files:
 
 ```python
 import json
@@ -441,15 +441,15 @@ trainer.train(data)
 merge_lora(model)
 ```
 
-**How it works:** Each targeted `nn.Linear` is replaced with `LoRALinear`, which computes `y = xW^T + scaling * x @ A @ B^T`. Matrix B is zero-initialized, so the model starts with the same output as the base model. Only A and B are trainable; W is frozen.
+Each targeted `nn.Linear` is replaced with `LoRALinear`, which computes `y = xW^T + scaling * x @ A @ B^T`. Matrix B is zero-initialized so that the model initially produces the same output as the base model. Only A and B are trainable; W is frozen.
 
-**Targets:**
-- `'attention'` — q/k/v/o projections
-- `'ffn'` — gate/up/down projections
+Supported targets:
+- `'attention'` - q/k/v/o projections
+- `'ffn'` - gate/up/down projections
 
 ## QLoRA (Quantized LoRA)
 
-Combine quantization and LoRA for maximum memory efficiency. Keep base weights in 4-bit quantized form while training full-precision LoRA adapters. This lets you fine-tune models that nearly fill available memory.
+QLoRA combines quantization and LoRA for memory efficiency: base weights remain in 4-bit quantized form while LoRA adapters train in full precision. This permits fine-tuning of models that would otherwise exceed available memory.
 
 ```python
 from lmxlab.core.quantize import quantize_model
@@ -466,9 +466,9 @@ trainer = Trainer(model, train_config)
 trainer.train(data)
 ```
 
-**How it works:** Each targeted `nn.QuantizedLinear` is replaced with `LoRAQuantizedLinear`, which uses `mx.quantized_matmul` for the frozen base computation and adds a full-precision low-rank update: `y = quantized_matmul(x, W_q) + scaling * x @ A @ B^T`.
+Each targeted `nn.QuantizedLinear` is replaced with `LoRAQuantizedLinear`, which uses `mx.quantized_matmul` for the frozen base computation and adds a full-precision low-rank update: `y = quantized_matmul(x, W_q) + scaling * x @ A @ B^T`.
 
-**When to use QLoRA vs LoRA:**
+QLoRA vs LoRA comparison:
 
 | Approach | Base weights | Memory | Use case |
 |----------|-------------|--------|----------|

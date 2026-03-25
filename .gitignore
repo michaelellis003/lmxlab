@@ -13,7 +13,7 @@ dist/
 # Virtual environment
 .venv/
 
-# Claude Code (local-only)
+# AI assistant config (local-only)
 .claude/
 CLAUDE.md
 

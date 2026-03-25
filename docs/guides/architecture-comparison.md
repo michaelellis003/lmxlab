@@ -2,7 +2,7 @@
 
 lmxlab implements **24 architectures** from a shared
 `BlockConfig` + `ModelConfig` system. Every model is
-assembled from registry components — swap attention, FFN,
+assembled from registry components; attention, FFN,
 normalization, and position encoding independently.
 
 ## Quick Reference Table
@@ -56,8 +56,8 @@ a fixed window of past tokens. O(n * w) instead of O(n^2).
 with data-dependent gating. O(n * d) complexity.
 
 **Mamba-2 SSM** ([Dao & Gu, 2024](https://arxiv.org/abs/2405.21060)):
-Structured state space model. No explicit attention matrix —
-uses selective scan over a recurrent state. O(n * d) with
+Structured state space model with no explicit attention matrix,
+using selective scan over a recurrent state. O(n * d) with
 hardware-efficient chunked scan.
 
 ## Normalization
@@ -103,7 +103,7 @@ in iRoPE and hybrid architectures.
 
 ## Decision Tree
 
-**"Which architecture should I study for X?"**
+Suggested study order by topic:
 
 - **Learning transformers**: Start with **GPT** (simplest) then
   compare to **LLaMA** (modern best practices)

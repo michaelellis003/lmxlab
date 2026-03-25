@@ -1,24 +1,22 @@
 # Developer Log
 
-A learning journal documenting design decisions, trade-offs, and lessons
-learned while building lmxlab. Following Sebastian Raschka's approach:
-honest uncertainty, practical grounding, and explaining *why* not just *what*.
+Design decisions, trade-offs, and lessons from building lmxlab.
 
 ## Design Decisions
 
 ### Config Factories Over Class Hierarchies
 
-The biggest early decision: GPT, LLaMA, DeepSeek, etc. are *not* separate
-model classes. They're config factory functions returning `ModelConfig`.
+GPT, LLaMA, DeepSeek, etc. are *not* separate model classes. They are
+config factory functions returning `ModelConfig`.
 
-**Why:** After studying the original LMT (PyTorch version), it became clear
-that transformer architectures differ in configuration, not structure. A
-`LlamaModel` and a `GPTModel` do the same thing — embed, attend, feed-forward,
-project — just with different component choices. Encoding this as inheritance
-(`LlamaModel(BaseModel)`) creates artificial boundaries.
+After studying the original LMT (PyTorch version), it became clear that
+transformer architectures differ in configuration, not structure. A
+`LlamaModel` and a `GPTModel` perform the same operations (embed, attend,
+feed-forward, project) with different component choices. Encoding this
+as inheritance (`LlamaModel(BaseModel)`) creates artificial boundaries.
 
-With config factories, switching from GPT to LLaMA is changing a function call,
-not a class hierarchy:
+With config factories, switching from GPT to LLaMA is changing a
+function call, not a class hierarchy:
 
 ```python
 # These produce different configs, not different model classes
@@ -29,61 +27,59 @@ config = llama_config(d_model=512, n_heads=8, n_kv_heads=4, n_layers=6)
 model = LanguageModel(config)
 ```
 
-**Trade-off:** This design makes individual architecture code harder to find
-(no `class LlamaModel` to grep for). We mitigate this with well-documented
-config factories in `models/*.py`.
+Trade-off: this design makes individual architecture code harder to find
+(no `class LlamaModel` to grep for). Well-documented config factories in
+`models/*.py` mitigate this.
 
 ### Registry Pattern for Components
 
 Components (attention, FFN, norm, position) register themselves by string
 name. `ConfigurableBlock` resolves them at construction time.
 
-**Why:** This decouples component implementation from block assembly. Adding
-a new attention type (MLA, sliding window) means writing the module and
-registering it — no changes to `ConfigurableBlock` or any existing code.
+This decouples component implementation from block assembly. Adding a new
+attention type (MLA, sliding window) requires only writing the module and
+registering it, with no changes to `ConfigurableBlock` or existing code.
 
-**What we got wrong initially:** MoE FFNs needed special registration because
-their constructors take extra arguments (`n_experts`, `top_k`). We solved
-this by making `BlockConfig` carry MoE fields and having MoE constructors
-read from the config with optional overrides.
+An early mistake: MoE FFNs needed special registration because their
+constructors take extra arguments (`n_experts`, `top_k`). The fix was to
+have `BlockConfig` carry MoE fields, with MoE constructors reading from
+the config with optional overrides.
 
 ### Explicit `mx.eval()` Boundaries
 
-MLX operations are lazy — nothing computes until you call `mx.eval()`.
-This is powerful but requires discipline. We enforce eval boundaries at
-specific points:
+MLX operations are lazy: nothing computes until `mx.eval()` is called.
+This requires explicit eval boundaries at specific points:
 
 1. After model construction (`mx.eval(model.parameters())`)
 2. During generation (eval each token before feeding it back)
 3. At training step boundaries (eval loss for logging)
 
-**Lesson learned:** Forgetting `mx.eval()` after model construction can
-cause the first training step to be extremely slow, because it triggers
-both initialization and the first forward pass in one graph.
+Omitting `mx.eval()` after model construction can cause the first
+training step to be extremely slow, because it triggers both
+initialization and the first forward pass in one graph.
 
 ## Lessons Learned
 
 ### Unified Memory Changes the Trade-offs
 
-On CUDA, the CPU-GPU memory boundary is a constant concern — batch sizes,
+On CUDA, the CPU-GPU memory boundary is a constant concern: batch sizes,
 gradient accumulation, offloading. On Apple Silicon with MLX, unified
 memory means:
 
-- No `.to(device)` calls — arrays live everywhere at once
+- No `.to(device)` calls, as arrays live everywhere at once
 - No data transfer bottleneck between CPU and GPU
 - The memory ceiling is system RAM (not separate GPU VRAM)
-- Speculative decoding is more natural (draft and verify models share memory)
+- Speculative decoding benefits from shared memory between draft and verify models
 
-**What we don't know yet:** How much this changes optimal training strategies.
-Does gradient accumulation matter less when there's no transfer overhead?
-Do different optimizer choices win when memory access patterns change?
-These are open questions for the experiment framework to investigate.
+Open questions remain: whether gradient accumulation matters less without
+transfer overhead, and whether different optimizer choices win when memory
+access patterns change. These are targets for the experiment framework.
 
 ### `mx.compile` Is Not Free
 
 Compiling the training step with `mx.compile` provides significant speedups
 (1.3-2x typical, potentially more for larger models), but it constrains
-what you can do:
+the available operations:
 
 - No Python control flow that depends on array values
 - Must declare `inputs` and `outputs` explicitly
@@ -91,39 +87,35 @@ what you can do:
 
 For educational code, we default to `compile_step=True` but make it easy
 to disable for debugging. The `benchmark_compile.py` recipe measures the
-actual speedup on your hardware.
+actual speedup on a given machine.
 
 ### LoRA and QLoRA on Unified Memory
 
 Parameter-efficient fine-tuning has different economics on unified memory.
 On CUDA, QLoRA's primary value is fitting a larger model in limited VRAM.
-On Apple Silicon:
+On Apple Silicon, the trade-offs differ:
 
 - The memory savings still matter (system RAM is shared with the OS)
 - But the performance characteristics may differ (no quantize-dequantize
   transfer between devices)
-- Adapter save/load is valuable regardless — small files that can be
-  shared independently of multi-GB base models
+- Adapter save/load is valuable regardless of memory architecture, as
+  small adapter files can be shared independently of multi-GB base models
 
 ### Testing ML Code
 
-Standard unit testing (`assertEqual`) doesn't work well for ML code because
-outputs are stochastic. We use behavioral tests instead:
+Standard unit testing (`assertEqual`) does not apply well to ML code
+because outputs are stochastic. Behavioral tests are used instead:
 
-- **Invariance tests:** Does the output stay the same when it should?
-  (Same input, same seed = same output)
-- **Directional tests:** Does the output move in the right direction?
-  (Loss decreases after training steps)
-- **Shape tests:** Are the dimensions correct? (Output shape matches
-  `(batch, seq_len, vocab_size)`)
-- **Minimum functionality tests:** Does it produce finite values?
-  (No NaN, no Inf)
+- Invariance tests: same input and seed produce the same output
+- Directional tests: loss decreases after training steps
+- Shape tests: output dimensions match `(batch, seq_len, vocab_size)`
+- Minimum functionality tests: outputs are finite (no NaN, no Inf)
 
 ## Architecture Notes
 
 ### Attention Variants Are Configurations, Not Architectures
 
-| Variant | Key Insight |
+| Variant | Distinguishing property |
 |---------|-------------|
 | MHA | Full attention: each head has independent K, V |
 | GQA | Share K, V across groups of query heads |
@@ -139,7 +131,7 @@ The difference is how they compute and store key-value state.
 Mixture of Experts replaces the dense FFN with a routed sparse FFN.
 The router selects top-k experts per token, and the outputs are combined
 by router weights. From `ConfigurableBlock`'s perspective, it's just
-another FFN — registered as `"moe"` instead of `"gated"`.
+another FFN, registered as `"moe"` instead of `"gated"`.
 
 The interesting part is load balancing. Without it, the router collapses
 to always picking the same experts. We implement bias-based balancing
@@ -148,49 +140,48 @@ implementations.
 
 ## HuggingFace Integration
 
-### The Three-Part Story
+### Components
 
-Connecting to the HuggingFace ecosystem required three components, each
-solving a different problem:
+Connecting to the HuggingFace ecosystem required three components:
 
-1. **`load_from_hf()`** — Download and convert pretrained weights from
+1. `load_from_hf()`: downloads and converts pretrained weights from
    the Hub. Maps HF config keys to `ModelConfig`, converts weight names,
-   handles architecture-specific quirks (rotated QKV in LLaMA, fused
+   and handles architecture-specific details (rotated QKV in LLaMA, fused
    gate-up in Gemma).
 
-2. **`HFTokenizer`** — Wraps `AutoTokenizer` with our `Tokenizer`
-   protocol. Needed because pretrained models expect their own tokenizer,
-   not a character or tiktoken tokenizer.
+2. `HFTokenizer`: wraps `AutoTokenizer` with the lmxlab `Tokenizer`
+   protocol, since pretrained models expect their own tokenizer rather
+   than a character or tiktoken tokenizer.
 
-3. **`HFDataset`** — Wraps `datasets.load_dataset` with streaming
-   support. Yields `(input, target)` batches by tokenizing on-the-fly
-   from a token buffer.
+3. `HFDataset`: wraps `datasets.load_dataset` with streaming support.
+   Yields `(input, target)` batches by tokenizing on-the-fly from a
+   token buffer.
 
-**Design choice:** All three are lazy imports (`from transformers import ...`
-inside `__init__`). This keeps the base library free of heavy dependencies —
-you don't need `transformers` installed unless you actually use HF features.
+All three use lazy imports (`from transformers import ...` inside
+`__init__`), keeping the base library free of heavy dependencies.
+The `transformers` package is only required when HF features are used.
 
-**What surprised us:** Weight conversion is the hardest part. Different
+Weight conversion proved to be the most difficult component. Different
 architectures store weights in different formats (some fuse QKV, some
-don't; some transpose FFN weights, some don't). The solution was a
-mapping table per architecture, with clear error messages for missing keys.
+do not; some transpose FFN weights, some do not). The solution was a
+mapping table per architecture, with clear error messages for missing
+keys.
 
 ### Streaming for Large Datasets
 
 `HFDataset.batch_iterator()` uses a token buffer pattern: accumulate
 tokens from the dataset stream until there are enough for one batch, yield
-it, and keep the remainder. This means you never need the full dataset in
-memory — important for multi-GB corpora.
+it, and keep the remainder. The full dataset need not fit in memory,
+which matters for multi-GB corpora.
 
 The `streaming=True` flag enables HuggingFace's iterable dataset mode,
 which downloads data on demand instead of caching the full dataset locally.
 
 ## Advanced Training Features
 
-### DPO, GRPO, and MTP: Three Approaches to Better Models
+### DPO, GRPO, and MTP
 
-These three training objectives each improve model quality in a different
-way, and together they illustrate a useful taxonomy:
+These three training objectives improve model quality in different ways:
 
 | Method | Signal Source | Key Idea |
 |--------|-------------|----------|
@@ -207,7 +198,7 @@ only needs the policy and reference model log probabilities.
 each group of completions (zero mean, unit variance). This removes the need
 for a value function baseline and makes training more stable.
 
-**MTP** is orthogonal — it doesn't change the objective, it enriches the
+**MTP** is orthogonal: it does not change the objective but enriches the
 training signal. Each position predicts not just the next token but the
 next 2-4 tokens via lightweight auxiliary heads. This provides richer
 gradients and enables speculative decoding at inference time (the auxiliary
@@ -220,8 +211,8 @@ principle: let the model learn basic patterns on short context before
 tackling long-range dependencies. Empirically, this often converges faster
 than training on the final sequence length from the start.
 
-The implementation is straightforward — linear interpolation of sequence
-length across stages. No complex scheduling needed.
+The implementation uses linear interpolation of sequence length across
+stages, with no complex scheduling required.
 
 ## Pre-Registered Experiment Plans
 
@@ -381,9 +372,8 @@ lengths.
 **Question:** What is the best validation BPB achievable in exactly
 5 minutes of wall-clock training on an M-series Mac?
 
-This is the autoresearch paradigm applied directly — fixed time
-budget eliminates timing confounds and makes all experiments directly
-comparable regardless of architecture complexity.
+A fixed time budget eliminates timing confounds and makes all
+experiments directly comparable regardless of architecture complexity.
 
 **Protocol:**
 
@@ -404,137 +394,116 @@ the same improvement from adding complexity.
 
 ## Research Directions
 
-These are longer-term areas we plan to explore. Each connects to
-existing lmxlab infrastructure and extends the library's educational
-scope into active research topics.
+Longer-term areas for investigation, each building on existing lmxlab
+infrastructure.
 
 ### Test-Time Compute Scaling
 
-**The idea:** Instead of training a bigger model, spend more compute
-at inference time. This is the central insight behind chain-of-thought
-prompting, tree search, best-of-N sampling, and the "thinking" paradigm
-seen in recent models.
+Rather than training a larger model, additional compute can be spent at
+inference time. This is the principle behind chain-of-thought prompting,
+tree search, best-of-N sampling, and recent "thinking" paradigms.
 
-**What lmxlab already has:**
+Existing primitives:
 
-- `best_of_n()` — generate N completions, pick the best by
-  log-probability
-- `majority_vote()` — generate N answers, take the most common
-- `speculative_decoding` — draft + verify for faster generation
+- `best_of_n()`: generate N completions, select the highest
+  log-probability candidate
+- `majority_vote()`: generate N answers, return the most common
+- `speculative_decoding`: draft + verify for faster generation
 
-**What we want to explore:**
+Open directions:
 
-1. **Scaling laws for inference compute.** How does quality scale with
-   N in best-of-N? Is the relationship log-linear (as suggested by
-   recent work) or does it plateau?
-2. **Tree search at generation time.** Beam search is the simplest
-   form; Monte Carlo Tree Search (MCTS) over token sequences is a
-   richer strategy. How does this compare to best-of-N at matched
-   compute?
-3. **Iterative refinement.** Generate, critique, regenerate. Can a
-   model improve its own output through self-evaluation loops? What's
-   the optimal number of iterations?
-4. **Budget-optimal allocation.** Given a fixed compute budget, is it
-   better to run one large model or many small models with voting?
-   Unified memory makes this especially interesting — no transfer
-   overhead between model copies.
+1. Scaling laws for inference compute: whether quality scales
+   log-linearly with N in best-of-N, or plateaus.
+2. Tree search at generation time: comparing MCTS over token sequences
+   against best-of-N at matched compute.
+3. Iterative refinement (generate, critique, regenerate): whether
+   self-evaluation loops improve output, and the optimal iteration count.
+4. Budget-optimal allocation: whether one large model or many small
+   models with voting is preferable at fixed compute. On unified memory,
+   there is no transfer overhead between model copies.
 
-**Connection to experiments:** This extends Experiment 5 ("What Can
-You Train in 5 Minutes?") into inference: "What's the best output
-quality achievable in 5 seconds of inference compute?"
+This extends Experiment 5 from training to inference: the best output
+quality achievable under a fixed inference compute budget.
 
 ---
 
 ### Knowledge Distillation
 
-**The idea:** Train a smaller "student" model to mimic a larger
-"teacher" model. The student learns from the teacher's soft probability
-distributions, which carry more information than hard labels alone
-(Hinton et al., 2015).
+A smaller "student" model is trained to mimic a larger "teacher" model.
+The student learns from the teacher's soft probability distributions,
+which carry more information than hard labels alone (Hinton et al., 2015).
 
-**Why it matters for lmxlab:**
+Distillation connects training objectives, model capacity, and
+information theory. On Apple Silicon with limited memory, distilling a
+large model into a smaller one is directly useful. DPO and GRPO already
+implement reference-model patterns (comparing policy vs reference
+log-probabilities), and distillation uses the same machinery.
 
-- Educational: distillation is a foundational technique that connects
-  training objectives, model capacity, and information theory
-- Practical: on Apple Silicon with limited memory, distilling a large
-  model into a small one that fits comfortably is directly useful
-- Connects to existing infrastructure: DPO and GRPO already implement
-  reference-model patterns (comparing policy vs reference
-  log-probabilities), and distillation uses the same machinery
+Planned components:
 
-**What to build:**
+1. Basic distillation loss: KL divergence between teacher and student
+   logits (temperature-scaled), as a training module alongside `dpo.py`
+   and `grpo.py`.
+2. Online vs offline distillation. Offline: pre-compute teacher logits
+   and store them. Online: run teacher forward pass during student
+   training. The trade-off is memory vs flexibility.
+3. Layer-wise distillation: matching intermediate representations, not
+   just final logits. This requires compatible architectures (same
+   hidden dimension or a projection layer).
+4. Self-distillation: a model distills into a smaller version of itself,
+   with potential for iterative compression.
 
-1. **Basic distillation loss.** KL divergence between teacher and
-   student logits (temperature-scaled). This is a training module
-   alongside `dpo.py` and `grpo.py`.
-2. **Online vs offline distillation.** Offline: pre-compute teacher
-   logits and store them. Online: run teacher forward pass during
-   student training. Trade-off is memory vs flexibility.
-3. **Layer-wise distillation.** Match intermediate representations,
-   not just final logits. This requires compatible architectures
-   (same hidden dimension or a projection layer).
-4. **Self-distillation.** A model distills into a smaller version of
-   itself. Interesting because you can iterate: train, distill,
-   train the smaller model, distill again.
-
-**Experiment idea:** Train a LLaMA-small teacher on Shakespeare,
-distill into a GPT-tiny student. Compare student quality vs training
-from scratch at the same compute budget. Does distillation help
-more when the student is much smaller than the teacher?
+Experiment: train a LLaMA-small teacher on Shakespeare, distill into a
+GPT-tiny student. Compare student quality against training from scratch
+at the same compute budget, and test whether the gap widens as the
+student-teacher size ratio increases.
 
 ---
 
 ### RL with Verifiable Rewards (Code Generation)
 
-**The idea:** Reinforcement learning works best when rewards are
-unambiguous. Code is a natural domain because correctness is
-verifiable — run the tests, check if they pass. This eliminates the
-reward model noise that plagues RLHF on open-ended text.
+Reinforcement learning works best when rewards are unambiguous. Code is
+a natural domain because correctness is verifiable: run the tests, check
+whether they pass. This eliminates the reward model noise that affects
+RLHF on open-ended text.
 
-**What lmxlab already has:**
+Existing primitives:
 
-- `grpo_loss()` — Group Relative Policy Optimization, which takes
-  scalar rewards per completion
-- `pass_at_k()` / `evaluate_pass_at_k()` — code generation metrics
-  that score completions by test passage
-- `best_of_n()` — generate multiple completions and pick the best
+- `grpo_loss()`: Group Relative Policy Optimization, taking scalar
+  rewards per completion
+- `pass_at_k()` / `evaluate_pass_at_k()`: code generation metrics
+  scoring completions by test passage
+- `best_of_n()`: generate multiple completions, select the best
 
-**The pipeline (what to build):**
+Planned pipeline:
 
-1. **Problem format.** Define a simple function-completion task:
-   given a docstring with examples, generate the function body.
-   We can start with arithmetic/string problems where test cases
-   are easy to generate.
-2. **Reward function.** Execute the generated code in a sandbox,
-   run test cases, return pass rate as the reward signal. Binary
-   (0/1 per test) or fractional (fraction of tests passed).
-3. **Training loop.** For each problem: generate K completions
-   with the model, score each with the reward function, compute
-   GRPO loss using the scores. This connects `grpo_loss` directly
-   to `pass_at_k` as the reward signal.
-4. **Curriculum over difficulty.** Start with easy problems
-   (single-function, simple logic), progress to harder ones. Use
-   `difficulty_curriculum` pattern but with problem difficulty
-   instead of text complexity.
+1. Problem format: function-completion tasks (given a docstring with
+   examples, generate the function body), starting with arithmetic and
+   string problems where test cases are easy to generate.
+2. Reward function: execute generated code in a sandbox, run test cases,
+   return pass rate as the reward signal (binary or fractional).
+3. Training loop: for each problem, generate K completions, score each
+   with the reward function, compute GRPO loss. This connects
+   `grpo_loss` directly to `pass_at_k` as the reward signal.
+4. Difficulty curriculum: start with single-function simple logic,
+   progress to harder problems.
 
-**Key research questions:**
+Research questions:
 
 - How many completions per problem (K) are needed for stable GRPO
-  training? Theory says more is better for variance reduction, but
-  compute scales linearly.
-- Does the model generalize from easy problems to hard ones, or does
-  it overfit to the reward signal on seen problem types?
-- How does RL fine-tuning compare to SFT on verified solutions?
-  SFT is simpler but requires curated correct solutions; RL can
-  learn from the model's own attempts.
-- On unified memory, can we run code execution and model inference
+  training? Theory favors more for variance reduction, but compute
+  scales linearly.
+- Does the model generalize from easy problems to hard ones, or overfit
+  to the reward signal on seen problem types?
+- How does RL fine-tuning compare to SFT on verified solutions? SFT is
+  simpler but requires curated correct solutions; RL can learn from the
+  model's own attempts.
+- On unified memory, can code execution and model inference run
   simultaneously without contention?
 
-**Connection to existing work:** This is the natural extension of
-GRPO (Experiment idea: after the optimizer comparison in Experiment
-3, use the best optimizer for GRPO training on code tasks). It also
-extends the `pass_at_k` evaluation metric from passive measurement
-to active training signal.
+This extends GRPO from the optimizer comparison in Experiment 3 to code
+tasks, and extends the `pass_at_k` metric from passive measurement to
+active training signal.
 
 ---
 

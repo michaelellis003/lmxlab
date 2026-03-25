@@ -1,9 +1,9 @@
 # Unified Memory on Apple Silicon
 
-Apple Silicon's unified memory architecture fundamentally changes how ML
-frameworks manage data. This page explains what unified memory means for
-lmxlab, how it differs from discrete GPU setups, and what trade-offs
-it introduces.
+Apple Silicon's unified memory architecture affects how ML frameworks
+manage data. This page describes what unified memory means for lmxlab,
+how it differs from discrete GPU setups, and what trade-offs it
+introduces.
 
 ## What unified memory means
 
@@ -34,8 +34,8 @@ On Apple Silicon, CPU and GPU share the same physical memory:
 ```
 
 There is no copy. When the CPU writes an array, the GPU can read it
-immediately (and vice versa). This eliminates an entire class of
-performance bottlenecks and bugs.
+immediately (and vice versa). This removes the class of bugs and
+performance costs associated with host-device transfers.
 
 ## What this means for lmxlab
 
@@ -47,7 +47,7 @@ In PyTorch, forgetting `.to(device)` is a common source of errors:
 # PyTorch: must explicitly manage device placement
 model = model.to('mps')       # Move model to GPU
 x = x.to('mps')               # Move data to GPU
-# RuntimeError if you forget either one
+# RuntimeError if either is omitted
 ```
 
 In lmxlab (MLX), there is no device concept:
@@ -59,9 +59,9 @@ x = mx.array([[1, 2, 3]])     # Already accessible to GPU
 logits, _ = model(x)          # Just works
 ```
 
-You will never see `.to()`, `.cuda()`, `.cpu()`, or `device=` anywhere
-in the lmxlab codebase. This is not a limitation — it is a feature
-of the hardware.
+The lmxlab codebase contains no `.to()`, `.cuda()`, `.cpu()`, or
+`device=` calls. The hardware provides a single address space, so
+device placement is unnecessary.
 
 ### Zero-copy data loading
 
@@ -75,18 +75,18 @@ tokens = mx.array(tokenizer.encode(text), dtype=mx.int32)
 # tokens is immediately usable by the GPU
 ```
 
-This is why lmxlab's `batch_iterator` is a simple Python generator —
-no `DataLoader` with `pin_memory=True`, no `num_workers` for parallel
-prefetching across a PCIe boundary.
+This is why lmxlab's `batch_iterator` is a simple Python generator,
+with no `DataLoader` using `pin_memory=True` and no `num_workers` for
+parallel prefetching across a PCIe boundary.
 
 ### KV cache stays in place
 
 During generation, the KV cache grows with each token. On discrete GPUs,
-you might need to manage GPU memory carefully to avoid OOM. On unified
+GPU memory must be managed carefully to avoid OOM. On unified
 memory, the KV cache is just more arrays in the same memory pool:
 
 ```python
-# No memory management needed — cache just grows
+# No memory management needed; cache just grows
 for _ in range(max_tokens):
     logits, cache = model(next_token, cache=cache)
     mx.eval(logits, *[c for pair in cache for c in pair])
@@ -123,10 +123,10 @@ fit in cache, the gap narrows significantly.
 | M4 Max | 128 GB |
 
 The advantage: **all** of this memory is available to the model.
-On a 64GB M1 Max, you can load a ~30B parameter model in 4-bit
-quantization. On a 192GB M2 Ultra, you can run 70B+ models.
+A 64GB M1 Max can load a ~30B parameter model in 4-bit quantization.
+A 192GB M2 Ultra can run 70B+ models.
 
-There is no separate "GPU memory" limit — the entire unified pool
+There is no separate "GPU memory" limit; the entire unified pool
 is usable.
 
 ### No CPU offloading
@@ -136,16 +136,15 @@ across CPU and GPU memory, loading layers on demand. This is possible
 because CPU memory is separate and typically much larger.
 
 On unified memory, there is no separate CPU memory pool to offload to.
-If your model exceeds unified memory, you are out of luck (aside from
-quantization or using a smaller model). There is no gradual degradation —
-just an OOM error.
+If the model exceeds unified memory, the only options are quantization
+or a smaller model. There is no gradual degradation, only an OOM error.
 
 **Mitigation strategies:**
 
-1. **Quantization** — `quantize_model(model, bits=4)` reduces memory ~8x
-2. **Smaller models** — use config factories with smaller dimensions
-3. **LoRA** — fine-tune with frozen base weights (no optimizer state for
-   frozen params)
+1. Quantization: `quantize_model(model, bits=4)` reduces memory ~8x.
+2. Smaller models: use config factories with smaller dimensions.
+3. LoRA: fine-tune with frozen base weights (no optimizer state for
+   frozen params).
 
 ### Lazy evaluation interaction
 
@@ -169,9 +168,9 @@ mx.eval(logits, *[c for pair in cache for c in pair])
 Without these boundaries, the graph accumulates and memory grows
 unboundedly. See [MLX Idioms](mlx-idioms.md) for more details.
 
-## What can you fit?
+## Capacity estimates
 
-Rough model size estimates for different Apple Silicon chips:
+Approximate model sizes for different Apple Silicon chips:
 
 | Chip (Memory) | FP16 Model | 4-bit Model |
 |---------------|-----------|-------------|
@@ -189,7 +188,7 @@ unified memory is available for model weights.
 
 | Aspect | Discrete GPU (CUDA) | Unified Memory (MLX) |
 |--------|-------------------|---------------------|
-| Device management | `.to('cuda')` everywhere | Nothing — no device concept |
+| Device management | `.to('cuda')` everywhere | None (no device concept) |
 | Data transfer | PCIe copies, pinned memory | Zero-copy |
 | Memory capacity | GPU VRAM (24-80GB typical) | Full unified pool (16-192GB) |
 | Bandwidth | Very high (2-3 TB/s HBM) | Lower (400-800 GB/s LPDDR) |
@@ -198,5 +197,5 @@ unified memory is available for model weights.
 | OOM recovery | Offload to CPU | Quantize or use smaller model |
 
 The unified memory model trades raw bandwidth for simplicity. For
-educational and research use (lmxlab's target), the elimination
-of device management complexity is a significant win.
+educational and research use (lmxlab's target), the removal of
+device management complexity reduces both code size and bug surface.

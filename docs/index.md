@@ -1,70 +1,55 @@
 # lmxlab
 
-A research platform for language model experimentation on Apple Silicon.
+Language model experimentation on Apple Silicon using
+[MLX](https://ml-explore.github.io/mlx/).
 
-## Why lmxlab?
+## Overview
 
-If you're doing language model research on a Mac, you've probably hit
-the limits of PyTorch's MPS backend — incomplete operator coverage,
-[silent wrong results on non-contiguous tensors](https://elanapearl.github.io/blog/2025/the-bug-that-taught-me-pytorch/),
-and unnecessary memory copies on hardware that shares memory by design.
+Autoregressive language models (GPT, LLaMA, DeepSeek, Mamba, and
+variants) differ in their sequence mixing operator (multi-head
+attention, grouped-query attention, multi-latent attention, state-space
+models) and feed-forward nonlinearity (SwiGLU, squared ReLU,
+mixture-of-experts). The remaining components (embedding, normalization,
+positional encoding, residual connections) are shared.
 
-lmxlab is built on [MLX](https://ml-explore.github.io/mlx/) instead,
-which was designed from scratch for Apple Silicon. The practical
-differences for research:
-
-- **Faster training.** MLX trains LMs
-  [30-50% faster](https://github.com/LucasSte/MLX-vs-Pytorch) than
-  PyTorch MPS on M-series chips, with the gap growing on newer hardware.
-- **True unified memory.** MLX arrays live in shared memory — no copies
-  between CPU and GPU. PyTorch MPS still duplicates tensors on device
-  transfers. On a 36GB MacBook Pro, this means larger models fit.
-- **No device management.** No `.to(device)`, no `.cuda()`, no
-  `PYTORCH_ENABLE_MPS_FALLBACK=1`. Arrays just work on any processor.
-- **Functional gradients.** `mx.value_and_grad(loss_fn)` replaces the
-  `zero_grad` / `backward` / `step` ceremony and eliminates an entire
-  class of gradient-accumulation bugs.
-
-On top of MLX, lmxlab makes the experiment loop short: swap architectures
-in one line, get standardized metrics automatically, and compare results
-across runs without writing boilerplate.
-
-The key idea is that GPT, LLaMA, DeepSeek, Mamba, and dozens of other
-architectures are not fundamentally different models. They are different
-*configurations* of the same building blocks: attention, SSMs, feed-forward
-networks, normalization, and positional encoding. lmxlab makes this concrete
-with **config factories** — so you can test a hypothesis across architectures
-without rewriting training code.
+In lmxlab, a single `LanguageModel` class is parameterized by a
+configuration object that selects components from a registry.
+Architecture comparisons reduce to config changes; the training loop,
+data pipeline, and evaluation code remain fixed.
 
 ```python
 from lmxlab.models.llama import llama_config
 from lmxlab.models.deepseek import deepseek_config
 from lmxlab.models.base import LanguageModel
 
-# Same LanguageModel class, different configs
+# Same model class, different configurations
 llama = LanguageModel(llama_config(d_model=512, n_heads=8, n_kv_heads=4, n_layers=6))
 deepseek = LanguageModel(deepseek_config(d_model=512, n_heads=8, n_layers=6, kv_lora_rank=64))
 ```
 
-No subclassing. No `LlamaModel` vs `DeepSeekModel`. One `LanguageModel` class,
-assembled from registry components based on what the config asks for.
+## Motivation
+
+PyTorch's MPS backend on Apple Silicon has incomplete operator
+coverage, [silent numerical errors on non-contiguous tensors](https://elanapearl.github.io/blog/2025/the-bug-that-taught-me-pytorch/),
+and redundant memory copies on unified-memory hardware. MLX was
+designed for Apple Silicon and
+shows [30-50% higher throughput](https://github.com/LucasSte/MLX-vs-Pytorch)
+than PyTorch MPS on M-series processors. It requires no explicit
+device management, and its functional gradient API
+(`mx.value_and_grad`) replaces the stateful
+`zero_grad`/`backward`/`step` pattern.
 
 ## Design principles
 
-- **Research-first.** Designed for fast iteration on ideas, not production
-  serving. Change a config, train, compare — the experiment loop should
-  be the bottleneck, not the framework.
-- **MLX-native.** No PyTorch translation layer. Uses MLX idioms directly:
-  `nn.value_and_grad`, `mx.compile`, `mx.fast.scaled_dot_product_attention`,
-  unified memory.
-- **Config factories, not subclasses.** Architecture variants are configs, not
-  class hierarchies. A `BlockConfig` names its components by string, and a
-  typed `Registry` resolves them at construction time.
-- **Progressive complexity.** Start with standard MHA and LayerNorm (GPT-style),
-  then swap in GQA + RMSNorm + SwiGLU (LLaMA-style), then try MLA
-  (DeepSeek-style) or Mamba SSMs. Same model class throughout.
-- **Reproducible experiments.** FLOP-matched budgets, train/val splits, MLflow
-  tracking, standardized metrics, and structured results logging.
+1. **Composition over inheritance.** Architecture variants are
+   configuration objects. Adding an architecture means registering
+   components.
+2. **Readability over performance.** Code is written to be read and
+   changed quickly.
+3. **MLX-native idioms.** Functional gradients (`nn.value_and_grad`),
+   compiled execution (`mx.compile`), unified memory.
+4. **Reproducibility.** Fixed time/FLOP budgets, deterministic
+   train/val splits, MLflow tracking, results logging.
 
 ## Installation
 
@@ -81,41 +66,67 @@ pip install -e ".[dev]"
 ```
 
 Requires Python 3.12+ and an Apple Silicon Mac (M1 or later) for GPU acceleration.
-MLX will still run on Intel Macs and Linux using CPU, but the performance
+MLX also runs on Intel Macs and Linux (CPU only), but performance
 characteristics will differ.
 
-## What's included
+## Components
 
-- **24 architectures** as config factories: GPT, LLaMA, Gemma, Gemma 3, Qwen, Qwen 3 MoE, Qwen 3.5, Qwen-Next, Mixtral, DeepSeek V2/V3, Nemotron, Llama 4 Scout/Maverick, Mistral Small, OLMo 2, GPT-OSS, Grok, Kimi K2.5, SmolLM3, Falcon H1, Jamba, Bamba, GLM-4.5
-- **Building blocks**: MHA, GQA, MLA, GatedGQA, SlidingWindowGQA, ChunkedGQA, SparseGQA (DSA), Mamba-2 SSD, Mamba-3, GatedDeltaNet, MoE, SharedExpertMoE, LatentMoE, QK-norm, SwiGLU, squared ReLU
-- **Compiled training** with `mx.compile`, functional gradients, gradient clipping, cosine schedules, dropout, muP parameterization
-- **Advanced training**: DPO, GRPO, multi-token prediction, curriculum learning, knowledge distillation
-- **LoRA & QLoRA**: parameter-efficient fine-tuning with optional 4-bit quantization
-- **Inference**: autoregressive generation, speculative decoding, best-of-N sampling, beam search, reward model scoring
-- **HuggingFace integration**: load pretrained weights from the Hub
-- **Experiment framework**: time/FLOP-budgeted runs, MLflow tracking, results logging, hyperparameter sweeps, MLX profiling
-- **35 recipe scripts**: training, fine-tuning, ablation studies, architecture comparison, benchmarking
+### Architectures (24 config factories)
+
+GPT, LLaMA, Gemma, Gemma 3 (sliding window), Qwen, Qwen 3 MoE,
+Qwen 3.5 (hybrid DeltaNet), Qwen-Next (gated attention), Mixtral (MoE),
+DeepSeek V2/V3 (MLA + MoE), Nemotron (hybrid Mamba-Transformer MoE),
+Llama 4 Scout/Maverick (iRoPE + chunked attention), Mistral Small
+(sliding window), OLMo 2 (QK-norm), GPT-OSS (QK-norm), Grok
+(SharedExpertMoE), Kimi K2.5 (DeltaNet + MoE), SmolLM3 (iRoPE),
+Falcon H1 (hybrid Mamba-2), Jamba (Mamba-2 + MoE), Bamba (hybrid
+Mamba-2), GLM-4.5 (MLA NoPE).
+
+### Sequence mixing operators
+
+MHA, GQA, MLA, GatedGQA, SlidingWindowGQA, ChunkedGQA, SparseGQA
+(DSA), Mamba-2 SSD, Mamba-3 (trapezoidal), GatedDeltaNet.
+
+### Feed-forward and routing
+
+SwiGLU, squared ReLU, MoE, SharedExpertMoE, LatentMoE.
+
+### Training
+
+Compiled forward/backward via `mx.compile`, functional gradients,
+gradient clipping, cosine annealing, dropout, muP parameterization,
+DPO, GRPO, multi-token prediction, curriculum learning, knowledge
+distillation. LoRA and QLoRA (4-bit quantization) for
+parameter-efficient fine-tuning.
+
+### Inference
+
+Autoregressive generation, speculative decoding, best-of-N sampling,
+beam search, reward model scoring.
+
+### Experiment infrastructure
+
+Runs budgeted by wall time or FLOPs, MLflow tracking, results logging,
+hyperparameter sweeps, MLX profiling. HuggingFace Hub integration for
+pretrained weight loading.
+
+### Recipes
+
+35 scripts for training, fine-tuning, alignment (DPO, GRPO),
+multi-token prediction, distillation, evaluation, quantization,
+architecture comparison, optimizer comparison, and KV cache analysis.
 
 ## Documentation overview
 
-- **[Quickstart](getting-started/quickstart.md)** -- Build and run a model in
-  under 20 lines.
-- **[First Training Run](getting-started/first-training-run.md)** -- Train a
-  model from scratch, step by step.
-- **[Architecture Overview](architecture/overview.md)** -- How configs, registries,
-  and `ConfigurableBlock` fit together.
-- **[MLX Idioms](architecture/mlx-idioms.md)** -- How MLX differs from PyTorch
-  and why it matters for this library.
-- **[Models](models/index.md)** -- Compare all 24 architectures side-by-side.
-- **[Compiled Training](architecture/compiled-training.md)** -- How `mx.compile`
-  fuses the training step.
-- **[Unified Memory](architecture/unified-memory.md)** -- What Apple Silicon's
-  memory model means for ML.
-- **[Production Optimizations](architecture/production-optimizations.md)** -- How
-  production systems (vLLM, llama.cpp) optimize beyond what lmxlab teaches.
-- **[Recipes](recipes/index.md)** -- All 35 ready-to-run scripts, categorized.
-- **[Experiment Methodology](experiments/methodology.md)** -- How to run rigorous
-  experiments with the framework.
-- **[Developer Log](devlog/index.md)** -- Design decisions, lessons learned,
-  and pre-registered experiment plans.
-- **[API Reference](api/index.md)** -- Auto-generated module documentation.
+- [Quickstart](getting-started/quickstart.md): build and run a model in under 20 lines
+- [First Training Run](getting-started/first-training-run.md): train a model from scratch
+- [Architecture Overview](architecture/overview.md): configs, registries, and `ConfigurableBlock`
+- [MLX Idioms](architecture/mlx-idioms.md): differences between MLX and PyTorch
+- [Models](models/index.md): all 24 architectures compared
+- [Compiled Training](architecture/compiled-training.md): how `mx.compile` fuses the training step
+- [Unified Memory](architecture/unified-memory.md): Apple Silicon's memory model for ML
+- [Production Optimizations](architecture/production-optimizations.md): optimizations in vLLM, llama.cpp, mlx-lm
+- [Recipes](recipes/index.md): all 35 scripts, categorized
+- [Experiment Methodology](experiments/methodology.md): running experiments with the framework
+- [Developer Log](devlog/index.md): design decisions and pre-registered experiments
+- [API Reference](api/index.md): auto-generated module documentation

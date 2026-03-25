@@ -1,13 +1,13 @@
 # Production Optimizations
 
-lmxlab teaches readable implementations. But production systems use
-optimizations that can deliver 2-10x speedups. This page explains
-**what** those optimizations do, **why** they matter, and **how** they
-relate to what lmxlab already implements.
+Production inference systems use optimizations that deliver 2-10x
+speedups over naive implementations. This page describes what those
+optimizations do, why they matter, and how they relate to lmxlab's
+implementations.
 
 !!! note "Educational, not implemented"
     lmxlab does not implement most of these optimizations. This page
-    teaches you how they work so you can understand production systems
+    describes how they work, with references to production systems
     like vLLM, llama.cpp, and mlx-lm.
 
 ## Flash Attention
@@ -17,8 +17,8 @@ relate to what lmxlab already implements.
 Standard attention computes `O = softmax(QK^T / sqrt(d)) * V`. This
 materializes the full N x N attention matrix in GPU memory. For a
 4096-token sequence in float16, that matrix is 32 MB **per head, per
-layer**. The bottleneck is not compute — modern GPUs have enormous
-FLOP/s — but **memory bandwidth**: reading and writing these large
+layer**. The bottleneck is not compute (modern GPUs have enormous
+FLOP/s) but **memory bandwidth**: reading and writing these large
 intermediate matrices dominates wall-clock time.
 
 ### How Flash Attention solves it
@@ -27,20 +27,26 @@ Flash Attention (Dao et al., 2022) is an **IO-aware exact attention
 algorithm**. "Exact" is critical: it produces mathematically identical
 results, just with far fewer memory round-trips.
 
-**Tiling.** Q, K, V are split into blocks that fit in GPU SRAM
+#### Tiling
+
+Q, K, V are split into blocks that fit in GPU SRAM
 (on-chip fast memory, ~20 MB on an A100 vs 40-80 GB HBM). Each block
 of Q attends to all blocks of K, V without ever writing the full
 N x N matrix to HBM.
 
-**Online softmax.** The key algorithmic insight. Standard softmax
+#### Online softmax
+
+The core algorithmic insight. Standard softmax
 requires knowing `max(x_1, ..., x_N)` across the entire row before
-computing any output. Online softmax maintains running statistics —
-a running maximum and running denominator — updated incrementally as
+computing any output. Online softmax maintains running statistics
+(a running maximum and running denominator) updated incrementally as
 each new tile of K is processed. When a new tile produces a new
 maximum, previous partial results are rescaled. This makes softmax
 associative over tiles.
 
-**IO complexity.** Standard attention requires O(N*d + N^2) HBM
+#### IO complexity
+
+Standard attention requires O(N*d + N^2) HBM
 accesses. Flash Attention requires O(N^2 * d^2 * M^{-1}), where M
 is SRAM size. For typical d=128, M~100KB, this is many-fold fewer
 HBM accesses. The authors prove this is **asymptotically optimal**.
@@ -51,7 +57,7 @@ lmxlab uses `mx.fast.scaled_dot_product_attention`, which is MLX's
 optimized Metal kernel. It supports causal masking and computes
 softmax in float32 regardless of input precision. While optimized
 for Apple Silicon, it is not fully IO-aware in the Flash Attention
-sense — the Metal FlashAttention project demonstrates that Flash
+sense; the Metal FlashAttention project demonstrates that Flash
 Attention-style tiling is feasible on Apple GPUs.
 
 ```python
@@ -109,7 +115,7 @@ Quantizing KV cache to 4 bits enables 2x larger batch sizes or
 
 ### What lmxlab does
 
-lmxlab implements a straightforward KV cache — each layer stores
+lmxlab implements a straightforward KV cache where each layer stores
 K, V tensors that grow with sequence length:
 
 ```python
@@ -118,9 +124,8 @@ logits, cache = model(next_token, cache=cache)
 mx.eval(logits, *[c for pair in cache for c in pair])
 ```
 
-For educational purposes, this is the right approach — it makes
-the caching mechanism explicit. Production systems add PagedAttention
-and quantization on top of this same concept.
+This keeps the caching mechanism explicit. Production systems add
+PagedAttention and quantization on top of this same concept.
 
 **References:**
 [PagedAttention (Kwon et al., 2023)](https://arxiv.org/abs/2309.06180),
@@ -144,29 +149,35 @@ registers or shared memory.
 Modern GPUs are bottlenecked by memory bandwidth, not compute. An
 A100 has 312 TFLOP/s of compute but only 2 TB/s of bandwidth. For
 elementwise operations (activations, normalization, residual adds),
-the ratio of memory access to compute is extremely unfavorable — they
+the ratio of memory access to compute is extremely unfavorable, and they
 are almost entirely bandwidth-bound. Fusing them with adjacent
 operations eliminates round-trips to HBM.
 
 ### Examples
 
-**Fused attention.** Flash Attention is the canonical example — it
-fuses QK^T matmul, softmax, and multiplication by V into a single
+#### Fused attention
+
+Flash Attention is the canonical example, fusing
+QK^T matmul, softmax, and multiplication by V into a single
 tiled kernel.
 
-**Fused LayerNorm + Linear.** RMSNorm computes reduction statistics,
+#### Fused LayerNorm + Linear
+
+RMSNorm computes reduction statistics,
 normalizes, then the next operation is typically a linear projection.
 Fusing avoids writing the normalized tensor to HBM.
 
-**Fused SwiGLU.** The gated FFN computes
+#### Fused SwiGLU
+
+The gated FFN computes
 `output = (xW_gate) * silu(xW_up)`, requiring two projections, an
 activation, and a multiply. Fusing all four operations into one kernel
 can yield 10-13% throughput improvement.
 
 ### How MLX handles this
 
-MLX's `mx.compile` performs graph-level fusion automatically. When
-you compile a function, MLX analyzes the computation graph, identifies
+MLX's `mx.compile` performs graph-level fusion automatically. On
+compilation, MLX analyzes the computation graph, identifies
 fusion opportunities, and generates fused Metal shaders:
 
 ```python
@@ -203,12 +214,12 @@ for bandwidth-bound operations).
 ### Granularity matters
 
 - **Per-tensor:** One scale for the entire weight tensor. Cheapest
-  but crudest — outliers anywhere penalize everything.
+  but crudest; outliers anywhere penalize everything.
 - **Per-channel:** One scale per output channel. Captures
   channel-wise distribution differences.
 - **Per-group:** Splits each channel into groups of G elements
   (commonly 32-128), each with its own scale. This is the dominant
-  approach for LLMs — it balances accuracy and overhead.
+  approach for LLMs, balancing accuracy and overhead.
 
 ### Post-training quantization methods
 
@@ -221,7 +232,7 @@ second-order (Hessian) information. Strong accuracy at 3-4 bits.
 to large activations) and protects them by applying per-channel
 scaling before quantization. Faster than GPTQ to apply.
 
-**GGUF / llama.cpp K-quants:** Uses hierarchical structure —
+**GGUF / llama.cpp K-quants:** Uses hierarchical structure:
 super-blocks of 256 weights subdivided into groups of 32, where
 group scales are themselves quantized to INT8. K-quants intelligently
 allocate more bits to important layers (attention) and fewer to
@@ -229,7 +240,7 @@ less important ones (some FFN layers).
 
 ### Quantization-aware training (QAT)
 
-QAT inserts fake quantization during training — the forward pass
+QAT inserts fake quantization during training. The forward pass
 simulates quantized computation (with straight-through estimator for
 gradients through rounding). The model learns to be robust to
 quantization error. Better accuracy than PTQ at very low bits (2-3
@@ -251,7 +262,7 @@ quantize_model(model, bits=4, group_size=64)
 
 MLX provides `mx.quantized_matmul()` which operates directly on
 quantized weights, dequantizing on-the-fly during computation. This
-is the key performance primitive — the Metal kernel reads compressed
+is the core performance primitive: the Metal kernel reads compressed
 weights and avoids full dequantization.
 
 **References:**
@@ -275,7 +286,7 @@ underutilized.
 
 A small, fast **draft model** generates K candidate tokens. Then the
 large **target model** verifies all K tokens in a **single forward
-pass** (processing K tokens in parallel, like a prefill step — high
+pass** (processing K tokens in parallel, like a prefill step with high
 GPU utilization).
 
 The acceptance criterion is mathematically precise: for each draft
@@ -285,12 +296,12 @@ rejection, sample from the residual distribution
 `normalize(max(0, p(x) - q(x)))`.
 
 This guarantees the **output distribution is identical to the target
-model's** — speculative decoding is lossless.
+model's**. Speculative decoding is lossless.
 
 ### Variants
 
 **Medusa** (Cai et al., 2024): Adds multiple lightweight decoding
-heads to the target model itself — each head predicts a different
+heads to the target model itself, where each head predicts a different
 future position. No separate draft model needed. 2-3x speedup.
 
 **EAGLE** (Li et al., 2024): Trains a head that predicts hidden
@@ -316,7 +327,7 @@ tokens = speculative_decode(
 )
 ```
 
-This is a pedagogically complete implementation showing the core
+This is a complete implementation showing the core
 algorithm. Production systems add tree-structured verification,
 dynamic draft length, and KV cache management for rejected tokens.
 
@@ -381,7 +392,7 @@ combined via all-reduce. Pioneered by Megatron-LM (Shoeybi et al.,
 2019).
 
 Each transformer layer requires 2 all-reduce operations. TP needs
-**high-bandwidth interconnect** — works well within a node (NVLink
+**high-bandwidth interconnect**, so it works well within a node (NVLink
 at 900 GB/s) but poorly across nodes.
 
 ### Pipeline parallelism (PP)
@@ -396,7 +407,7 @@ the pipeline full, reducing bubble overhead.
 
 ### Relevance to Apple Silicon
 
-A single M-series chip has no CPU-GPU transfer bottleneck — unified
+A single M-series chip has no CPU-GPU transfer bottleneck because unified
 memory eliminates that class of problems. The M2/M3 Ultra chips
 are dual-die designs connected via UltraFusion (~800 GB/s),
 transparently handling a form of multi-chip parallelism.
@@ -413,7 +424,7 @@ inference with MLX for 1T-parameter MoE models.
 
 ---
 
-## Summary: What lmxlab Teaches vs What Production Does
+## Summary: lmxlab vs Production Systems
 
 | Concept | lmxlab (educational) | Production |
 |---------|---------------------|------------|
@@ -425,7 +436,6 @@ inference with MLX for 1T-parameter MoE models.
 | Batching | Single sequence | Continuous batching + chunked prefill |
 | Parallelism | Single device | TP + PP across devices |
 
-The readable version teaches you **what** these operations compute.
-The optimized version teaches you **how** to compute them fast. Both
-are valuable — understanding the simple version makes the optimized
-version comprehensible.
+The readable implementations show **what** these operations compute.
+The optimized versions show **how** to compute them fast. Understanding
+the simple version makes the optimized version comprehensible.

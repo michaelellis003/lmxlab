@@ -72,8 +72,8 @@ for token_id in stream_generate(
     print(token_id, end=' ', flush=True)
 ```
 
-This is useful for real-time display where you want to show tokens
-as they are generated rather than waiting for the full sequence.
+This is useful for real-time display, where tokens are shown
+as they are generated rather than after the full sequence completes.
 
 ## Best-of-N Sampling
 
@@ -96,9 +96,7 @@ best = best_of_n(
 )
 ```
 
-Best-of-N is a simple but effective way to improve generation
-quality. Each candidate is scored by its total log probability
-under the model, optionally normalized by length.
+Each candidate is scored by its total log probability under the model, optionally normalized by length. Selecting the highest-scoring candidate tends to improve generation quality over single-sample decoding.
 
 ## Majority Vote
 
@@ -144,18 +142,17 @@ print(f'Acceptance rate: {stats["acceptance_rate"]:.1%}')
 ```
 
 !!! note "Unified Memory Advantage"
-    Speculative decoding is especially interesting on Apple Silicon.
-    Both models share unified memory, so there is no data transfer
-    overhead between CPU and GPU. The draft and target models can
-    coexist efficiently in the same memory pool.
+    On Apple Silicon, both models share unified memory, so there is
+    no data transfer overhead between CPU and GPU. The draft and
+    target models coexist in the same memory pool without copies.
 
 ### How It Works
 
-1. **Draft:** The small model generates `draft_tokens` candidate tokens
-2. **Verify:** The target model processes the full sequence (prompt + drafts) in one forward pass
-3. **Accept/reject:** Each drafted token is compared against what the target would have produced
-4. **On match:** Accept and continue
-5. **On mismatch:** Use the target's token, discard remaining drafts, restart
+1. The small model generates `draft_tokens` candidate tokens.
+2. The target model processes the full sequence (prompt + drafts) in one forward pass.
+3. Each drafted token is compared against the target model's distribution.
+4. Matching tokens are accepted and retained.
+5. On the first mismatch, the target model's token is used and remaining drafts are discarded.
 
 When the acceptance rate is high, speculative decoding generates
 multiple tokens per target model forward pass, providing a

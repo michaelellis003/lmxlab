@@ -1,8 +1,8 @@
 # Compiled Training
 
 This page explains how lmxlab's training loop uses `mx.compile` to fuse
-the entire training step into a single optimized computation graph, and why
-this matters for performance on Apple Silicon.
+the entire training step into a single optimized computation graph. The
+resulting reduction in overhead is significant on Apple Silicon.
 
 ## The basic training step
 
@@ -24,7 +24,7 @@ mx.eval(loss, model.parameters(), optimizer.state)
 
 Each of these steps builds a computation graph. MLX's lazy evaluation means
 nothing actually runs until `mx.eval`. But without compilation, each call
-to the step function creates a *new* graph every time — MLX must trace,
+to the step function creates a *new* graph every time, so MLX must trace,
 optimize, and schedule it from scratch.
 
 ## What `mx.compile` does
@@ -44,10 +44,10 @@ if config.compile_step:
 
 After the first call, the compiled function:
 
-1. **Skips graph construction** — reuses the cached graph
-2. **Enables kernel fusion** — combines multiple operations into single GPU kernels
-3. **Optimizes memory layout** — plans buffer reuse across the graph
-4. **Reduces Python overhead** — no Python-level tracing on subsequent calls
+1. Skips graph construction by reusing the cached graph
+2. Fuses multiple operations into single GPU kernels
+3. Plans buffer reuse across the graph, reducing memory allocation
+4. Eliminates Python-level tracing on subsequent calls
 
 ## The `inputs` and `outputs` contract
 
@@ -67,7 +67,7 @@ This is necessary because `_single_step` mutates model parameters via
 that the model's parameter arrays change between calls.
 
 !!! warning "Getting inputs/outputs wrong"
-    If you forget to include optimizer state in outputs, the optimizer's
+    If optimizer state is not included in outputs, the optimizer's
     internal state (momentum, second moments for Adam) will not be
     updated correctly after the first step. In lmxlab, we pass
     `model.trainable_parameters()` which captures both the parameters
@@ -78,14 +78,14 @@ that the model's parameter arrays change between calls.
 **Compile when:**
 
 - Running production training loops (the default: `compile_step=True`)
-- Profiling throughput — compilation gives realistic performance numbers
+- Profiling throughput, since compilation gives realistic performance numbers
 - The training step has no data-dependent control flow
 
 **Don't compile when:**
 
-- **Debugging** — compiled functions give less informative stack traces
-- **Prototyping** — compilation adds startup latency for the first step
-- **Variable-shape inputs** — if batch size or sequence length changes,
+- Debugging, because compiled functions give less informative stack traces
+- Prototyping, because compilation adds startup latency for the first step
+- Variable-shape inputs: if batch size or sequence length changes,
   the graph must be retraced (triggering recompilation)
 
 Set `compile_step=False` in `TrainConfig` to disable:
@@ -141,7 +141,7 @@ trainer = Trainer(model, TrainConfig(compile_step=True))
 
 The speedup from compilation depends on model size and step complexity.
 Expected improvements on Apple Silicon (approximate, based on MLX
-documentation and community benchmarks — actual results vary by
+documentation and community benchmarks; actual results vary by
 hardware, batch size, and sequence length):
 
 | Scenario | Uncompiled | Compiled | Speedup |
@@ -152,7 +152,7 @@ hardware, batch size, and sequence length):
 
 The larger the model, the more opportunity for kernel fusion and the
 greater the relative reduction in Python overhead. Use
-`benchmark_compile.py` to measure on your specific hardware.
+`benchmark_compile.py` to measure on a given hardware configuration.
 
 ## How lmxlab structures the compiled step
 
@@ -163,7 +163,7 @@ def _single_step(self, x, y):
     # Forward pass + backward pass (functional)
     loss, grads = self._loss_and_grad(self.model, x, y)
 
-    # Gradient clipping (functional — returns new grads)
+    # Gradient clipping (functional, returns new grads)
     if self.config.max_grad_norm > 0:
         grads, _ = optim.clip_grad_norm(
             grads, max_norm=self.config.max_grad_norm
@@ -176,11 +176,11 @@ def _single_step(self, x, y):
 
 Key design choices:
 
-1. **Everything in one function** — forward, backward, clipping, and
-   optimizer update are fused into a single compiled graph
-2. **Functional gradients** — `nn.value_and_grad` returns a gradient dict,
-   not in-place `.grad` attributes, which is what `mx.compile` expects
-3. **Single eval boundary** — `mx.eval` is called *outside* the compiled
-   function, after it returns, to force evaluation of the entire graph
-4. **No Python conditionals inside** — the `if max_grad_norm > 0` check
-   is on a Python float (config value), not a tensor, so it's safe
+1. Forward, backward, clipping, and optimizer update are fused into a
+   single compiled graph.
+2. `nn.value_and_grad` returns a gradient dict (not in-place `.grad`
+   attributes), which is what `mx.compile` expects.
+3. `mx.eval` is called *outside* the compiled function, after it returns,
+   to force evaluation of the entire graph.
+4. The `if max_grad_norm > 0` check is on a Python float (config value),
+   not a tensor, so it is safe inside a compiled function.

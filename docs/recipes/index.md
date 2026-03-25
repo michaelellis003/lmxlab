@@ -1,8 +1,8 @@
 # Recipes
 
-Ready-to-run scripts in the `recipes/` directory. Each is self-contained —
-it creates its own data, builds models, and prints results. No external
-downloads required unless noted.
+Scripts in the `recipes/` directory. Each script creates its own data,
+builds models, and prints results. External downloads are noted where
+applicable.
 
 ```bash
 # Run any recipe
@@ -14,10 +14,10 @@ uv run python recipes/train_tiny_gpt.py --help
 
 ## Training Basics
 
-Start here. These scripts train small models on Shakespeare text and
-demonstrate the core training loop.
+These scripts train small models on Shakespeare text and demonstrate
+the core training loop.
 
-| Recipe | What it teaches |
+| Recipe | Description |
 |--------|----------------|
 | [`train_tiny_gpt.py`](#train_tiny_gpt) | End-to-end workflow: build, train, generate |
 | [`train_llama_shakespeare.py`](#train_llama_shakespeare) | BPE tokenization, compiled training |
@@ -29,8 +29,8 @@ demonstrate the core training loop.
 
 ### train_tiny_gpt
 
-The "hello world" of lmxlab. Trains a tiny GPT on Shakespeare with
-character-level tokenization. Good for verifying your install works.
+Trains a tiny GPT on Shakespeare with character-level tokenization.
+Serves as an installation verification test.
 
 ```bash
 uv run python recipes/train_tiny_gpt.py
@@ -101,7 +101,7 @@ uv run python recipes/compare_schedules.py --optimizers adamw lion
 
 Parameter-efficient methods for adapting pretrained models.
 
-| Recipe | What it teaches |
+| Recipe | Description |
 |--------|----------------|
 | [`finetune_lora.py`](#finetune_lora) | LoRA: train ~0.1% of parameters |
 | [`finetune_qlora.py`](#finetune_qlora) | QLoRA: 4-bit base + LoRA adapters |
@@ -143,7 +143,7 @@ uv run python recipes/load_pretrained.py --repo meta-llama/Llama-3.2-1B
 
 Specialized training objectives beyond standard next-token prediction.
 
-| Recipe | What it teaches |
+| Recipe | Description |
 |--------|----------------|
 | [`train_dpo.py`](#train_dpo) | Direct Preference Optimization |
 | [`train_grpo.py`](#train_grpo) | Group Relative Policy Optimization |
@@ -194,7 +194,7 @@ uv run python recipes/train_moe.py --experts 4 --top-k 2
 
 Hybrid attention from Qwen 3.5: interleaves Gated DeltaNet (linear
 attention with delta rule) and standard GQA layers. DeltaNet uses
-fixed-size state — O(d^2) per token regardless of sequence length.
+fixed-size state, O(d^2) per token regardless of sequence length.
 
 ```bash
 uv run python recipes/train_deltanet.py --steps 300
@@ -217,7 +217,7 @@ uv run python recipes/distill_model.py --temperature 4 --alpha 0.7
 
 Different strategies for generating text from trained models.
 
-| Recipe | What it teaches |
+| Recipe | Description |
 |--------|----------------|
 | [`interactive_generate.py`](#interactive_generate) | Streaming token-by-token generation |
 | [`advanced_sampling.py`](#advanced_sampling) | Best-of-N and majority vote |
@@ -245,9 +245,9 @@ uv run python recipes/advanced_sampling.py --n 8
 ### speculative_decoding
 
 A small draft model proposes K tokens, then a larger target model verifies
-them in a single forward pass. Mathematically lossless — the output
-distribution is identical to the target model's. Especially natural on
-unified memory where both models share the same memory pool.
+them in a single forward pass. The procedure is lossless: the output
+distribution is identical to the target model's. On unified memory, both models share the same memory pool,
+avoiding transfer overhead.
 
 ```bash
 uv run python recipes/speculative_decoding.py --draft-tokens 4
@@ -259,7 +259,7 @@ uv run python recipes/speculative_decoding.py --draft-tokens 4
 
 Scripts for understanding the differences between transformer architectures.
 
-| Recipe | What it teaches |
+| Recipe | Description |
 |--------|----------------|
 | [`compare_architectures.py`](#compare_architectures) | Parameter counts, KV cache sizes for all 8 architectures |
 | [`compare_training.py`](#compare_training) | Training dynamics: loss curves across architectures |
@@ -269,8 +269,8 @@ Scripts for understanding the differences between transformer architectures.
 ### compare_architectures
 
 Instantiates all 8 architectures at matched dimensions and compares
-parameter counts, KV cache sizes, and structural differences. No training
-— just model construction and analysis.
+parameter counts, KV cache sizes, and structural differences. No
+training is performed; only model construction and analysis.
 
 ```bash
 uv run python recipes/compare_architectures.py
@@ -312,9 +312,9 @@ uv run python recipes/compare_kv_cache.py --d-model 128 --max-gen 512
 
 ## Benchmarks & Profiling
 
-Measure performance on your hardware.
+Performance measurement on local hardware.
 
-| Recipe | What it teaches |
+| Recipe | Description |
 |--------|----------------|
 | [`benchmark_compile.py`](#benchmark_compile) | `mx.compile` speedup measurement |
 | [`profile_models.py`](#profile_models) | Memory, throughput, and generation speed |
@@ -324,8 +324,8 @@ Measure performance on your hardware.
 ### benchmark_compile
 
 Measures training step time with and without `mx.compile` at multiple
-model sizes. Quantifies the speedup from kernel fusion on your specific
-Apple Silicon chip.
+model sizes. Quantifies the speedup from kernel fusion on a given Apple Silicon
+chip.
 
 ```bash
 uv run python recipes/benchmark_compile.py
@@ -366,7 +366,7 @@ uv run python recipes/quantize_and_generate.py --bits 4 8
 
 Structured experiment infrastructure for reproducible research.
 
-| Recipe | What it teaches |
+| Recipe | Description |
 |--------|----------------|
 | [`run_experiment.py`](#run_experiment) | Time-budgeted experiments with logging |
 | [`sweep_learning_rate.py`](#sweep_learning_rate) | Grid and random hyperparameter sweeps |
@@ -396,7 +396,8 @@ uv run python recipes/sweep_learning_rate.py --min-lr 1e-4 --max-lr 1e-2
 
 Demonstrates the experiment analysis toolkit on synthetic data. Covers
 `compare_experiments`, `compute_statistics`, `confidence_interval`,
-`cohens_d`, and `simplicity_score`. No training required — runs instantly.
+`cohens_d`, and `simplicity_score`. No training required; runs on
+synthetic data.
 
 ```bash
 uv run python recipes/analyze_experiments.py

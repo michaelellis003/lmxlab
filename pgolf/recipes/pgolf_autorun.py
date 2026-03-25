@@ -4,7 +4,7 @@ Drives the OpenAI Parameter Golf challenge (https://github.com/openai/parameter-
 via the lmxlab /autorun skill. Each iteration modifies hyperparameters or architecture
 in train_gpt_mlx.py, runs training, and logs results.
 
-The agent loop (driven by Claude Code via /autorun) calls:
+The agent loop calls:
   1. propose(past_results) -> config dict
   2. run(config) -> metrics dict
   3. Log result and print JSON summary
@@ -41,7 +41,9 @@ from lmxlab.experiments.tracking import ExperimentLog, LogEntry
 # ── Task identity ────────────────────────────────────────────
 TASK_NAME = "pgolf"
 MAX_ITERATIONS = 20
-PGOLF_DIR = Path(__file__).resolve().parent.parent.parent.parent / "parameter-golf"
+PGOLF_DIR = (
+    Path(__file__).resolve().parent.parent.parent.parent / "parameter-golf"
+)
 RESULTS_FILE = "pgolf/experiments/pgolf_results.jsonl"
 ARTIFACT_LIMIT_BYTES = 16_000_000
 SCRIPT_BACKUP_DIR = Path("pgolf/experiments/pgolf_scripts")
@@ -82,7 +84,7 @@ LOCAL_OVERRIDES = {
 }
 
 
-# ── MUTABLE: Claude edits this function between iterations ────
+# ── MUTABLE: edit this function between iterations ────
 
 
 def propose(
@@ -111,7 +113,8 @@ def propose(
     # Zero new params, ~2% overhead. Used in top 3 competition submissions.
     # Best local config: 6L+3u+4h/4kv+EVAL_STRIDE=256+NORMUON=1
     hyp039_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-039")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -139,12 +142,21 @@ def propose(
             "hypothesis": "HYP-039-xsa",
         },
         {
-            "env_overrides": {**best_local_base, "XSA": "1", "VALUE_RESID": "1"},
+            "env_overrides": {
+                **best_local_base,
+                "XSA": "1",
+                "VALUE_RESID": "1",
+            },
             "description": "XSA + Value Residual (test interaction)",
             "hypothesis": "HYP-039-xsa-vr",
         },
         {
-            "env_overrides": {**best_local_base, "XSA": "1", "DENSE_DWA": "1", "VALUE_RESID": "1"},
+            "env_overrides": {
+                **best_local_base,
+                "XSA": "1",
+                "DENSE_DWA": "1",
+                "VALUE_RESID": "1",
+            },
             "description": "XSA + DWA + Value Residual (triple combo test)",
             "hypothesis": "HYP-039-xsa-dwa-vr",
         },
@@ -157,7 +169,8 @@ def propose(
     # Competition PRs apply XSA selectively. Test if early layers
     # need self-value for feature formation.
     hyp040_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-040")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -165,20 +178,32 @@ def propose(
 
     configs = [
         {
-            "env_overrides": {**best_local_base, "XSA": "1", "VALUE_RESID": "1",
-                              "XSA_START_LAYER": "3"},
+            "env_overrides": {
+                **best_local_base,
+                "XSA": "1",
+                "VALUE_RESID": "1",
+                "XSA_START_LAYER": "3",
+            },
             "description": "Partial XSA: last 3 of 6 layers only + VR",
             "hypothesis": "HYP-040-last3",
         },
         {
-            "env_overrides": {**best_local_base, "XSA": "1", "VALUE_RESID": "1",
-                              "XSA_START_LAYER": "4"},
+            "env_overrides": {
+                **best_local_base,
+                "XSA": "1",
+                "VALUE_RESID": "1",
+                "XSA_START_LAYER": "4",
+            },
             "description": "Partial XSA: last 2 of 6 layers only + VR",
             "hypothesis": "HYP-040-last2",
         },
         {
-            "env_overrides": {**best_local_base, "XSA": "1", "VALUE_RESID": "1",
-                              "XSA_START_LAYER": "5"},
+            "env_overrides": {
+                **best_local_base,
+                "XSA": "1",
+                "VALUE_RESID": "1",
+                "XSA_START_LAYER": "5",
+            },
             "description": "Partial XSA: last 1 of 6 layers only + VR",
             "hypothesis": "HYP-040-last1",
         },
@@ -191,7 +216,8 @@ def propose(
     # FP16_EMBED is serialization-only (same training, different quantization).
     # Label smoothing and z-loss are loss function changes (iso-step, batch-independent).
     hyp041_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-041")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -221,7 +247,11 @@ def propose(
             "hypothesis": "HYP-041-zloss",
         },
         {
-            "env_overrides": {**best_with_xsa, "FP16_EMBED": "1", "Z_LOSS": "1e-4"},
+            "env_overrides": {
+                **best_with_xsa,
+                "FP16_EMBED": "1",
+                "Z_LOSS": "1e-4",
+            },
             "description": "FP16 embed + z-loss (best combo test)",
             "hypothesis": "HYP-041-combined",
         },
@@ -232,7 +262,8 @@ def propose(
 
     # HYP-042: Z-loss coefficient sweep + softcap interaction
     hyp042_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-042")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -269,7 +300,8 @@ def propose(
 
     # HYP-043: Focal loss — downweight easy tokens
     hyp043_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-043")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -295,7 +327,8 @@ def propose(
 
     # HYP-044: MiLe loss — entropy-weighted (upweights uncertain tokens)
     hyp044_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-044")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -320,7 +353,8 @@ def propose(
     # HYP-045: Softcap tuning with z-loss
     # Now that z-loss handles logit stabilization, softcap 30 may be redundant.
     hyp045_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-045")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -354,7 +388,8 @@ def propose(
 
     # HYP-046: QK gain + embedding init with softcap 50 + z-loss
     hyp046_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-046")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -380,7 +415,8 @@ def propose(
 
     # HYP-047: Embedding init std with softcap 50 + z-loss
     hyp047_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-047")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -405,7 +441,8 @@ def propose(
     # HYP-048: Multi-seed validation of best config
     # All prior results are seed 1337 (n=1). Validate with seeds 42, 43, 44.
     hyp048_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-048")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -434,7 +471,8 @@ def propose(
 
     # HYP-049: Training sequence length
     hyp049_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-049")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -460,7 +498,8 @@ def propose(
     # dim=384 is 56% fewer params → faster → more steps in 600s.
     # But each step learns less. Net effect is unclear.
     hyp050_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-050")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -470,9 +509,15 @@ def propose(
         {
             "env_overrides": {
                 **best_local_base,
-                "XSA": "1", "XSA_START_LAYER": "4", "VALUE_RESID": "1",
-                "FP16_EMBED": "1", "Z_LOSS": "1e-4", "LOGIT_SOFTCAP": "50.0",
-                "MODEL_DIM": "384", "NUM_HEADS": "4", "NUM_KV_HEADS": "4",
+                "XSA": "1",
+                "XSA_START_LAYER": "4",
+                "VALUE_RESID": "1",
+                "FP16_EMBED": "1",
+                "Z_LOSS": "1e-4",
+                "LOGIT_SOFTCAP": "50.0",
+                "MODEL_DIM": "384",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
             },
             "description": "dim=384 + 4h (head_dim=96, smaller+faster model)",
             "hypothesis": "HYP-050-dim384",
@@ -484,7 +529,8 @@ def propose(
 
     # HYP-051: dim=384 vs 512 iso-step (200 steps each)
     hyp051_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-051")
         and r.get("wall_time_s", 0) > 30  # smoke test threshold for iso-step
     ]
@@ -494,10 +540,17 @@ def propose(
         {
             "env_overrides": {
                 **best_local_base,
-                "XSA": "1", "XSA_START_LAYER": "4", "VALUE_RESID": "1",
-                "FP16_EMBED": "1", "Z_LOSS": "1e-4", "LOGIT_SOFTCAP": "50.0",
-                "MODEL_DIM": "512", "NUM_HEADS": "4", "NUM_KV_HEADS": "4",
-                "ITERATIONS": "200", "MAX_WALLCLOCK_SECONDS": "300",
+                "XSA": "1",
+                "XSA_START_LAYER": "4",
+                "VALUE_RESID": "1",
+                "FP16_EMBED": "1",
+                "Z_LOSS": "1e-4",
+                "LOGIT_SOFTCAP": "50.0",
+                "MODEL_DIM": "512",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "ITERATIONS": "200",
+                "MAX_WALLCLOCK_SECONDS": "300",
             },
             "description": "dim=512 iso-step baseline (200 steps)",
             "hypothesis": "HYP-051-dim512",
@@ -506,10 +559,17 @@ def propose(
         {
             "env_overrides": {
                 **best_local_base,
-                "XSA": "1", "XSA_START_LAYER": "4", "VALUE_RESID": "1",
-                "FP16_EMBED": "1", "Z_LOSS": "1e-4", "LOGIT_SOFTCAP": "50.0",
-                "MODEL_DIM": "384", "NUM_HEADS": "4", "NUM_KV_HEADS": "4",
-                "ITERATIONS": "200", "MAX_WALLCLOCK_SECONDS": "300",
+                "XSA": "1",
+                "XSA_START_LAYER": "4",
+                "VALUE_RESID": "1",
+                "FP16_EMBED": "1",
+                "Z_LOSS": "1e-4",
+                "LOGIT_SOFTCAP": "50.0",
+                "MODEL_DIM": "384",
+                "NUM_HEADS": "4",
+                "NUM_KV_HEADS": "4",
+                "ITERATIONS": "200",
+                "MAX_WALLCLOCK_SECONDS": "300",
             },
             "description": "dim=384 iso-step comparison (200 steps)",
             "hypothesis": "HYP-051-dim384",
@@ -522,7 +582,8 @@ def propose(
 
     # HYP-052: V normalization — RMSNorm on V like Q and K
     hyp052_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-052")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -541,7 +602,8 @@ def propose(
 
     # HYP-053: Stochastic depth (drop layers during training)
     hyp053_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-053")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -560,7 +622,8 @@ def propose(
 
     # HYP-054: sp2048 vocabulary test
     hyp054_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-054")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -598,7 +661,8 @@ def propose(
 
     # HYP-055: MinGRU hybrid layers (replace some attention with minGRU)
     hyp055_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-055")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -647,7 +711,8 @@ def propose(
 
     # HYP-056: sp4096 vocabulary
     hyp056_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-056")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -685,7 +750,8 @@ def propose(
 
     # HYP-057: Causal convolution hybrid layers
     hyp057_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-057")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -709,7 +775,8 @@ def propose(
 
     # HYP-058: Pre-attention causal conv (inside attention, minimal overhead)
     hyp058_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-058")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -728,7 +795,8 @@ def propose(
 
     # HYP-059: Vectorized non-attention layers (no Python loops)
     hyp059_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-059")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -752,7 +820,8 @@ def propose(
 
     # HYP-060: Eval stride tuning with sp2048
     hyp060_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-060")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -776,7 +845,8 @@ def propose(
 
     # HYP-061: RDOQ — keep output projections at fp16 (most sensitive to quant)
     hyp061_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-061")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -784,14 +854,18 @@ def propose(
 
     configs = [
         {
-            "env_overrides": {**best_sp2048,
-                              "INT8_KEEP_FLOAT_NAME_PATTERNS": "tok_emb,proj"},
+            "env_overrides": {
+                **best_sp2048,
+                "INT8_KEEP_FLOAT_NAME_PATTERNS": "tok_emb,proj",
+            },
             "description": "RDOQ: keep tok_emb + all proj layers at fp16",
             "hypothesis": "HYP-061-fp16proj",
         },
         {
-            "env_overrides": {**best_sp2048,
-                              "INT8_KEEP_FLOAT_NAME_PATTERNS": "tok_emb,attn_scale,mlp_scale,q_gain,resid_mix"},
+            "env_overrides": {
+                **best_sp2048,
+                "INT8_KEEP_FLOAT_NAME_PATTERNS": "tok_emb,attn_scale,mlp_scale,q_gain,resid_mix",
+            },
             "description": "RDOQ: keep tok_emb + all control tensors at fp16",
             "hypothesis": "HYP-061-fp16ctrl",
         },
@@ -802,7 +876,8 @@ def propose(
 
     # HYP-063: Eval-time temperature scaling (compression theory insight)
     hyp063_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-063")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -832,7 +907,8 @@ def propose(
     # HYP-064: Gradient accumulation (bias-variance tradeoff from statistics)
     # Core problem: "What is the optimal noise-averaging vs step-count tradeoff?"
     hyp064_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-064")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -858,7 +934,8 @@ def propose(
     # Core problem: "How do we combine local (bigram) and global (attention) predictions?"
     # From coding theory: context mixing improves compression by combining models.
     hyp065_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-065")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -866,7 +943,11 @@ def propose(
 
     configs = [
         {
-            "env_overrides": {**best_sp2048, "BIGRAM_VOCAB_SIZE": "4096", "BIGRAM_DIM": "64"},
+            "env_overrides": {
+                **best_sp2048,
+                "BIGRAM_VOCAB_SIZE": "4096",
+                "BIGRAM_DIM": "64",
+            },
             "description": "BigramHash 4096 dim=64 with sp2048 (local context mixing)",
             "hypothesis": "HYP-065-bigram4k",
         },
@@ -877,7 +958,8 @@ def propose(
 
     # HYP-066: Eval-time context mixing (from coding theory / James-Stein shrinkage)
     hyp066_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-066")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -887,23 +969,29 @@ def propose(
 
     configs = [
         {
-            "env_overrides": {**best_sp2048,
-                              "EVAL_MIX_ALPHA": "0.01",
-                              "EVAL_MIX_LOGPROBS": unigram_path},
+            "env_overrides": {
+                **best_sp2048,
+                "EVAL_MIX_ALPHA": "0.01",
+                "EVAL_MIX_LOGPROBS": unigram_path,
+            },
             "description": "Context mixing alpha=0.01 (1% unigram, 99% transformer)",
             "hypothesis": "HYP-066-mix001",
         },
         {
-            "env_overrides": {**best_sp2048,
-                              "EVAL_MIX_ALPHA": "0.05",
-                              "EVAL_MIX_LOGPROBS": unigram_path},
+            "env_overrides": {
+                **best_sp2048,
+                "EVAL_MIX_ALPHA": "0.05",
+                "EVAL_MIX_LOGPROBS": unigram_path,
+            },
             "description": "Context mixing alpha=0.05 (5% unigram, 95% transformer)",
             "hypothesis": "HYP-066-mix005",
         },
         {
-            "env_overrides": {**best_sp2048,
-                              "EVAL_MIX_ALPHA": "0.001",
-                              "EVAL_MIX_LOGPROBS": unigram_path},
+            "env_overrides": {
+                **best_sp2048,
+                "EVAL_MIX_ALPHA": "0.001",
+                "EVAL_MIX_LOGPROBS": unigram_path,
+            },
             "description": "Context mixing alpha=0.001 (0.1% unigram, 99.9% transformer)",
             "hypothesis": "HYP-066-mix0001",
         },
@@ -915,7 +1003,8 @@ def propose(
     # HYP-067: Progressive sequence length (multigrid-inspired)
     # Train at seq_len=512 for first 60%, then switch to 1024
     hyp067_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-067")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -939,7 +1028,8 @@ def propose(
 
     # HYP-068: Shared Q-K projections (Mahalanobis attention, from metric learning)
     hyp068_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-068")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -960,7 +1050,8 @@ def propose(
     # Old: 8M train + 2M val from SAME val shard (1.95 epochs, data overlap)
     # New: 20M train from TRAIN shard + 2M val from VAL shard (0.78 epochs, no overlap)
     hyp069_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-069")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -982,7 +1073,8 @@ def propose(
 
     # HYP-070: Re-validate key findings on proper v2 dataset
     hyp070_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-070")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1020,7 +1112,8 @@ def propose(
 
     # HYP-071: Affine RMSNorm (learnable γ,β — from approximation theory)
     hyp071_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-071")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1041,7 +1134,8 @@ def propose(
     # WD gradient = λ*θ is batch-independent. But relative strength vs CE gradient
     # scales with sqrt(batch). At 8K, use λ = 0.04/8 ≈ 0.005 to match GPU effect.
     hyp072_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-072")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1065,7 +1159,8 @@ def propose(
 
     # HYP-073: Random MLP features (from random matrix theory / kernel methods)
     hyp073_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-073")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1084,7 +1179,8 @@ def propose(
 
     # HYP-074: Random attention projections (extending JL/random features insight)
     hyp074_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-074")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1106,7 +1202,11 @@ def propose(
             "hypothesis": "HYP-074-randomk",
         },
         {
-            "env_overrides": {**best_random, "RANDOM_ATTN_V": "1", "RANDOM_ATTN_K": "1"},
+            "env_overrides": {
+                **best_random,
+                "RANDOM_ATTN_V": "1",
+                "RANDOM_ATTN_K": "1",
+            },
             "description": "Random MLP fc + V + K (maximum JL freezing)",
             "hypothesis": "HYP-074-randomvk",
         },
@@ -1117,7 +1217,8 @@ def propose(
 
     # HYP-075: Multi-seed validation of random fc + full stack (v2 data)
     hyp075_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-075")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1151,7 +1252,8 @@ def propose(
 
     # HYP-076: Wider random MLP (more random features = better kernel approx)
     hyp076_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-076")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1175,7 +1277,8 @@ def propose(
 
     # HYP-077: Orthogonal random fc (optimal JL projection from numerical LA)
     hyp077_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-077")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1194,7 +1297,8 @@ def propose(
 
     # HYP-078: Post-hoc magnitude pruning (from compressed sensing / sparse recovery)
     hyp078_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-078")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1222,7 +1326,8 @@ def propose(
 
     # HYP-079: Position-dependent MLP bias (time-varying filter from signal processing)
     hyp079_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-079")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1230,7 +1335,11 @@ def propose(
 
     configs = [
         {
-            "env_overrides": {**best_random, "ORTHO_RANDOM_FC": "1", "POS_MLP_BIAS": "1"},
+            "env_overrides": {
+                **best_random,
+                "ORTHO_RANDOM_FC": "1",
+                "POS_MLP_BIAS": "1",
+            },
             "description": "Position-dependent MLP bias (position-aware nonlinear transform)",
             "hypothesis": "HYP-079-posmlp",
         },
@@ -1241,7 +1350,8 @@ def propose(
 
     # HYP-080: Palindrome weight sharing (from symmetry theory / U-Net)
     hyp080_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-080")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1263,7 +1373,8 @@ def propose(
 
     # HYP-081: Diagnostic 1800s run (convergence analysis)
     hyp081_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-081")
         and r.get("wall_time_s", 0) > 1500
     ]
@@ -1274,8 +1385,11 @@ def propose(
 
     configs = [
         {
-            "env_overrides": {**best_ortho, "MAX_WALLCLOCK_SECONDS": "1800",
-                              "TRAIN_LOG_EVERY": "100"},
+            "env_overrides": {
+                **best_ortho,
+                "MAX_WALLCLOCK_SECONDS": "1800",
+                "TRAIN_LOG_EVERY": "100",
+            },
             "description": "Diagnostic 1800s run (3x longer, convergence analysis)",
             "hypothesis": "HYP-081-long",
         },
@@ -1286,7 +1400,8 @@ def propose(
 
     # HYP-082: Warmdown fraction optimization (from optimal control theory)
     hyp082_runs = [
-        r for r in past_results
+        r
+        for r in past_results
         if r.get("config", {}).get("hypothesis", "").startswith("HYP-082")
         and r.get("wall_time_s", 0) > 500
     ]
@@ -1482,11 +1597,14 @@ def run(
     t0 = time.time()
     # Write stdout/stderr to temp files to avoid accumulating
     # large strings in the parent process across many runs.
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".log", delete=False
-    ) as stdout_f, tempfile.NamedTemporaryFile(
-        mode="w", suffix=".err", delete=False
-    ) as stderr_f:
+    with (
+        tempfile.NamedTemporaryFile(
+            mode="w", suffix=".log", delete=False
+        ) as stdout_f,
+        tempfile.NamedTemporaryFile(
+            mode="w", suffix=".err", delete=False
+        ) as stderr_f,
+    ):
         stdout_path = stdout_f.name
         stderr_path = stderr_f.name
         result = subprocess.run(
@@ -1580,8 +1698,16 @@ def log_result(metrics: dict[str, Any], config: dict[str, Any]) -> None:
         metrics={
             k: v
             for k, v in metrics.items()
-            if k not in ("val_bpb", "val_loss", "train_loss", "param_count",
-                         "wall_time_s", "description", "status")
+            if k
+            not in (
+                "val_bpb",
+                "val_loss",
+                "train_loss",
+                "param_count",
+                "wall_time_s",
+                "description",
+                "status",
+            )
         },
     )
     log.log(entry)

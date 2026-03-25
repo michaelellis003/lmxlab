@@ -16,11 +16,11 @@ pip install -e ".[dev]"
 
 ## Requirements
 
-- **Python 3.12+**
-- **Apple Silicon Mac** (M1/M2/M3/M4) for GPU acceleration
+- Python 3.12+
+- Apple Silicon Mac (M1/M2/M3/M4) for GPU acceleration
 
-MLX will also run on Intel Macs and Linux using CPU, but performance
-will differ significantly.
+MLX also runs on Intel Macs and Linux using CPU, but performance
+will differ.
 
 ## Optional dependencies
 
@@ -66,14 +66,14 @@ lmxlab list
 
 ## Troubleshooting
 
-**`ImportError: libmlx.so` on Linux/Intel Mac:**
+`ImportError: libmlx.so` on Linux/Intel Mac:
 MLX requires Apple Silicon for GPU support. On other platforms it falls
 back to CPU, but the shared library must still be available. Ensure
-`mlx>=0.25` installed correctly: `pip install mlx`.
+`mlx>=0.25` is installed correctly: `pip install mlx`.
 
-**`ModuleNotFoundError: No module named 'tiktoken'`:**
+`ModuleNotFoundError: No module named 'tiktoken'`:
 Install the tokenizers extra: `pip install lmxlab[tokenizers]`.
 
-**Slow first run:**
+Slow first run:
 MLX compiles computation graphs on first execution. Subsequent runs
-will be faster. This is normal.
+are faster. This is expected behavior.

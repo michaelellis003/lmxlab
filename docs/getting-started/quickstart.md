@@ -1,14 +1,15 @@
 # Quickstart
 
-This guide walks through building a transformer language model, running a
-forward pass, and generating text. Everything runs on a single Apple Silicon
-GPU via MLX -- no CUDA, no `.to(device)` calls, no boilerplate.
+This guide covers building a transformer language model, running a
+forward pass, and generating text. All computation runs on Apple
+Silicon via MLX. No CUDA setup or explicit device management is
+required.
 
 ## 1. Create a model config
 
-Every model starts with a `ModelConfig`, which contains a `BlockConfig`
-describing the transformer block components. The simplest way is to use a
-preset factory function:
+Every model starts with a `ModelConfig` containing a `BlockConfig`
+that describes the transformer block components. The simplest approach
+is a preset factory function:
 
 ```python
 from lmxlab.models.llama import llama_config
@@ -47,8 +48,8 @@ block = BlockConfig(
 config = ModelConfig(block=block, vocab_size=32000, n_layers=6)
 ```
 
-You can also build a config from scratch if you want a non-standard combination.
-Want MHA with RMSNorm and a standard FFN? Just change the string names:
+Configs can also be built from scratch for non-standard combinations.
+For example, MHA with RMSNorm and a standard FFN:
 
 ```python
 block = BlockConfig(
@@ -63,7 +64,7 @@ block = BlockConfig(
 
 ## 2. Build the model
 
-Once you have a config, build the model:
+Once the config exists, construct the model:
 
 ```python
 from lmxlab.models.base import LanguageModel
@@ -92,20 +93,20 @@ logits, caches = model(tokens)
 # caches: list of (K, V) tuples, one per layer
 ```
 
-Note that we never called `.to(device)` or `.cuda()`. MLX uses unified
-memory -- the same arrays live on CPU and GPU simultaneously. Computation
-happens on the GPU automatically.
+No `.to(device)` or `.cuda()` call is needed. MLX uses unified
+memory: the same arrays are accessible from CPU and GPU, and
+computation runs on the GPU automatically.
 
 !!! note "Lazy evaluation"
     MLX operations are lazy by default. The `logits` array above is only
     *described*, not yet computed. Call `mx.eval(logits)` to force
-    evaluation, or let it happen implicitly when you read a value
+    evaluation, or let it happen implicitly when a value is read
     (e.g., `logits.shape` is available immediately, but `.item()` triggers
     evaluation).
 
 ## 4. Text generation
 
-lmxlab provides built-in generation with KV caching, sampling strategies,
+lmxlab provides generation with KV caching, sampling strategies,
 and stop tokens:
 
 ```python
@@ -144,8 +145,8 @@ output = generate(
 
 ### Streaming generation
 
-For interactive applications, `stream_generate` yields tokens one at a
-time as they are produced:
+For interactive use, `stream_generate` yields tokens one at a
+time:
 
 ```python
 from lmxlab import stream_generate
@@ -158,14 +159,14 @@ for token_id in stream_generate(
     print(token_id, end=' ', flush=True)
 ```
 
-Both functions use KV caching internally -- the first call processes the
+Both functions use KV caching internally. The first call processes the
 full prompt (prefill), then each subsequent token reuses cached key/value
-projections. This makes generation O(n) total work instead of O(n^2).
+projections, reducing total generation work from O(n^2) to O(n).
 
 ## 5. Try a different architecture
 
-The power of config factories: switch to DeepSeek-style MLA without changing
-any model code.
+Config factories allow switching architectures without changing model
+code. For example, to use DeepSeek-style MLA:
 
 ```python
 from lmxlab.models.deepseek import deepseek_config
@@ -185,8 +186,8 @@ ds_model = LanguageModel(ds_config)
 logits, caches = ds_model(tokens)
 ```
 
-Same `LanguageModel`, same `ConfigurableBlock`, same forward pass interface.
-The only difference is which attention module the registry resolves: `'gqa'`
+The same `LanguageModel` and `ConfigurableBlock` classes are used. The
+difference is which attention module the registry resolves: `'gqa'`
 for LLaMA, `'mla'` for DeepSeek.
 
 ## 6. Training (preview)
@@ -209,11 +210,11 @@ trainer = Trainer(model, train_config)
 
 The trainer uses `nn.value_and_grad` for functional gradient computation
 and `mx.eval` for explicit evaluation boundaries. See
-[MLX Idioms](../architecture/mlx-idioms.md) for why these patterns matter.
+[MLX Idioms](../architecture/mlx-idioms.md) for details on these patterns.
 
 ## 7. CLI tools
 
-lmxlab includes a CLI for quick architecture exploration:
+lmxlab includes a CLI for architecture exploration:
 
 ```bash
 # List all architectures
@@ -231,7 +232,7 @@ lmxlab bench llama --tiny --seq-len 64
 
 ## 8. Recipes
 
-Ready-to-run scripts in the `recipes/` directory:
+Scripts in the `recipes/` directory:
 
 ```bash
 # Train a tiny GPT on Shakespeare
@@ -300,8 +301,8 @@ uv run python recipes/checkpoint_resume.py --steps 200
 
 ## Next steps
 
-- **[Architecture Overview](../architecture/overview.md)** -- Understand the
-  config/registry/block design in depth.
-- **[MLX Idioms](../architecture/mlx-idioms.md)** -- Learn the MLX patterns
+- **[Architecture Overview](../architecture/overview.md)** -- The
+  config/registry/block design in detail.
+- **[MLX Idioms](../architecture/mlx-idioms.md)** -- MLX patterns
   that differ from PyTorch.
 - **[Models](../models/index.md)** -- Compare all 8 architectures side-by-side.
