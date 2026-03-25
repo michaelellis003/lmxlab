@@ -16,6 +16,7 @@ dist/
 # AI assistant config (local-only)
 .claude/
 CLAUDE.md
+memory/
 
 # Secrets
 .env
