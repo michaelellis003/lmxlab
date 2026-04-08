@@ -4,6 +4,9 @@ Transformer language models on Apple Silicon, built with [MLX](https://ml-explor
 
 [![CI](https://github.com/michaelellis003/lmxlab/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelellis003/lmxlab/actions/workflows/ci.yml)
 [![Docs](https://github.com/michaelellis003/lmxlab/actions/workflows/docs.yml/badge.svg)](https://michaelellis003.github.io/lmxlab/)
+[![PyPI](https://img.shields.io/pypi/v/lmxlab)](https://pypi.org/project/lmxlab/)
+[![Python](https://img.shields.io/pypi/pyversions/lmxlab)](https://pypi.org/project/lmxlab/)
+[![License](https://img.shields.io/github/license/michaelellis003/lmxlab)](LICENSE)
 
 ## Install
 
