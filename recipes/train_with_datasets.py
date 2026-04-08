@@ -1,12 +1,8 @@
-"""Train using TextDataset and TokenDataset classes.
+"""Train using TextDataset and TokenDataset.
 
-Demonstrates the dataset abstractions in lmxlab.data:
-
-- TextDataset: takes raw text + tokenizer, handles tokenization
-- TokenDataset: wraps pre-tokenized arrays
-- Both provide __len__ and __getitem__ for windowed training pairs
-
-Also shows how to build a simple batched iterator from a dataset.
+TextDataset takes raw text + tokenizer; TokenDataset wraps
+pre-tokenized arrays. Both provide windowed (input, target) pairs
+via __getitem__.
 
 Usage:
     uv run python recipes/train_with_datasets.py

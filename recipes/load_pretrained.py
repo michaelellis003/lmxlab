@@ -1,10 +1,7 @@
 """Load a pretrained HuggingFace model and generate text.
 
-Demonstrates the weight conversion pipeline:
-1. Download model from HuggingFace Hub
-2. Convert weight names from HF → lmxlab format
-3. Load into LanguageModel
-4. Generate text
+Downloads a model from the Hub, converts weight names from HF
+format to lmxlab format, loads into LanguageModel, generates.
 
 Requires: pip install huggingface_hub
 

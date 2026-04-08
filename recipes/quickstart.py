@@ -1,7 +1,7 @@
 """Quickstart: train a language model from scratch in ~50 lines.
 
 A minimal, annotated recipe showing the full pipeline:
-load data → build model → train → evaluate → plot.
+load data → build model → train → evaluate.
 
 Usage:
     uv run python recipes/quickstart.py
@@ -90,14 +90,3 @@ train_loss = history[-1]["loss"] if history else float("inf")
 
 print(f"\nTrain loss: {train_loss:.4f}")
 print(f"Val loss:   {val_loss:.4f}")
-
-# ── Step 5: Plot (optional) ──────────────────────────────
-try:
-    from lmxlab.analysis.plotting import plot_loss_curves
-
-    train_losses = [h["loss"] for h in history]
-    fig = plot_loss_curves(train_losses)
-    fig.savefig("quickstart_loss.png", dpi=100)
-    print("Loss curve saved to quickstart_loss.png")
-except ImportError:
-    print("(matplotlib not installed — skipping plot)")

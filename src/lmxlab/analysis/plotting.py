@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 import mlx.core as mx
 
 
-def _import_plt():  # type: ignore[no-untyped-def]
+def _import_plt():  # noqa: ANN202
     """Import matplotlib.pyplot, raising helpful error."""
     try:
         import matplotlib.pyplot as plt
@@ -176,7 +176,7 @@ def plot_gradient_flow(
     plt = _import_plt()
     import mlx.utils
 
-    leaves = mlx.utils.tree_flatten(model.parameters())  # type: ignore[union-attr]
+    leaves = mlx.utils.tree_flatten(model.parameters())  # type: ignore[attr-defined]
     groups: dict[str, list[float]] = {}
     for path, p in leaves:
         if p.ndim < 2:

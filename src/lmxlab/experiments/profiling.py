@@ -79,7 +79,7 @@ def benchmark_fn(
     }
 
 
-def memory_estimate(model: nn.Module) -> dict[str, Any]:  # type: ignore[name-defined]
+def memory_estimate(model: nn.Module) -> dict[str, Any]:
     """Estimate model memory usage from parameter shapes and dtypes.
 
     This is a static estimate based on parameter tensors. Actual
@@ -98,7 +98,7 @@ def memory_estimate(model: nn.Module) -> dict[str, Any]:  # type: ignore[name-de
     param_count = 0
     dtype_bytes: dict[str, int] = {}
 
-    for _, p in flat:  # type: ignore[misc]
+    for _, p in flat:
         nbytes = p.nbytes
         total_bytes += nbytes
         param_count += p.size
@@ -114,7 +114,7 @@ def memory_estimate(model: nn.Module) -> dict[str, Any]:  # type: ignore[name-de
 
 
 def count_parameters_by_module(
-    model: nn.Module,  # type: ignore[name-defined]
+    model: nn.Module,
 ) -> dict[str, int]:
     """Count parameters per top-level submodule.
 
@@ -131,14 +131,14 @@ def count_parameters_by_module(
     result = {}
     for name, child in model.children().items():
         flat = mlx.utils.tree_flatten(child)
-        count = sum(p.size for _, p in flat)  # type: ignore[misc]
+        count = sum(p.size for _, p in flat)
         if count > 0:
             result[name] = count
     return result
 
 
 def profile_forward(
-    model: nn.Module,  # type: ignore[name-defined]
+    model: nn.Module,
     tokens: mx.array,
     n_warmup: int = 2,
     n_iter: int = 5,
@@ -181,7 +181,7 @@ def profile_forward(
 
 
 def profile_generation(
-    model: nn.Module,  # type: ignore[name-defined]
+    model: nn.Module,
     prompt: mx.array,
     max_tokens: int = 50,
 ) -> dict[str, Any]:

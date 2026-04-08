@@ -1,8 +1,7 @@
 """Train a Mixture of Experts (MoE) model.
 
-Demonstrates MoE training where each token is routed to a subset
-of expert FFNs. Compares a standard dense model vs MoE to show
-how experts increase capacity without proportional compute cost.
+Each token is routed to top-k of N expert FFNs. Compares dense
+vs MoE at matched compute to show the capacity advantage.
 
 Usage:
     uv run python recipes/train_moe.py

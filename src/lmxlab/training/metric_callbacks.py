@@ -375,7 +375,7 @@ class EffectiveRankCallback:
             sv_sum = mx.sum(sv)
             if sv_sum.item() < 1e-10:
                 continue
-            p_sv = sv / sv_sum
+            p_sv = sv / sv_sum  # type: ignore[operator]
             # Entropy of normalized singular values
             p_sv = mx.clip(p_sv, 1e-10, 1.0)
             entropy = -mx.sum(p_sv * mx.log(p_sv))

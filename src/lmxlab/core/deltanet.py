@@ -176,7 +176,7 @@ class GatedDeltaNet(AttentionBase):
         self.decay_proj.bias = mx.full((self.n_heads,), -3.0)
         self.update_proj.bias = mx.full((self.n_heads,), -3.0)
 
-    def __call__(
+    def __call__(  # type: ignore[override]
         self,
         x: mx.array,
         mask: mx.array | None = None,
@@ -288,7 +288,7 @@ class GatedDeltaNet(AttentionBase):
         # Build new cache
         new_cache: tuple[mx.array, ...]
         if self.use_short_conv:
-            new_cache = (S, q_conv_state, k_conv_state, v_conv_state)
+            new_cache = (S, q_conv_state, k_conv_state, v_conv_state)  # type: ignore[assignment]
         else:
             new_cache = (S, mx.array(0), mx.array(0), mx.array(0))
 

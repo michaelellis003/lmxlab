@@ -1,7 +1,7 @@
 [project]
 name = "lmxlab"
 version = "0.3.1"
-description = "Research platform for language model experimentation on Apple Silicon"
+description = "Transformer language models on Apple Silicon with MLX"
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,7 +12,6 @@ keywords = ["mlx", "transformers", "apple-silicon", "language-models", "deep-lea
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -31,8 +30,8 @@ dependencies = [
 [project.optional-dependencies]
 tokenizers = ["tiktoken"]
 hf = ["huggingface_hub", "transformers", "datasets"]
-analysis = ["matplotlib"]
-experiments = ["mlflow", "optuna"]
+plotting = ["matplotlib"]
+tracking = ["mlflow"]
 dev = [
     "pytest>=8.0",
     "ruff>=0.7",
@@ -79,7 +78,15 @@ known-first-party = ["lmxlab"]
 
 [tool.mypy]
 python_version = "3.12"
-strict = true
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+# MLX is a C extension with no type stubs — many operations
+# (tree_flatten, nn.Module.__call__, mx.array ops) produce
+# false positives under strict mode.
+disable_error_code = ["misc", "arg-type"]
 
 [[tool.mypy.overrides]]
 module = [

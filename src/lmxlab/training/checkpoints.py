@@ -69,17 +69,17 @@ def load_checkpoint(
 
     # Load model weights
     weights = mx.load(str(path / "model.safetensors"))
-    model.load_weights(list(weights.items()))
+    model.load_weights(list(weights.items()))  # type: ignore[union-attr]
 
     # Load optimizer state if available
     opt_path = path / "optimizer.safetensors"
     if optimizer is not None and opt_path.exists():
         opt_state = mx.load(str(opt_path))
         # Reconstruct nested state from flat keys
-        optimizer.state = mlx.utils.tree_unflatten(list(opt_state.items()))
+        optimizer.state = mlx.utils.tree_unflatten(list(opt_state.items()))  # type: ignore[union-attr]
 
     # Load metadata
     meta_path = path / "metadata.json"
     if meta_path.exists():
-        return json.loads(meta_path.read_text())
+        return json.loads(meta_path.read_text())  # type: ignore[no-any-return]
     return {}

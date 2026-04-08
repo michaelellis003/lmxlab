@@ -1,8 +1,7 @@
 """Checkpoint and resume training.
 
-Demonstrates saving and loading training checkpoints: model
-weights, optimizer state, and step count. Trains for N steps,
-saves a checkpoint, then resumes from it and continues training.
+Trains for N steps, saves a checkpoint (model weights + optimizer
+state + step count), then resumes from it and continues.
 
 Usage:
     uv run python recipes/checkpoint_resume.py

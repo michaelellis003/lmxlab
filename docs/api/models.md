@@ -23,19 +23,11 @@ architecture when passed to `LanguageModel`.
 
 ::: lmxlab.models.gpt.gpt_tiny
 
-::: lmxlab.models.gpt.gpt_small
-
-::: lmxlab.models.gpt.gpt_medium
-
 ### LLaMA
 
 ::: lmxlab.models.llama.llama_config
 
 ::: lmxlab.models.llama.llama_tiny
-
-::: lmxlab.models.llama.llama_7b
-
-::: lmxlab.models.llama.llama_13b
 
 ### Gemma
 
@@ -43,35 +35,59 @@ architecture when passed to `LanguageModel`.
 
 ::: lmxlab.models.gemma.gemma_tiny
 
-### Gemma 3
+### Gemma 3 (Sliding Window)
 
 ::: lmxlab.models.gemma3.gemma3_config
 
 ::: lmxlab.models.gemma3.gemma3_tiny
 
-### Qwen
+### DeepSeek V2 (MLA)
 
-::: lmxlab.models.qwen.qwen_config
+::: lmxlab.models.deepseek.deepseek_config
 
-::: lmxlab.models.qwen.qwen_tiny
+::: lmxlab.models.deepseek.deepseek_tiny
 
-### Mixtral
+### DeepSeek V3 (MLA + MoE)
+
+::: lmxlab.models.deepseek.deepseek_v3_config
+
+::: lmxlab.models.deepseek.deepseek_v3_tiny
+
+### Mixtral (MoE)
 
 ::: lmxlab.models.mixtral.mixtral_config
 
 ::: lmxlab.models.mixtral.mixtral_tiny
 
-### Qwen 3.5 (Hybrid DeltaNet)
+### Llama 4 (iRoPE + Chunked Attention + MoE)
+
+::: lmxlab.models.llama4.llama4_scout_config
+
+::: lmxlab.models.llama4.llama4_scout_tiny
+
+### Nemotron (Mamba-2 + LatentMoE + Attention)
+
+::: lmxlab.models.nemotron.nemotron3_config
+
+::: lmxlab.models.nemotron.nemotron3_tiny
+
+### Falcon H1 (Mamba-2 Hybrid)
+
+::: lmxlab.models.falcon.falcon_h1_config
+
+::: lmxlab.models.falcon.falcon_h1_tiny
+
+### Jamba (Mamba-2 + MoE)
+
+::: lmxlab.models.jamba.jamba_config
+
+::: lmxlab.models.jamba.jamba_tiny
+
+### Qwen 3.5 (DeltaNet Hybrid)
 
 ::: lmxlab.models.qwen35.qwen35_config
 
 ::: lmxlab.models.qwen35.qwen35_tiny
-
-### DeepSeek
-
-::: lmxlab.models.deepseek.deepseek_config
-
-::: lmxlab.models.deepseek.deepseek_tiny
 
 ## Weight Conversion
 

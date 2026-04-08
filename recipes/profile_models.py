@@ -21,17 +21,23 @@ from lmxlab.experiments.profiling import (
 )
 from lmxlab.models.base import LanguageModel
 from lmxlab.models.deepseek import deepseek_tiny
+from lmxlab.models.falcon import falcon_h1_tiny
+from lmxlab.models.gemma import gemma_tiny
 from lmxlab.models.gpt import gpt_tiny
+from lmxlab.models.jamba import jamba_tiny
 from lmxlab.models.llama import llama_tiny
 from lmxlab.models.mixtral import mixtral_tiny
-from lmxlab.models.qwen import qwen_tiny
+from lmxlab.models.qwen35 import qwen35_tiny
 
 ARCHITECTURES = {
     "GPT": gpt_tiny,
     "LLaMA": llama_tiny,
-    "Qwen": qwen_tiny,
+    "Gemma": gemma_tiny,
     "Mixtral": mixtral_tiny,
     "DeepSeek": deepseek_tiny,
+    "Falcon-H1": falcon_h1_tiny,
+    "Jamba": jamba_tiny,
+    "Qwen3.5": qwen35_tiny,
 }
 
 

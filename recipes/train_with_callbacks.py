@@ -1,11 +1,9 @@
 """Train with callbacks: logging, throughput monitoring, early stopping.
 
-Demonstrates the callback system that hooks into the training loop.
-Three callbacks run simultaneously:
-
-- MetricsLogger: prints loss and learning rate at intervals
-- ThroughputMonitor: reports steps/sec and tokens/sec
-- EarlyStopping: halts training when eval loss plateaus
+Three callbacks running together:
+- MetricsLogger: prints loss + lr at intervals
+- ThroughputMonitor: steps/sec and tokens/sec
+- EarlyStopping: stops when eval loss plateaus
 
 Usage:
     uv run python recipes/train_with_callbacks.py

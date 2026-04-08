@@ -1,11 +1,9 @@
 """Train a model with Direct Preference Optimization (DPO).
 
-Demonstrates DPO training: first train a base model (SFT), then
-fine-tune with preference pairs using DPO. The reference model is
-a frozen copy of the SFT model.
+SFT a base model, then fine-tune on preference pairs. The reference
+model is a frozen copy of the SFT checkpoint.
 
-This is a toy example with synthetic preferences for illustration.
-In practice, you'd use human-labeled preference data.
+Toy example with synthetic preferences — real use needs human labels.
 
 Usage:
     uv run python recipes/train_dpo.py

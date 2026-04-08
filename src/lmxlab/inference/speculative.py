@@ -48,7 +48,7 @@ def speculative_decode(
         n_draft = min(draft_tokens, remaining)
 
         # Draft: generate n_draft tokens with small model
-        drafted = []
+        drafted: list[int] = []
         for _ in range(n_draft):
             d_input = mx.array([tokens + drafted])
             d_logits, _ = draft_model(d_input)

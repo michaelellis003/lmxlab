@@ -66,7 +66,7 @@ class LanguageModel(nn.Module):
 
         # Final norm
         final_norm_cls = norm_registry.get(block_cfg.norm)
-        self.final_norm = final_norm_cls(block_cfg)
+        self.final_norm = final_norm_cls(block_cfg)  # type: ignore[call-arg]
 
         # Output head (possibly tied with embedding)
         if not config.tie_embeddings:

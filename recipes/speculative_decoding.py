@@ -1,12 +1,8 @@
 """Speculative decoding: draft-then-verify generation.
 
-Demonstrates speculative decoding on Apple Silicon, where both the
-draft and target model share unified memory (zero-copy). A small
-draft model proposes tokens; the large target model verifies them
-in a single forward pass.
-
-The speedup comes from batch-verifying multiple draft tokens at once
-instead of running the target model autoregressively for each token.
+A small draft model proposes tokens; a larger target model verifies
+them in a single forward pass. On Apple Silicon both models share
+unified memory, so there's no copy overhead between them.
 
 Usage:
     uv run python recipes/speculative_decoding.py

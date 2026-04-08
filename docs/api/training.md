@@ -44,6 +44,16 @@ Compiled training loop, optimizers, and training utilities.
 
 ::: lmxlab.training.grpo
 
+## GRPO Trainer
+
+::: lmxlab.training.grpo_trainer.GRPOConfig
+    options:
+      members: true
+
+::: lmxlab.training.grpo_trainer.GRPOTrainer
+    options:
+      members: true
+
 ## Multi-Token Prediction
 
 ::: lmxlab.training.mtp.MTPHead
@@ -61,3 +71,21 @@ Compiled training loop, optimizers, and training utilities.
 ## Knowledge Distillation
 
 ::: lmxlab.training.distillation
+
+## Hardware Detection
+
+::: lmxlab.training.hardware.detect_peak_tflops
+
+## Metric Callbacks
+
+::: lmxlab.training.metric_callbacks.GradientStatsCallback
+
+::: lmxlab.training.metric_callbacks.WeightStatsCallback
+
+::: lmxlab.training.metric_callbacks.ActivationStatsCallback
+
+::: lmxlab.training.metric_callbacks.AttentionEntropyCallback
+
+::: lmxlab.training.metric_callbacks.LossCurvatureCallback
+
+::: lmxlab.training.metric_callbacks.EffectiveRankCallback

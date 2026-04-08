@@ -1,13 +1,10 @@
 """Train a model with Multi-Token Prediction (MTP).
 
-Demonstrates MTP training: the model predicts not just the next
-token, but multiple future tokens simultaneously. This provides
-richer training signal and can enable speculative decoding.
+Predict multiple future tokens at once via auxiliary heads.
+Richer gradients during training, and the heads double as draft
+predictors for speculative decoding at inference.
 
-Compares standard next-token prediction against MTP to show
-the effect of auxiliary prediction heads.
-
-Reference: DeepSeek-V3 (arxiv.org/abs/2501.12948), Meta (2024)
+Compares standard next-token prediction against MTP.
 
 Usage:
     uv run python recipes/train_mtp.py

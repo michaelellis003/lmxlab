@@ -151,7 +151,7 @@ def probe_accuracy(
         preds = mx.argmax(logits, axis=-1)
         mx.eval(preds)
 
-        correct += (preds == y).sum().item()
+        correct += (preds == y).sum().item()  # type: ignore[assignment, union-attr]
         total += y.size
 
     return correct / max(total, 1)

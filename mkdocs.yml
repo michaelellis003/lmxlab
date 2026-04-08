@@ -1,5 +1,5 @@
 site_name: lmxlab
-site_description: Educational MLX library for transformer language models on Apple Silicon
+site_description: MLX library for transformer language models on Apple Silicon
 repo_url: https://github.com/michaelellis003/lmxlab
 
 theme:
@@ -18,16 +18,12 @@ theme:
   features:
     - content.code.copy
     - navigation.sections
-    - navigation.expand
 
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
   - admonition
-  - pymdownx.details
 
 plugins:
   - search
@@ -44,23 +40,6 @@ nav:
   - Getting Started:
     - Installation: getting-started/installation.md
     - Quickstart: getting-started/quickstart.md
-    - First Training Run: getting-started/first-training-run.md
-  - Architecture:
-    - Overview: architecture/overview.md
-    - Configurable Block: architecture/configurable-block.md
-    - MLX Idioms: architecture/mlx-idioms.md
-    - Compiled Training: architecture/compiled-training.md
-    - Unified Memory: architecture/unified-memory.md
-    - Production Optimizations: architecture/production-optimizations.md
-  - Models: models/index.md
-  - Data: data/index.md
-  - Training: training/index.md
-  - Inference: inference/index.md
-  - Recipes: recipes/index.md
-  - Experiments:
-    - Methodology: experiments/methodology.md
-    - Results: experiments/results.md
-  - Developer Log: devlog/index.md
   - API Reference:
     - Overview: api/index.md
     - Core: api/core.md
@@ -69,4 +48,3 @@ nav:
     - Data: api/data.md
     - Evaluation: api/eval.md
     - Inference: api/inference.md
-    - Experiments: api/experiments.md

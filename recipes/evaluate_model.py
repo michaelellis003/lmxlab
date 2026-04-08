@@ -1,9 +1,8 @@
 """Evaluate a language model with perplexity and bits-per-byte.
 
-Trains a tiny model, then evaluates on held-out data using
-lmxlab's evaluation metrics. Demonstrates the eval pipeline:
-train/eval split, perplexity, BPB, and metric comparison across
-different architectures.
+Trains a tiny model, then runs the eval pipeline on held-out data:
+train/eval split, perplexity, BPB, and a side-by-side comparison
+across architectures.
 
 Usage:
     uv run python recipes/evaluate_model.py

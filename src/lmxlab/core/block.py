@@ -43,14 +43,14 @@ class ConfigurableBlock(nn.Module):
 
         self.attention = attn_cls(config)
         self.ffn = ffn_cls(config)
-        self.attn_norm = norm_cls(config)
-        self.ffn_norm = norm_cls(config)
+        self.attn_norm = norm_cls(config)  # type: ignore[call-arg]
+        self.ffn_norm = norm_cls(config)  # type: ignore[call-arg]
 
         # Residual dropout (applied after sublayer output)
         self.resid_dropout = nn.Dropout(p=config.dropout)
 
         # Position encoding
-        self.position = position_registry.get(config.position)(config)
+        self.position = position_registry.get(config.position)(config)  # type: ignore[call-arg]
 
         # RoPE is passed to attention for Q/K rotation
         self._rope = self.position if config.position == "rope" else None

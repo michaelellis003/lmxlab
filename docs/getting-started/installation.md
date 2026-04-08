@@ -6,7 +6,7 @@
 pip install lmxlab
 ```
 
-## From source (development)
+## From source
 
 ```bash
 git clone https://github.com/michaelellis003/lmxlab.git
@@ -19,61 +19,30 @@ pip install -e ".[dev]"
 - Python 3.12+
 - Apple Silicon Mac (M1/M2/M3/M4) for GPU acceleration
 
-MLX also runs on Intel Macs and Linux using CPU, but performance
-will differ.
+MLX also runs on Intel Macs and Linux (CPU only).
 
-## Optional dependencies
-
-Install extras for additional functionality:
+## Optional extras
 
 ```bash
-# BPE tokenization (tiktoken)
-pip install lmxlab[tokenizers]
-
-# HuggingFace model loading
-pip install lmxlab[hf]
-
-# Experiment tracking (MLflow)
-pip install lmxlab[experiments]
-
-# Everything for development
-pip install -e ".[dev]"
+pip install lmxlab[tokenizers]  # tiktoken BPE tokenization
+pip install lmxlab[hf]          # HuggingFace model loading
 ```
 
-## Verify installation
+## Verify
 
 ```python
-import mlx.core as mx
 from lmxlab.models.gpt import gpt_tiny
 from lmxlab.models.base import LanguageModel
+import mlx.core as mx
 
-config = gpt_tiny()
-model = LanguageModel(config)
+model = LanguageModel(gpt_tiny())
 mx.eval(model.parameters())
-
-tokens = mx.array([[1, 2, 3, 4]])
-logits, _ = model(tokens)
-mx.eval(logits)
-print(f"Output shape: {logits.shape}")  # (1, 4, vocab_size)
-print("Installation OK!")
+logits, _ = model(mx.array([[1, 2, 3, 4]]))
+print(logits.shape)  # (1, 4, vocab_size)
 ```
 
-Or use the CLI:
+Or via CLI:
 
 ```bash
 lmxlab list
 ```
-
-## Troubleshooting
-
-`ImportError: libmlx.so` on Linux/Intel Mac:
-MLX requires Apple Silicon for GPU support. On other platforms it falls
-back to CPU, but the shared library must still be available. Ensure
-`mlx>=0.25` is installed correctly: `pip install mlx`.
-
-`ModuleNotFoundError: No module named 'tiktoken'`:
-Install the tokenizers extra: `pip install lmxlab[tokenizers]`.
-
-Slow first run:
-MLX compiles computation graphs on first execution. Subsequent runs
-are faster. This is expected behavior.

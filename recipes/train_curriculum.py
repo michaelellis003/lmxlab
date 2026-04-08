@@ -1,10 +1,8 @@
 """Train a model with curriculum learning.
 
-Demonstrates two curriculum strategies:
-1. Length curriculum: start with short sequences, gradually increase
-2. Difficulty curriculum: mix easy and hard data with increasing ratio
-
-Compares curriculum training against a baseline to show the effect.
+Two strategies compared against a flat baseline:
+1. Length curriculum: short sequences first, gradually increase
+2. Difficulty curriculum: easy/hard mix ratio ramps up over training
 
 Usage:
     uv run python recipes/train_curriculum.py

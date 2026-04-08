@@ -1,8 +1,7 @@
 """Interactive streaming text generation.
 
-Trains a tiny model and then generates text token-by-token,
-demonstrating the stream_generate() API for real-time output.
-Also shows stop tokens and repetition penalty in action.
+Trains a tiny model, then generates text token-by-token using
+stream_generate(). Shows stop tokens and repetition penalty.
 
 Usage:
     uv run python recipes/interactive_generate.py

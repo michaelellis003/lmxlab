@@ -1,15 +1,8 @@
 """Distill a teacher model into a smaller student.
 
-Demonstrates knowledge distillation:
-
-1. Train a larger "teacher" model to convergence
-2. Train a smaller "student" from scratch (baseline)
-3. Train the same student with distillation from the teacher
-4. Compare student quality with and without distillation
-
-The student learns from the teacher's soft probability
-distributions, which encode richer information than hard
-labels alone (Hinton et al., 2015).
+Trains a larger teacher, then trains a student both from scratch
+and with KL-divergence distillation loss from the teacher's soft
+logits. Compares the two to show the distillation benefit.
 
 Usage:
     uv run python recipes/distill_model.py

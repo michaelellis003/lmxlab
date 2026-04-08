@@ -19,7 +19,6 @@ from lmxlab.models.gemma3 import gemma3_tiny
 from lmxlab.models.gpt import gpt_tiny
 from lmxlab.models.llama import llama_tiny
 from lmxlab.models.mixtral import mixtral_tiny
-from lmxlab.models.qwen import qwen_tiny
 from lmxlab.models.qwen35 import qwen35_tiny
 
 # -- Invariance tests: perturbations that should NOT change output ---------
@@ -147,7 +146,6 @@ ALL_TINY_FACTORIES = [
     gpt_tiny,
     llama_tiny,
     gemma_tiny,
-    qwen_tiny,
     mixtral_tiny,
     deepseek_tiny,
     gemma3_tiny,

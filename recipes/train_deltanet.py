@@ -1,13 +1,7 @@
 """Train a Qwen 3.5-style hybrid DeltaNet model.
 
-Demonstrates hybrid attention: Gated DeltaNet (linear attention)
-interleaved with standard GQA (softmax attention). The 3:1 ratio
-gives efficient long-context processing from DeltaNet plus global
-context modeling from periodic full attention layers.
-
-Compares:
-1. Pure GQA (LLaMA-style, all softmax attention)
-2. Hybrid DeltaNet (Qwen 3.5-style, 75% DeltaNet + 25% GQA)
+Hybrid attention: Gated DeltaNet (linear, O(n)) interleaved with
+GQA (softmax, O(n^2)) in a 3:1 ratio. Compares against pure GQA.
 
 Usage:
     uv run python recipes/train_deltanet.py

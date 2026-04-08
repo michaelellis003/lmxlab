@@ -1,11 +1,10 @@
 """Train a model with Group Relative Policy Optimization (GRPO).
 
-Demonstrates GRPO training: first train a base model (SFT), then
-fine-tune with group-relative rewards. For each prompt, multiple
-completions are scored and normalized within the group.
+SFT a base model, then fine-tune with group-relative rewards:
+generate K completions per prompt, score them, normalize within
+the group.
 
-This is a toy example with synthetic rewards for illustration.
-In practice, you'd use a reward model or human evaluations.
+Toy example with synthetic rewards — real use needs a reward model.
 
 Usage:
     uv run python recipes/train_grpo.py

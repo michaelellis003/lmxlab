@@ -1,11 +1,8 @@
 """Advanced sampling strategies: best-of-N and majority vote.
 
-Demonstrates inference-time compute scaling:
+Uses extra inference compute to improve output quality:
 - Best-of-N: generate multiple completions, keep the highest-scoring
-- Majority vote: generate multiple completions, group by content
-
-These techniques improve output quality by spending more compute
-at inference time rather than training time.
+- Majority vote: generate multiple completions, return the most common
 
 Usage:
     uv run python recipes/advanced_sampling.py

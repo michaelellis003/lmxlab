@@ -420,7 +420,7 @@ class Mamba2(AttentionBase):
             bias=False,
         )
 
-    def __call__(
+    def __call__(  # type: ignore[override]
         self,
         x: mx.array,
         mask: mx.array | None = None,

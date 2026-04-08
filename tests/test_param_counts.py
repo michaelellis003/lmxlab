@@ -4,7 +4,6 @@ import mlx.core as mx
 import mlx.utils
 import pytest
 
-from lmxlab.models.bamba import bamba_10m
 from lmxlab.models.base import LanguageModel
 from lmxlab.models.falcon import falcon_h1_10m
 from lmxlab.models.gpt import gpt_10m, gpt_30m
@@ -19,7 +18,6 @@ SCALED_CONFIGS = [
     (llama_30m, 30_000_000, 0.10),
     (falcon_h1_10m, 10_000_000, 0.10),
     (jamba_10m, 10_000_000, 0.10),
-    (bamba_10m, 10_000_000, 0.10),
 ]
 
 

@@ -103,7 +103,7 @@ def _apply_repetition_penalty(
     mask = mx.zeros((batch_size, vocab_size))
     for i in range(all_ids.shape[1]):
         token_id = all_ids[:, i : i + 1]  # (batch, 1)
-        mask = mx.maximum(mask, (vocab_range == token_id).astype(logits.dtype))
+        mask = mx.maximum(mask, (vocab_range == token_id).astype(logits.dtype))  # type: ignore[union-attr]
 
     # Apply penalty: divide positive, multiply negative
     penalized = mx.where(logits > 0, logits / penalty, logits * penalty)

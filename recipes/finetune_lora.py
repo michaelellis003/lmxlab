@@ -1,15 +1,11 @@
 """Fine-tune a model using LoRA (Low-Rank Adaptation).
 
-Demonstrates the full LoRA pipeline:
-1. Build a pretrained-sized model (or load from HuggingFace)
-2. Apply LoRA adapters to attention layers
-3. Train only the LoRA parameters (~0.1% of total)
-4. Merge LoRA back into base weights for inference
-5. Generate text with the fine-tuned model
+Full LoRA pipeline: apply adapters to attention layers, train
+only the adapter params (~0.1% of total), merge back into base
+weights, generate.
 
-This recipe uses a tiny model with character tokenization for
-fast iteration. For real fine-tuning, use load_from_hf() with
-a pretrained model and a proper tokenizer.
+Uses a tiny model with char tokenization here. For real
+fine-tuning, use load_from_hf() with a pretrained model.
 
 Usage:
     uv run python recipes/finetune_lora.py

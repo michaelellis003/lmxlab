@@ -69,7 +69,7 @@ class Sinusoidal(nn.Module):
         seq_len = x.shape[1]
         positions = mx.arange(seq_len)
         pe = self._embed(positions)  # (seq_len, d_model)
-        return x + pe
+        return x + pe  # type: ignore[no-any-return]
 
 
 @position_registry.register("alibi")
@@ -108,7 +108,7 @@ class ALiBi(nn.Module):
         t_q = mask.shape[-2] if mask is not None else seq_len
         t_k = mask.shape[-1] if mask is not None else seq_len + cache_len
         dummy = mx.zeros((1, self.n_heads, t_q, t_k))
-        return self._alibi(dummy, offset=cache_len, mask=mask)
+        return self._alibi(dummy, offset=cache_len, mask=mask)  # type: ignore[no-any-return]
 
 
 @position_registry.register("none")

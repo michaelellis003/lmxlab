@@ -44,8 +44,8 @@ class _CaptureWrapper(nn.Module):
         self._idx = layer_idx
         self._store = store
         # Expose config for compatibility with model forward
-        self.config = block.config  # type: ignore[attr-defined]
-        self.position = block.position  # type: ignore[attr-defined]
+        self.config = block.config
+        self.position = block.position
 
     def __call__(
         self,
@@ -86,14 +86,14 @@ class ActivationCapture:
 
         for i, block in enumerate(self._originals):
             wrapper = _CaptureWrapper(block, i, self.activations)
-            self.model.blocks[i] = wrapper
+            self.model.blocks[i] = wrapper  # type: ignore[call-overload]
 
         return self
 
     def __exit__(self, *exc: Any) -> None:
         """Restore original blocks."""
         for i, block in enumerate(self._originals):
-            self.model.blocks[i] = block
+            self.model.blocks[i] = block  # type: ignore[call-overload]
         self._originals.clear()
 
     def layer_norms(self) -> dict[str, float]:

@@ -1,11 +1,7 @@
 """Fine-tune a quantized model using QLoRA.
 
-Demonstrates the QLoRA pipeline:
-1. Build a model
-2. Quantize to 4-bit (base weights ~8x smaller)
-3. Apply LoRA adapters on top of quantized layers
-4. Train only the LoRA parameters (~0.1% of total)
-5. Generate text with the fine-tuned model
+Quantize a model to 4-bit, then apply LoRA adapters on top.
+Base weights stay int4 (~8x smaller), LoRA trains in float16.
 
 For real fine-tuning, load a pretrained model from HuggingFace
 with quantization: load_from_hf(repo, quantize=4).

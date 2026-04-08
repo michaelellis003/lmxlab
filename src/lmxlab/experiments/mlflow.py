@@ -22,7 +22,7 @@ from lmxlab.training.config import TrainConfig
 try:
     import mlflow
 except ImportError:
-    mlflow = None  # type: ignore[assignment]
+    mlflow = None
 
 _MISSING_MSG = (
     "mlflow is required for MLflow integration. "
@@ -108,7 +108,7 @@ class MLflowCallback:
             logged = {
                 k: float(v)
                 for k, v in metrics.items()
-                if isinstance(v, (int, float))
+                if isinstance(v, int | float)
             }
             if logged:
                 mlflow.log_metrics(_prefix_metrics(logged), step=step)
@@ -118,7 +118,7 @@ class MLflowCallback:
         logged = {
             k: float(v)
             for k, v in metrics.items()
-            if isinstance(v, (int, float))
+            if isinstance(v, int | float)
         }
         if logged:
             mlflow.log_metrics(_prefix_metrics(logged), step=step)
@@ -219,7 +219,7 @@ class MLflowExperimentRunner:
         # Log final metrics with group prefixes
         mlflow_metrics: dict[str, float] = {}
         for k, v in metrics.items():
-            if isinstance(v, (int, float)):
+            if isinstance(v, int | float):
                 mlflow_metrics[k] = float(v)
         if mlflow_metrics:
             mlflow.log_metrics(_prefix_metrics(mlflow_metrics))

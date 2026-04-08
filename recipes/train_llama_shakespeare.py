@@ -1,10 +1,7 @@
-"""Train a tiny LLaMA on Shakespeare text with BPE tokenization.
+"""Train a tiny LLaMA on Shakespeare with BPE tokenization.
 
-Demonstrates:
-- TiktokenTokenizer (GPT-2 BPE, 50257 tokens)
-- LLaMA architecture (RMSNorm, GQA, SwiGLU, RoPE)
-- Compiled training step
-- Text generation with temperature and top-k sampling
+LLaMA config (RMSNorm, GQA, SwiGLU, RoPE) + tiktoken BPE +
+compiled training + generation with temperature/top-k.
 
 Usage:
     uv run python recipes/train_llama_shakespeare.py

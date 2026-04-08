@@ -1,8 +1,7 @@
 """Hyperparameter sweep: find the best learning rate.
 
-Demonstrates the sweep utilities by doing a grid search over
-learning rates and optionally model dimensions. Each configuration
-is trained and the results are logged to experiments/results.jsonl.
+Grid search over learning rates (and optionally model dimensions).
+Each config is trained and results logged to experiments/results.jsonl.
 
 Usage:
     uv run python recipes/sweep_learning_rate.py

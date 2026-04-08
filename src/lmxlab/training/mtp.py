@@ -230,4 +230,4 @@ class MultiTokenPrediction(nn.Module):
             "total_loss": total_loss,
         }
 
-        return logits, losses
+        return logits, losses  # type: ignore[return-value]

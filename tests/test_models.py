@@ -775,6 +775,274 @@ class TestMultiGroupBC:
             Mamba2(cfg)
 
 
+class TestDensePattern:
+    """Tests for '-' (dense MLP) pattern character."""
+
+    def test_dash_pattern_parsing(self):
+        """'-' maps to dense FFN config."""
+        attn = BlockConfig(attention="gqa")
+        moe = BlockConfig(attention="none", ffn="latent_moe")
+        mamba = BlockConfig(attention="mamba2", ffn="none")
+        dense = BlockConfig(attention="none", ffn="relu2")
+
+        configs = _parse_hybrid_pattern(
+            "M-*",
+            attn,
+            moe,
+            mamba,
+            dense,
+        )
+        assert len(configs) == 3
+        assert configs[0].attention == "mamba2"
+        assert configs[1].attention == "none"
+        assert configs[1].ffn == "relu2"
+        assert configs[2].attention == "gqa"
+
+    def test_8b_config_valid(self):
+        """nemotron3_8b produces a valid ModelConfig."""
+        cfg = nemotron3_8b()
+        assert cfg.n_layers == 52
+        assert cfg.vocab_size == 131072
+        assert cfg.block_configs is not None
+        assert len(cfg.block_configs) == 52
+
+    def test_8b_layer_types(self):
+        """8B model has M, -, and * layer types."""
+        cfg = nemotron3_8b()
+        types = set()
+        for bc in cfg.block_configs:
+            types.add((bc.attention, bc.ffn))
+        # Should have Mamba, dense, and attention layers
+        assert ("mamba2", "none") in types
+        assert ("none", "relu2") in types
+        assert ("gqa", "none") in types
+
+
+class TestNemotronWeightMap:
+    """Tests for Nemotron-H HF weight mapping."""
+
+    def test_embedding_map(self):
+        """Maps backbone.embeddings.weight."""
+        from lmxlab.models.convert import _nemotron_weight_map
+
+        wmap = _nemotron_weight_map("M*")
+        assert wmap("backbone.embeddings.weight") == "embed.weight"
+
+    def test_final_norm_map(self):
+        """Maps backbone.norm_f.weight."""
+        from lmxlab.models.convert import _nemotron_weight_map
+
+        wmap = _nemotron_weight_map("M*")
+        assert wmap("backbone.norm_f.weight") == "final_norm.weight"
+
+    def test_lm_head_map(self):
+        """Maps lm_head.weight."""
+        from lmxlab.models.convert import _nemotron_weight_map
+
+        wmap = _nemotron_weight_map("M*")
+        assert wmap("lm_head.weight") == "head.weight"
+
+    def test_mamba_layer_map(self):
+        """Maps Mamba-2 layer weights (M)."""
+        from lmxlab.models.convert import _nemotron_weight_map
+
+        wmap = _nemotron_weight_map("M*")
+        assert (
+            wmap("backbone.layers.0.mixer.in_proj.weight")
+            == "blocks.0.attention.in_proj.weight"
+        )
+        assert (
+            wmap("backbone.layers.0.mixer.A_log") == "blocks.0.attention.A_log"
+        )
+        assert (
+            wmap("backbone.layers.0.norm.weight")
+            == "blocks.0.attn_norm.weight"
+        )
+
+    def test_attn_layer_map(self):
+        """Maps attention layer weights (*).
+
+        Attention layers have only Q/K/V/O projections,
+        no FFN weights (HF-verified for Nemotron-H-8B).
+        """
+        from lmxlab.models.convert import _nemotron_weight_map
+
+        wmap = _nemotron_weight_map("M*")
+        assert (
+            wmap("backbone.layers.1.mixer.q_proj.weight")
+            == "blocks.1.attention.q_proj.weight"
+        )
+        # Attention layers have no FFN weights
+        assert wmap("backbone.layers.1.mlp.up_proj.weight") is None
+
+    def test_moe_layer_map(self):
+        """Maps LatentMoE layer weights (E)."""
+        from lmxlab.models.convert import _nemotron_weight_map
+
+        wmap = _nemotron_weight_map("E")
+        assert (
+            wmap("backbone.layers.0.mlp.router.weight")
+            == "blocks.0.ffn.router.weight"
+        )
+        assert (
+            wmap("backbone.layers.0.mlp.experts.3.up.weight")
+            == "blocks.0.ffn.experts.3.up.weight"
+        )
+        assert (
+            wmap("backbone.layers.0.mlp.shared_expert.up.weight")
+            == "blocks.0.ffn.shared_expert.up.weight"
+        )
+
+    def test_dense_layer_map(self):
+        """Maps dense MLP layer weights (-).
+
+        Dense layers use mixer.up/down_proj prefix
+        (HF-verified for Nemotron-H-8B).
+        """
+        from lmxlab.models.convert import _nemotron_weight_map
+
+        wmap = _nemotron_weight_map("-")
+        assert (
+            wmap("backbone.layers.0.mixer.up_proj.weight")
+            == "blocks.0.ffn.up.weight"
+        )
+        assert (
+            wmap("backbone.layers.0.mixer.down_proj.weight")
+            == "blocks.0.ffn.down.weight"
+        )
+
+    def test_config_from_nemotron_h(self):
+        """config_from_hf works with nemotron_h type."""
+        from lmxlab.models.convert import config_from_hf
+
+        hf_cfg = {
+            "model_type": "nemotron_h",
+            "hybrid_override_pattern": "M-M*",
+            "hidden_size": 256,
+            "num_attention_heads": 4,
+            "num_key_value_heads": 2,
+            "intermediate_size": 512,
+            "vocab_size": 1000,
+            "num_hidden_layers": 4,
+            "mamba_num_heads": 4,
+            "ssm_state_size": 16,
+            "expand": 2,
+            "n_groups": 1,
+            "conv_kernel": 4,
+        }
+        cfg = config_from_hf(hf_cfg)
+        assert cfg.n_layers == 4
+        assert cfg.vocab_size == 1000
+
+
+class TestDeepSeekV3Config:
+    def test_tiny_config(self):
+        """deepseek_v3_tiny creates valid config."""
+        from lmxlab.models.deepseek import deepseek_v3_tiny
+
+        cfg = deepseek_v3_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+        assert len(cfg.block_configs) == 4
+
+    def test_dense_then_moe(self):
+        """First layer is dense, rest are MoE."""
+        from lmxlab.models.deepseek import deepseek_v3_tiny
+
+        cfg = deepseek_v3_tiny()
+        assert cfg.block_configs[0].ffn == "gated"
+        for bc in cfg.block_configs[1:]:
+            assert bc.ffn == "shared_moe"
+
+    def test_forward_shape(self):
+        """DeepSeek V3 forward pass produces correct shape."""
+        from lmxlab.models.deepseek import deepseek_v3_tiny
+
+        cfg = deepseek_v3_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
+
+
+class TestLlama4ScoutConfig:
+    def test_tiny_config(self):
+        """llama4_scout_tiny creates valid hybrid config."""
+        from lmxlab.models.llama4 import llama4_scout_tiny
+
+        cfg = llama4_scout_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+        assert len(cfg.block_configs) == 4
+
+    def test_irope_pattern(self):
+        """iRoPE: 3 chunked + 1 NoPE per cycle."""
+        from lmxlab.models.llama4 import llama4_scout_tiny
+
+        cfg = llama4_scout_tiny()
+        # Layers 0,1,2 = chunked, layer 3 = NoPE
+        for i in range(3):
+            assert cfg.block_configs[i].attention == "chunked_gqa"
+            assert cfg.block_configs[i].position == "rope"
+        assert cfg.block_configs[3].attention == "gqa"
+        assert cfg.block_configs[3].position == "none"
+
+    def test_forward_shape(self):
+        """Llama 4 Scout forward pass produces correct shape."""
+        from lmxlab.models.llama4 import llama4_scout_tiny
+
+        cfg = llama4_scout_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
+
+
+class TestLlama4MaverickConfig:
+    def test_tiny_config(self):
+        """llama4_maverick_tiny creates valid hybrid config."""
+        from lmxlab.models.llama4 import llama4_maverick_tiny
+
+        cfg = llama4_maverick_tiny()
+        assert cfg.n_layers == 4
+        assert cfg.block_configs is not None
+
+    def test_irope_pattern(self):
+        """iRoPE: 3 chunked + 1 NoPE per cycle."""
+        from lmxlab.models.llama4 import llama4_maverick_tiny
+
+        cfg = llama4_maverick_tiny()
+        for i in range(3):
+            assert cfg.block_configs[i].attention == "chunked_gqa"
+            assert cfg.block_configs[i].position == "rope"
+        assert cfg.block_configs[3].attention == "gqa"
+        assert cfg.block_configs[3].position == "none"
+
+    def test_more_experts_than_scout(self):
+        """Maverick has more experts than Scout."""
+        from lmxlab.models.llama4 import llama4_maverick_tiny
+
+        cfg = llama4_maverick_tiny()
+        assert cfg.block_configs[0].n_experts == 8
+        assert cfg.block_configs[0].top_k_experts == 1
+
+    def test_forward_shape(self):
+        """Llama 4 Maverick forward pass produces correct shape."""
+        from lmxlab.models.llama4 import llama4_maverick_tiny
+
+        cfg = llama4_maverick_tiny()
+        model = LanguageModel(cfg)
+        mx.eval(model.parameters())
+        x = mx.array([[1, 2, 3, 4]])
+        logits, _ = model(x)
+        mx.eval(logits)
+        assert logits.shape == (1, 4, cfg.vocab_size)
+
+
 class TestLatentMoEImprovements:
     """Tests for LatentMoE score_correction, scaling, groups."""
 
@@ -1080,404 +1348,6 @@ class TestMTP:
             assert not hasattr(head, "head")
 
 
-class TestDensePattern:
-    """Tests for '-' (dense MLP) pattern character."""
-
-    def test_dash_pattern_parsing(self):
-        """'-' maps to dense FFN config."""
-        attn = BlockConfig(attention="gqa")
-        moe = BlockConfig(attention="none", ffn="latent_moe")
-        mamba = BlockConfig(attention="mamba2", ffn="none")
-        dense = BlockConfig(attention="none", ffn="relu2")
-
-        configs = _parse_hybrid_pattern(
-            "M-*",
-            attn,
-            moe,
-            mamba,
-            dense,
-        )
-        assert len(configs) == 3
-        assert configs[0].attention == "mamba2"
-        assert configs[1].attention == "none"
-        assert configs[1].ffn == "relu2"
-        assert configs[2].attention == "gqa"
-
-    def test_8b_config_valid(self):
-        """nemotron3_8b produces a valid ModelConfig."""
-        cfg = nemotron3_8b()
-        assert cfg.n_layers == 52
-        assert cfg.vocab_size == 131072
-        assert cfg.block_configs is not None
-        assert len(cfg.block_configs) == 52
-
-    def test_8b_layer_types(self):
-        """8B model has M, -, and * layer types."""
-        cfg = nemotron3_8b()
-        types = set()
-        for bc in cfg.block_configs:
-            types.add((bc.attention, bc.ffn))
-        # Should have Mamba, dense, and attention layers
-        assert ("mamba2", "none") in types
-        assert ("none", "relu2") in types
-        assert ("gqa", "none") in types
-
-
-class TestNemotronWeightMap:
-    """Tests for Nemotron-H HF weight mapping."""
-
-    def test_embedding_map(self):
-        """Maps backbone.embeddings.weight."""
-        from lmxlab.models.convert import _nemotron_weight_map
-
-        wmap = _nemotron_weight_map("M*")
-        assert wmap("backbone.embeddings.weight") == "embed.weight"
-
-    def test_final_norm_map(self):
-        """Maps backbone.norm_f.weight."""
-        from lmxlab.models.convert import _nemotron_weight_map
-
-        wmap = _nemotron_weight_map("M*")
-        assert wmap("backbone.norm_f.weight") == "final_norm.weight"
-
-    def test_lm_head_map(self):
-        """Maps lm_head.weight."""
-        from lmxlab.models.convert import _nemotron_weight_map
-
-        wmap = _nemotron_weight_map("M*")
-        assert wmap("lm_head.weight") == "head.weight"
-
-    def test_mamba_layer_map(self):
-        """Maps Mamba-2 layer weights (M)."""
-        from lmxlab.models.convert import _nemotron_weight_map
-
-        wmap = _nemotron_weight_map("M*")
-        assert (
-            wmap("backbone.layers.0.mixer.in_proj.weight")
-            == "blocks.0.attention.in_proj.weight"
-        )
-        assert (
-            wmap("backbone.layers.0.mixer.A_log") == "blocks.0.attention.A_log"
-        )
-        assert (
-            wmap("backbone.layers.0.norm.weight")
-            == "blocks.0.attn_norm.weight"
-        )
-
-    def test_attn_layer_map(self):
-        """Maps attention layer weights (*).
-
-        Attention layers have only Q/K/V/O projections,
-        no FFN weights (HF-verified for Nemotron-H-8B).
-        """
-        from lmxlab.models.convert import _nemotron_weight_map
-
-        wmap = _nemotron_weight_map("M*")
-        assert (
-            wmap("backbone.layers.1.mixer.q_proj.weight")
-            == "blocks.1.attention.q_proj.weight"
-        )
-        # Attention layers have no FFN weights
-        assert wmap("backbone.layers.1.mlp.up_proj.weight") is None
-
-    def test_moe_layer_map(self):
-        """Maps LatentMoE layer weights (E)."""
-        from lmxlab.models.convert import _nemotron_weight_map
-
-        wmap = _nemotron_weight_map("E")
-        assert (
-            wmap("backbone.layers.0.mlp.router.weight")
-            == "blocks.0.ffn.router.weight"
-        )
-        assert (
-            wmap("backbone.layers.0.mlp.experts.3.up.weight")
-            == "blocks.0.ffn.experts.3.up.weight"
-        )
-        assert (
-            wmap("backbone.layers.0.mlp.shared_expert.up.weight")
-            == "blocks.0.ffn.shared_expert.up.weight"
-        )
-
-    def test_dense_layer_map(self):
-        """Maps dense MLP layer weights (-).
-
-        Dense layers use mixer.up/down_proj prefix
-        (HF-verified for Nemotron-H-8B).
-        """
-        from lmxlab.models.convert import _nemotron_weight_map
-
-        wmap = _nemotron_weight_map("-")
-        assert (
-            wmap("backbone.layers.0.mixer.up_proj.weight")
-            == "blocks.0.ffn.up.weight"
-        )
-        assert (
-            wmap("backbone.layers.0.mixer.down_proj.weight")
-            == "blocks.0.ffn.down.weight"
-        )
-
-    def test_config_from_nemotron_h(self):
-        """config_from_hf works with nemotron_h type."""
-        from lmxlab.models.convert import config_from_hf
-
-        hf_cfg = {
-            "model_type": "nemotron_h",
-            "hybrid_override_pattern": "M-M*",
-            "hidden_size": 256,
-            "num_attention_heads": 4,
-            "num_key_value_heads": 2,
-            "intermediate_size": 512,
-            "vocab_size": 1000,
-            "num_hidden_layers": 4,
-            "mamba_num_heads": 4,
-            "ssm_state_size": 16,
-            "expand": 2,
-            "n_groups": 1,
-            "conv_kernel": 4,
-        }
-        cfg = config_from_hf(hf_cfg)
-        assert cfg.n_layers == 4
-        assert cfg.vocab_size == 1000
-
-
-class TestDeepSeekV3Config:
-    def test_tiny_config(self):
-        """deepseek_v3_tiny creates valid config."""
-        from lmxlab.models.deepseek import deepseek_v3_tiny
-
-        cfg = deepseek_v3_tiny()
-        assert cfg.n_layers == 4
-        assert cfg.block_configs is not None
-        assert len(cfg.block_configs) == 4
-
-    def test_dense_then_moe(self):
-        """First layer is dense, rest are MoE."""
-        from lmxlab.models.deepseek import deepseek_v3_tiny
-
-        cfg = deepseek_v3_tiny()
-        assert cfg.block_configs[0].ffn == "gated"
-        for bc in cfg.block_configs[1:]:
-            assert bc.ffn == "shared_moe"
-
-    def test_forward_shape(self):
-        """DeepSeek V3 forward pass produces correct shape."""
-        from lmxlab.models.deepseek import deepseek_v3_tiny
-
-        cfg = deepseek_v3_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3, 4]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 4, cfg.vocab_size)
-
-
-class TestOLMo2Config:
-    def test_tiny_config(self):
-        """olmo2_tiny creates valid config with qk_norm."""
-        from lmxlab.models.olmo import olmo2_tiny
-
-        cfg = olmo2_tiny()
-        assert cfg.block.qk_norm is True
-        assert cfg.block.attention == "gqa"
-
-    def test_forward_shape(self):
-        """OLMo 2 forward pass produces correct shape."""
-        from lmxlab.models.olmo import olmo2_tiny
-
-        cfg = olmo2_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 3, cfg.vocab_size)
-
-
-class TestLlama4ScoutConfig:
-    def test_tiny_config(self):
-        """llama4_scout_tiny creates valid hybrid config."""
-        from lmxlab.models.llama4 import llama4_scout_tiny
-
-        cfg = llama4_scout_tiny()
-        assert cfg.n_layers == 4
-        assert cfg.block_configs is not None
-        assert len(cfg.block_configs) == 4
-
-    def test_irope_pattern(self):
-        """iRoPE: 3 chunked + 1 NoPE per cycle."""
-        from lmxlab.models.llama4 import llama4_scout_tiny
-
-        cfg = llama4_scout_tiny()
-        # Layers 0,1,2 = chunked, layer 3 = NoPE
-        for i in range(3):
-            assert cfg.block_configs[i].attention == "chunked_gqa"
-            assert cfg.block_configs[i].position == "rope"
-        assert cfg.block_configs[3].attention == "gqa"
-        assert cfg.block_configs[3].position == "none"
-
-    def test_forward_shape(self):
-        """Llama 4 Scout forward pass produces correct shape."""
-        from lmxlab.models.llama4 import llama4_scout_tiny
-
-        cfg = llama4_scout_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3, 4]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 4, cfg.vocab_size)
-
-
-class TestQwenNextConfig:
-    def test_tiny_config(self):
-        """qwen_next_tiny creates valid config."""
-        from lmxlab.models.qwen_next import qwen_next_tiny
-
-        cfg = qwen_next_tiny()
-        assert cfg.block.attention == "gated_gqa"
-
-    def test_forward_shape(self):
-        """Qwen3-Next forward pass produces correct shape."""
-        from lmxlab.models.qwen_next import qwen_next_tiny
-
-        cfg = qwen_next_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 3, cfg.vocab_size)
-
-
-class TestSmolLM3Config:
-    def test_tiny_config(self):
-        """smollm3_tiny creates valid hybrid config."""
-        from lmxlab.models.smollm import smollm3_tiny
-
-        cfg = smollm3_tiny()
-        assert cfg.n_layers == 4
-        assert cfg.block_configs is not None
-
-    def test_irope_pattern(self):
-        """iRoPE: 3 RoPE + 1 NoPE per cycle."""
-        from lmxlab.models.smollm import smollm3_tiny
-
-        cfg = smollm3_tiny()
-        for i in range(3):
-            assert cfg.block_configs[i].position == "rope"
-        assert cfg.block_configs[3].position == "none"
-
-    def test_forward_shape(self):
-        """SmolLM3 forward pass produces correct shape."""
-        from lmxlab.models.smollm import smollm3_tiny
-
-        cfg = smollm3_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 3, cfg.vocab_size)
-
-
-class TestMistralSmallConfig:
-    def test_tiny_config(self):
-        """mistral_small_tiny creates valid config."""
-        from lmxlab.models.mistral import mistral_small_tiny
-
-        cfg = mistral_small_tiny()
-        assert cfg.block.attention == "sliding_window_gqa"
-        assert cfg.block.window_size == 32
-
-    def test_forward_shape(self):
-        """Mistral Small forward pass produces correct shape."""
-        from lmxlab.models.mistral import mistral_small_tiny
-
-        cfg = mistral_small_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 3, cfg.vocab_size)
-
-
-class TestGPTOSSConfig:
-    def test_tiny_config(self):
-        """gpt_oss_tiny creates valid config."""
-        from lmxlab.models.gpt_oss import gpt_oss_tiny
-
-        cfg = gpt_oss_tiny()
-        assert cfg.block.qk_norm is True
-        assert cfg.tie_embeddings is True
-
-    def test_forward_shape(self):
-        """GPT-OSS forward pass produces correct shape."""
-        from lmxlab.models.gpt_oss import gpt_oss_tiny
-
-        cfg = gpt_oss_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 3, cfg.vocab_size)
-
-
-class TestGrokConfig:
-    def test_tiny_config(self):
-        """grok_tiny creates valid config."""
-        from lmxlab.models.grok import grok_tiny
-
-        cfg = grok_tiny()
-        assert cfg.block.ffn == "shared_moe"
-        assert cfg.block.n_experts == 4
-
-    def test_forward_shape(self):
-        """Grok forward pass produces correct shape."""
-        from lmxlab.models.grok import grok_tiny
-
-        cfg = grok_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 3, cfg.vocab_size)
-
-
-class TestKimiConfig:
-    def test_tiny_config(self):
-        """kimi_tiny creates valid hybrid config."""
-        from lmxlab.models.kimi import kimi_tiny
-
-        cfg = kimi_tiny()
-        assert cfg.n_layers == 4
-        assert cfg.block_configs is not None
-
-    def test_hybrid_pattern(self):
-        """3 GQA + 1 DeltaNet per cycle."""
-        from lmxlab.models.kimi import kimi_tiny
-
-        cfg = kimi_tiny()
-        for i in range(3):
-            assert cfg.block_configs[i].attention == "gqa"
-        assert cfg.block_configs[3].attention == "gated_deltanet"
-
-    def test_forward_shape(self):
-        """Kimi K2.5 forward pass produces correct shape."""
-        from lmxlab.models.kimi import kimi_tiny
-
-        cfg = kimi_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3, 4]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 4, cfg.vocab_size)
-
-
 class TestFalconH1Config:
     def test_tiny_config(self):
         """falcon_h1_tiny creates valid hybrid config."""
@@ -1551,121 +1421,3 @@ class TestJambaConfig:
         logits, _ = model(x)
         mx.eval(logits)
         assert logits.shape == (1, 4, cfg.vocab_size)
-
-
-class TestBambaConfig:
-    def test_tiny_config(self):
-        """bamba_tiny creates valid hybrid config."""
-        from lmxlab.models.bamba import bamba_tiny
-
-        cfg = bamba_tiny()
-        assert cfg.n_layers == 4
-        assert cfg.block_configs is not None
-        assert len(cfg.block_configs) == 4
-
-    def test_hybrid_pattern(self):
-        """3 Mamba-2 + 1 GQA in MMM* pattern."""
-        from lmxlab.models.bamba import bamba_tiny
-
-        cfg = bamba_tiny()
-        for i in range(3):
-            assert cfg.block_configs[i].attention == "mamba2"
-        assert cfg.block_configs[3].attention == "gqa"
-
-    def test_forward_shape(self):
-        """Bamba forward pass produces correct shape."""
-        from lmxlab.models.bamba import bamba_tiny
-
-        cfg = bamba_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3, 4]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 4, cfg.vocab_size)
-
-
-class TestLlama4MaverickConfig:
-    def test_tiny_config(self):
-        """llama4_maverick_tiny creates valid hybrid config."""
-        from lmxlab.models.llama4 import llama4_maverick_tiny
-
-        cfg = llama4_maverick_tiny()
-        assert cfg.n_layers == 4
-        assert cfg.block_configs is not None
-
-    def test_irope_pattern(self):
-        """iRoPE: 3 chunked + 1 NoPE per cycle."""
-        from lmxlab.models.llama4 import llama4_maverick_tiny
-
-        cfg = llama4_maverick_tiny()
-        for i in range(3):
-            assert cfg.block_configs[i].attention == "chunked_gqa"
-            assert cfg.block_configs[i].position == "rope"
-        assert cfg.block_configs[3].attention == "gqa"
-        assert cfg.block_configs[3].position == "none"
-
-    def test_more_experts_than_scout(self):
-        """Maverick has more experts than Scout."""
-        from lmxlab.models.llama4 import llama4_maverick_tiny
-
-        cfg = llama4_maverick_tiny()
-        assert cfg.block_configs[0].n_experts == 8
-        assert cfg.block_configs[0].top_k_experts == 1
-
-    def test_forward_shape(self):
-        """Llama 4 Maverick forward pass produces correct shape."""
-        from lmxlab.models.llama4 import llama4_maverick_tiny
-
-        cfg = llama4_maverick_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3, 4]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 4, cfg.vocab_size)
-
-
-class TestQwen3MoeConfig:
-    def test_tiny_config(self):
-        """qwen3_moe_tiny creates valid config."""
-        from lmxlab.models.qwen import qwen3_moe_tiny
-
-        cfg = qwen3_moe_tiny()
-        assert cfg.block.ffn == "shared_moe"
-        assert cfg.block.n_experts == 4
-
-    def test_forward_shape(self):
-        """Qwen3 MoE forward pass produces correct shape."""
-        from lmxlab.models.qwen import qwen3_moe_tiny
-
-        cfg = qwen3_moe_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 3, cfg.vocab_size)
-
-
-class TestGLM45Config:
-    def test_tiny_config(self):
-        """glm45_tiny creates valid MLA config with no RoPE."""
-        from lmxlab.models.glm import glm45_tiny
-
-        cfg = glm45_tiny()
-        assert cfg.block.attention == "mla"
-        assert cfg.block.position == "none"
-        assert cfg.block.rope_dim == 0
-
-    def test_forward_shape(self):
-        """GLM-4.5 forward pass produces correct shape."""
-        from lmxlab.models.glm import glm45_tiny
-
-        cfg = glm45_tiny()
-        model = LanguageModel(cfg)
-        mx.eval(model.parameters())
-        x = mx.array([[1, 2, 3]])
-        logits, _ = model(x)
-        mx.eval(logits)
-        assert logits.shape == (1, 3, cfg.vocab_size)

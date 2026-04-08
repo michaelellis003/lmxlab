@@ -4,7 +4,6 @@ from lmxlab.core.attention import (
     GQA,
     MHA,
     ChunkedGQA,
-    GatedGQA,
     SlidingWindowGQA,
 )
 from lmxlab.core.block import ConfigurableBlock
@@ -34,7 +33,6 @@ __all__ = [
     "ConfigurableBlock",
     "GQA",
     "GatedDeltaNet",
-    "GatedGQA",
     "GatedFFN",
     "LoRALinear",
     "LoRAQuantizedLinear",

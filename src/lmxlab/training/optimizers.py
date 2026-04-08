@@ -37,7 +37,7 @@ def create_schedule(
             steps=config.max_steps - config.warmup_steps,
         )
     elif config.lr_schedule == "constant":
-        decay = config.learning_rate
+        decay = config.learning_rate  # type: ignore[assignment]
     else:
         raise ValueError(f"Unknown schedule: {config.lr_schedule!r}")
 

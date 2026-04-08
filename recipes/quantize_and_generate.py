@@ -1,15 +1,7 @@
 """Quantize a trained model and compare inference quality.
 
-Demonstrates post-training quantization:
-
-- Train a small model to convergence
-- Quantize to 4-bit and 8-bit
-- Compare generation quality and memory usage
-- Show dequantization back to float
-
-MLX uses affine quantization: weights stored as packed ints with
-per-group scales and biases. On Apple Silicon, quantized models
-run efficiently via hardware-accelerated dequantization.
+Trains a model, quantizes it to 4-bit and 8-bit, then compares
+generation quality and memory usage across the three versions.
 
 Usage:
     uv run python recipes/quantize_and_generate.py

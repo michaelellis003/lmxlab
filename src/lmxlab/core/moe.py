@@ -76,7 +76,7 @@ class MoEFFN(nn.Module):
                 if not mx.any(mask).item():
                     continue
                 expert_out = self.experts[e](x)  # (B, T, D)
-                mask_expanded = mask[:, :, None]  # (B, T, 1)
+                mask_expanded = mask[:, :, None]  # type: ignore[index]  # (B, T, 1)
                 output = output + expert_out * weights * mask_expanded
 
         return output
@@ -168,7 +168,7 @@ class SharedExpertMoEFFN(nn.Module):
                 if not mx.any(mask).item():
                     continue
                 expert_out = self.experts[e](x)
-                mask_expanded = mask[:, :, None]
+                mask_expanded = mask[:, :, None]  # type: ignore[index]
                 routed_out = routed_out + expert_out * weights * mask_expanded
 
         return shared_out + routed_out
@@ -329,7 +329,7 @@ class LatentMoEFFN(FFNBase):
                 expert_out = self.experts[e](latent)
                 # Up-project to d_model
                 expert_out = self.up_proj(expert_out)
-                mask_expanded = mask[:, :, None]
+                mask_expanded = mask[:, :, None]  # type: ignore[index]
                 routed_out = routed_out + expert_out * weights * mask_expanded
 
         # Scale routed output
@@ -373,8 +373,8 @@ class LatentMoEFFN(FFNBase):
             gidx = top_group_idx[:, :, g]  # (B, T)
             for gi in range(G):
                 group_mask = mx.where(
-                    (gidx == gi)[:, :, None]
-                    * (mx.arange(G) == gi)[None, None, :],
+                    (gidx == gi)[:, :, None]  # type: ignore[index]
+                    * (mx.arange(G) == gi)[None, None, :],  # type: ignore[index]
                     1.0,
                     group_mask,
                 )

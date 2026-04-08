@@ -1,4 +1,4 @@
-"""lmxlab: Research platform for LM experimentation on Apple Silicon."""
+"""lmxlab: Transformer language models on Apple Silicon with MLX."""
 
 from lmxlab.core.config import BlockConfig, ModelConfig
 from lmxlab.models.base import LanguageModel

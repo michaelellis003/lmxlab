@@ -20,7 +20,6 @@ import sys
 import mlx.core as mx
 import mlx.utils
 
-from lmxlab.models.bamba import bamba_10m, bamba_config, bamba_tiny
 from lmxlab.models.base import LanguageModel
 from lmxlab.models.deepseek import (
     deepseek_config,
@@ -29,91 +28,38 @@ from lmxlab.models.deepseek import (
     deepseek_v3_tiny,
 )
 from lmxlab.models.falcon import (
-    falcon_h1_10m,
     falcon_h1_config,
     falcon_h1_tiny,
 )
 from lmxlab.models.gemma import gemma_config, gemma_tiny
 from lmxlab.models.gemma3 import gemma3_config, gemma3_tiny
-from lmxlab.models.glm import glm45_config, glm45_tiny
-from lmxlab.models.gpt import (
-    gpt_10m,
-    gpt_30m,
-    gpt_config,
-    gpt_tiny,
-)
-from lmxlab.models.gpt_oss import gpt_oss_config, gpt_oss_tiny
-from lmxlab.models.grok import grok_config, grok_tiny
-from lmxlab.models.jamba import jamba_10m, jamba_config, jamba_tiny
-from lmxlab.models.kimi import kimi_config, kimi_tiny
-from lmxlab.models.llama import (
-    llama_10m,
-    llama_30m,
-    llama_config,
-    llama_tiny,
-)
+from lmxlab.models.gpt import gpt_config, gpt_tiny
+from lmxlab.models.jamba import jamba_config, jamba_tiny
+from lmxlab.models.llama import llama_config, llama_tiny
 from lmxlab.models.llama4 import (
-    llama4_maverick_config,
-    llama4_maverick_tiny,
     llama4_scout_config,
     llama4_scout_tiny,
 )
-from lmxlab.models.mistral import (
-    mistral_small_config,
-    mistral_small_tiny,
-)
 from lmxlab.models.mixtral import mixtral_config, mixtral_tiny
-from lmxlab.models.nemotron import nemotron3_config, nemotron3_tiny
-from lmxlab.models.olmo import olmo2_config, olmo2_tiny
-from lmxlab.models.qwen import (
-    qwen3_moe_config,
-    qwen3_moe_tiny,
-    qwen_config,
-    qwen_tiny,
+from lmxlab.models.nemotron import (
+    nemotron3_config,
+    nemotron3_tiny,
 )
 from lmxlab.models.qwen35 import qwen35_config, qwen35_tiny
-from lmxlab.models.qwen_next import (
-    qwen_next_config,
-    qwen_next_tiny,
-)
-from lmxlab.models.smollm import smollm3_config, smollm3_tiny
 
 ARCHITECTURES = {
     "gpt": (gpt_config, gpt_tiny),
     "llama": (llama_config, llama_tiny),
     "gemma": (gemma_config, gemma_tiny),
     "gemma3": (gemma3_config, gemma3_tiny),
-    "qwen": (qwen_config, qwen_tiny),
-    "qwen35": (qwen35_config, qwen35_tiny),
-    "mixtral": (mixtral_config, mixtral_tiny),
     "deepseek": (deepseek_config, deepseek_tiny),
     "deepseek_v3": (deepseek_v3_config, deepseek_v3_tiny),
+    "mixtral": (mixtral_config, mixtral_tiny),
+    "llama4": (llama4_scout_config, llama4_scout_tiny),
     "nemotron": (nemotron3_config, nemotron3_tiny),
-    "llama4_scout": (llama4_scout_config, llama4_scout_tiny),
-    "llama4_maverick": (
-        llama4_maverick_config,
-        llama4_maverick_tiny,
-    ),
-    "mistral": (mistral_small_config, mistral_small_tiny),
-    "olmo2": (olmo2_config, olmo2_tiny),
-    "gpt_oss": (gpt_oss_config, gpt_oss_tiny),
-    "grok": (grok_config, grok_tiny),
-    "kimi": (kimi_config, kimi_tiny),
-    "qwen_next": (qwen_next_config, qwen_next_tiny),
-    "qwen3_moe": (qwen3_moe_config, qwen3_moe_tiny),
-    "smollm3": (smollm3_config, smollm3_tiny),
     "falcon_h1": (falcon_h1_config, falcon_h1_tiny),
     "jamba": (jamba_config, jamba_tiny),
-    "bamba": (bamba_config, bamba_tiny),
-    "glm45": (glm45_config, glm45_tiny),
-    # Scaled research configs (10M / 30M params, BPE vocab)
-    "gpt_10m": (gpt_10m, gpt_10m),
-    "gpt_30m": (gpt_30m, gpt_30m),
-    "llama_10m": (llama_10m, llama_10m),
-    "llama_30m": (llama_30m, llama_30m),
-    "falcon_h1_10m": (falcon_h1_10m, falcon_h1_10m),
-    "jamba_10m": (jamba_10m, jamba_10m),
-    "bamba_10m": (bamba_10m, bamba_10m),
+    "qwen35": (qwen35_config, qwen35_tiny),
 }
 
 
@@ -121,7 +67,7 @@ def cmd_list(args: argparse.Namespace) -> None:
     """List available architectures."""
     print("Available architectures:")
     for name, (full_fn, _) in ARCHITECTURES.items():
-        config = full_fn()
+        config = full_fn()  # type: ignore[operator]
         block = config.block
         print(
             f"  {name:10s}  "
@@ -140,7 +86,7 @@ def cmd_info(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     full_fn, tiny_fn = ARCHITECTURES[name]
-    config = tiny_fn() if args.tiny else full_fn()
+    config = tiny_fn() if args.tiny else full_fn()  # type: ignore[operator]
     label = f"{name} (tiny)" if args.tiny else name
     block = config.block
 
@@ -181,7 +127,7 @@ def cmd_count(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     full_fn, tiny_fn = ARCHITECTURES[name]
-    config = tiny_fn() if args.tiny else full_fn()
+    config = tiny_fn() if args.tiny else full_fn()  # type: ignore[operator]
     label = f"{name} (tiny)" if args.tiny else name
 
     model = LanguageModel(config)
@@ -204,7 +150,7 @@ def cmd_count(args: argparse.Namespace) -> None:
 
 
 def cmd_bench(args: argparse.Namespace) -> None:
-    """Benchmark forward pass and memory for an architecture."""
+    """Benchmark forward pass and memory."""
     name = args.arch.lower()
     if name not in ARCHITECTURES:
         print(f"Unknown architecture: {name}")
@@ -218,7 +164,7 @@ def cmd_bench(args: argparse.Namespace) -> None:
     )
 
     full_fn, tiny_fn = ARCHITECTURES[name]
-    config = tiny_fn() if args.tiny else full_fn()
+    config = tiny_fn() if args.tiny else full_fn()  # type: ignore[operator]
     label = f"{name} (tiny)" if args.tiny else name
 
     model = LanguageModel(config)
@@ -249,7 +195,7 @@ def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
         prog="lmxlab",
-        description="Research platform for language model experimentation",
+        description=("Transformer language models on Apple Silicon with MLX"),
     )
     sub = parser.add_subparsers(dest="command")
 
@@ -281,7 +227,7 @@ def main() -> None:
         "--seq-len",
         type=int,
         default=32,
-        help="Sequence length for forward pass (default: 32)",
+        help="Sequence length (default: 32)",
     )
     bench_p.add_argument(
         "--gen-tokens",

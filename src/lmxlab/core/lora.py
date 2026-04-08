@@ -209,7 +209,7 @@ def lora_parameters(model: nn.Module) -> dict:
     all_params = model.trainable_parameters()
     # trainable_parameters already returns only unfrozen params,
     # which for LoRA models means only lora_A and lora_B
-    return all_params
+    return all_params  # type: ignore[no-any-return]
 
 
 def merge_lora(model: nn.Module) -> None:
@@ -303,9 +303,9 @@ def load_lora_adapters(
         raise FileNotFoundError(f"Adapter directory not found: {path}")
 
     weights = mx.load(str(path / "adapter.safetensors"))
-    model.load_weights(list(weights.items()), strict=False)
+    model.load_weights(list(weights.items()), strict=False)  # type: ignore[union-attr]
 
     config_path = path / "adapter_config.json"
     if config_path.exists():
-        return json.loads(config_path.read_text())
+        return json.loads(config_path.read_text())  # type: ignore[no-any-return]
     return {}

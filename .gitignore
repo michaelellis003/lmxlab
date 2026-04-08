@@ -13,8 +13,9 @@ dist/
 # Virtual environment
 .venv/
 
-# AI assistant config (local-only)
+# Local config
 .claude/
+.claude.json
 CLAUDE.md
 memory/
 
@@ -23,14 +24,14 @@ memory/
 .env.*
 credentials.json
 
-# Data (downloaded by recipes)
+# Data
 /data/
+/pgolf/
 
-# Experiment results
+# Experiment output
+experiments/
 results.jsonl
-
-# Agent team output (temporary)
-.team-output/
+mlflow.db
 
 # Checkpoints
 checkpoints/

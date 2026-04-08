@@ -48,3 +48,13 @@ print(f"Acceptance rate: {stats['acceptance_rate']:.1%}")
 ## Speculative Decoding
 
 ::: lmxlab.inference.speculative
+
+## Beam Search
+
+::: lmxlab.inference.beam_search.beam_search
+
+## Reward Model
+
+::: lmxlab.inference.reward_model.RewardModel
+    options:
+      members: ["__init__", "__call__"]

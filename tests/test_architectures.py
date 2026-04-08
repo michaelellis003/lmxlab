@@ -20,14 +20,12 @@ from lmxlab.models.llama import (
     llama_tiny,
 )
 from lmxlab.models.mixtral import mixtral_config, mixtral_tiny
-from lmxlab.models.qwen import qwen_config, qwen_tiny
 from lmxlab.models.qwen35 import qwen35_config, qwen35_tiny
 
 ALL_TINY_FACTORIES = [
     ("gpt", gpt_tiny),
     ("llama", llama_tiny),
     ("gemma", gemma_tiny),
-    ("qwen", qwen_tiny),
     ("mixtral", mixtral_tiny),
     ("deepseek", deepseek_tiny),
     ("gemma3", gemma3_tiny),
@@ -85,11 +83,6 @@ class TestArchitectureDefaults:
         assert c.block.attention == "gqa"
         assert c.block.n_kv_heads == 1  # multi-query
         assert c.tie_embeddings is True
-
-    def test_qwen_defaults(self):
-        c = qwen_config()
-        assert c.block.bias is True  # Qwen uses bias
-        assert c.block.rope_theta == 1000000.0  # high theta
 
     def test_mixtral_defaults(self):
         c = mixtral_config()
