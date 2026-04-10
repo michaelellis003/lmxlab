@@ -1,70 +1,68 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to release (e.g. 0.4.0)"
-        required: true
-        type: string
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    environment: pypi
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
 
-      - uses: astral-sh/setup-uv@v7
+      - name: Setup uv
+        uses: ./.github/actions/setup-uv
+
+      - name: Python Semantic Release
+        id: semver
+        uses: python-semantic-release/python-semantic-release@350c48fcb3ffcdfd2e0a235206bc2ecea6b69df0  # v10.5.3
         with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          github_token: ${{ secrets.RELEASE_TOKEN }}
+          push: "false"
+          vcs_release: "false"
 
-      - name: Update version in pyproject.toml
+      - name: Update lockfile and push release
+        if: steps.semver.outputs.released == 'true'
         run: |
-          sed -i "s/^version = .*/version = \"${{ inputs.version }}\"/" pyproject.toml
-
-      - name: Update version in __init__.py
-        run: |
-          sed -i "s/^__version__ = .*/__version__ = \"${{ inputs.version }}\"/" src/lmxlab/__init__.py
-
-      - name: Sync lockfile
-        run: uv lock
-
-      - name: Commit version bump
-        run: |
+          VERSION="${{ steps.semver.outputs.version }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml src/lmxlab/__init__.py uv.lock
-          git commit -m "release: v${{ inputs.version }}"
-          git push
+          uv lock --upgrade-package lmxlab
+          git add uv.lock
+          git tag -d "v${VERSION}"
+          git commit --amend --no-edit
+          git tag "v${VERSION}"
+          git push origin main "v${VERSION}"
 
-      - name: Create tag
-        run: |
-          git tag "v${{ inputs.version }}"
-          git push origin "v${{ inputs.version }}"
+      - name: Build package
+        if: steps.semver.outputs.released == 'true'
+        run: uv build
 
-      - name: Generate release notes
-        id: notes
-        run: |
-          PREV_TAG=$(git tag --sort=-v:refname | head -2 | tail -1)
-          if [ -z "$PREV_TAG" ]; then
-            BODY="Initial release."
-          else
-            BODY=$(git log --pretty=format:"- %s" "$PREV_TAG"..HEAD~1)
-          fi
-          echo "body<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$BODY" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+      - name: Publish to PyPI
+        if: steps.semver.outputs.released == 'true'
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14.0
+        with:
+          attestations: true
 
-      - name: Create GitHub release
-        run: |
-          gh release create "v${{ inputs.version }}" \
-            --title "v${{ inputs.version }}" \
-            --notes "${{ steps.notes.outputs.body }}"
+      - name: Create GitHub Release
+        if: steps.semver.outputs.released == 'true'
+        run: gh release create "v${{ steps.semver.outputs.version }}" dist/* --generate-notes
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}

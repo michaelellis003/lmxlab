@@ -6,7 +6,7 @@ from lmxlab.models.generate import generate, stream_generate
 from lmxlab.training.config import TrainConfig
 from lmxlab.training.trainer import Trainer
 
-__version__ = "0.1.0"
+__version__ = "0.3.1"
 
 __all__ = [
     "BlockConfig",

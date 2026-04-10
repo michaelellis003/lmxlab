@@ -99,3 +99,19 @@ module = [
     "matplotlib.*",
 ]
 ignore_missing_imports = true
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/lmxlab/__init__.py:__version__"]
+commit_message = "chore(release): {version}"
+major_on_zero = false
+allow_zero_version = true
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
+
+[tool.semantic_release.remote]
+type = "github"
+
+[tool.semantic_release.publish]
+upload_to_vcs_release = true
