@@ -1,6 +1,6 @@
 [project]
 name = "lmxlab"
-version = "0.3.1"
+version = "0.4.0"
 description = "Transformer language models on Apple Silicon with MLX"
 license = "MIT"
 readme = "README.md"
