@@ -23,7 +23,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
       - run: uv sync --locked --extra dev
       - run: uv run mkdocs build
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
       - id: deployment
